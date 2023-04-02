@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"path": "../../../lsport-inplay"
+		},
+		{
+			"path": "../../../lsport-prematch"
+		}
+	],
+	"settings": {}
+}

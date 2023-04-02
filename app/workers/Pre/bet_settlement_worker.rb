@@ -4,9 +4,9 @@
 require "sidekiq"
 require "json"
 
-class BetSettlementWorker
+class Pre::BetSettlementWorker
   include Sidekiq::Worker
-  sidekiq_options queue: "critical", retry: false
+  sidekiq_options queue: "high", retry: false
 
   def perform(message)
     events = message.fetch("Body", {}).fetch("Events", nil)
