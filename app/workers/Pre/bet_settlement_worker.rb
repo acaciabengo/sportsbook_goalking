@@ -54,7 +54,7 @@ class Pre::BetSettlementWorker
       bets = provider.fetch("Bets", nil)
       next if bets.nil?
 
-      bets_with_baseline = bets.group_by { |bet| bet.fetch("BaseLine", nil) }
+      bets_with_baseline = bets.group_by { |bet| bet.fetch("BaseLine", []) }
       bets_with_baseline.each do |baseline, settlements|
         specifier = baseline
         settlement = settlements.each_with_object({}) do |bet, result|
@@ -64,6 +64,9 @@ class Pre::BetSettlementWorker
         market_entry = fixture.live_markets.find_or_initialize_by(market_identifier: market["Id"], specifier: specifier)
         market_entry.assign_attributes(status: "Settled", results: settlement)
         market_entry.save
+
+        # settle the bets
+        settle_bets(fixture.id, "3", market["Id"], settlement, specifier)
       end
 
       #   settle bets without baseline
@@ -74,6 +77,10 @@ class Pre::BetSettlementWorker
         market_entry = fixture.live_markets.find_or_initialize_by(market_identifier: market["Id"])
         market_entry.assign_attributes(status: "Settled", results: settlement)
         market_entry.save
+
+        # settle the bets
+        settle_bets(fixture.id, "3", market["Id"], settlement, specifier)
+
       end
     end
   end

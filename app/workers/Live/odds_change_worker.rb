@@ -51,9 +51,9 @@ class Live::OddsChangeWorker
       bets = [bets] if bets.is_a?(Hash)
 
       #group the bets by baseline
-      bets = bets.group_by { |bet| bet.fetch("BaseLine", nil) }
+      bets_with_baseline = bets.group_by { |bet| bet.fetch("BaseLine", []) }
       # iterate over bets
-      bets.each do |key, values|
+      bets_with_baseline.each do |key, values|
         odds = values.each_with_object({}) do |bet, result|
           result["outcome_#{bet["Name"]}"] = bet["Price"]
         end
@@ -61,6 +61,11 @@ class Live::OddsChangeWorker
         market_entry = fixture.live_markets.find_or_initialize_by(market_identifier: market["Id"], specifier: key)
         market_entry.assign_attributes(status: status, odds: market_entry.odds.merge(odds))
         market_entry.save
+      end
+
+      bets_without_baseline = bets - bets_with_baseline
+
+      bets_without_baseline.each do |bet|
       end
     end
   end
