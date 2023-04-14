@@ -123,3 +123,4 @@ gem 'mimemagic',
     ref: '01f92d86d15d85cfd0f20dabd025dcbd36a8a60f'
 gem 'will_paginate'
 gem 'prettier'
+gem 'fabrication', '~> 2.15', '>= 2.15.2'

@@ -6,7 +6,7 @@ require "bunny"
 class LsportsLive
   # declare constants
   CONNECTION_THRESHOLD = 90.freeze
-  PRODUCT = "3".freeze
+  PRODUCT = "1".freeze
   CONNECTION_HOST = "inplay-rmq.lsports.eu".freeze
   ALERTS_KEY = "lsports_live_alerts".freeze
   STATUS_KEY = "lsports_live_status".freeze
@@ -14,7 +14,7 @@ class LsportsLive
   def initialize
     @connection = Bunny.new(
       host: CONNECTION_HOST,
-      port: 5673,
+      port: 5672,
       username: ENV["LSPORTS_USERNAME"],
       password: ENV["LSPORTS_PASSWORD"],
       vhost: "Customers",
@@ -28,7 +28,7 @@ class LsportsLive
     @connection.start
     @channel = @connection.create_channel
     @queue = @channel.queue(
-      "_4372_",
+      "_4373_",
       exchange: "",
       durable: true,
       passive: true,
@@ -37,8 +37,8 @@ class LsportsLive
     @exchange = @channel.default_exchange
 
     # write initial cache store
-    RAILS.cache.write(ALERTS_KEY, Time.now.to_i)
-    RAILS.cache.write(STATUS_KEY, 0)
+    Rails.cache.write(ALERTS_KEY, Time.now.to_i)
+    Rails.cache.write(STATUS_KEY, 0)
 
     # call connection checker
     check_connection
@@ -62,24 +62,24 @@ class LsportsLive
         case message_type
         when 1
           # process fixtures
-          Live::FixtureChangeWorker.perform_async(message)
+          FixtureChangeWorker.set(queue: :critical).perform_async(message, PRODUCT)
         when 2
           # process live scores
-          Live::LiveScoresWorker.perform_async(message)
+          LiveScoresWorker.set(queue: :critical).perform_async(message, PRODUCT)
         when 3
           # process odds
-          Live::OddsChangeWorker.perform_async(message)
+          OddsChangeWorker.set(queue: :critical).perform_async(message, PRODUCT)
         when 32
           # process alerts
           # extract the timestamp
           timestamp = message["Header"]["ServerTimestamp"]
 
           # write this to the cache store
-          RAILS.cache.write(ALERTS_KEY, timestamp)
+          Rails.cache.write(ALERTS_KEY, timestamp)
         when 35
           # process bet settlements
           # call bet settlement worker
-          Live::BetSettlementWorker.perform_async(message)
+          BetSettlementWorker.perform_async(message, PRODUCT)
         end
       end
     rescue => e
@@ -104,16 +104,16 @@ class LsportsLive
       while true
         # every 15 seconds check the connection
         # if current time - last update > 90 seconds,deactivate all markets
-        last_update = RAILS.cache.read(ALERTS_KEY)
-        status = RAILS.cache.read(STATUS_KEY)
+        last_update = Rails.cache.read(ALERTS_KEY)
+        status = Rails.cache.read(STATUS_KEY)
 
         if (Time.now.to_i - last_update) > CONNECTION_THRESHOLD
           # change the connection status
-          RAILS.cache.write(STATUS_KEY, 0)
+          Rails.cache.write(STATUS_KEY, 0)
           # deactivate markets
           DeactivateMarketsWorker.perform_async(PRODUCT)
         else
-          RAILS.cache.write(STATUS_KEY, 1) if status == 0
+          Rails.cache.write(STATUS_KEY, 1) if status == 0
         end
         sleep 15
       end
@@ -122,7 +122,7 @@ class LsportsLive
 end
 
 # run this is enviroment is not test
-if Rails.env.production?
+if Rails.env.production? #|| Rails.env.development?
   # instantiate and start listening to the queue
   listener = LsportsLive.new
   listener.start

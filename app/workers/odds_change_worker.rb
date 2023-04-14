@@ -2,11 +2,17 @@
 
 require "sidekiq"
 
-class Live::OddsChangeWorker
+class OddsChangeWorker
   include Sidekiq::Worker
   sidekiq_options queue: "critical", retry: false
 
-  def perform(message)
+  MARKETS = {
+    "1" => "live_markets",
+    "3" => "pre_markets",
+  }.freeze
+
+  def perform(message, product)
+
     # fetch events from the message
     events = message.fetch("Body", {}).fetch("Events", nil)
     return if events.nil?
@@ -58,7 +64,7 @@ class Live::OddsChangeWorker
           result["outcome_#{bet["Name"]}"] = bet["Price"]
         end
         status = market_status[values.first["Status"]]
-        market_entry = fixture.live_markets.find_or_initialize_by(market_identifier: market["Id"], specifier: key)
+        market_entry = fixture.send("#{MARKETS[product]}").find_or_initialize_by(market_identifier: market["Id"], specifier: key)
         market_entry.assign_attributes(status: status, odds: market_entry.odds.merge(odds))
         market_entry.save
       end

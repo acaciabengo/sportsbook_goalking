@@ -37,8 +37,8 @@ class LsportsPre
     @exchange = @channel.default_exchange
 
     # write initial cache store
-    RAILS.cache.write(ALERTS_KEY, Time.now.to_i)
-    RAILS.cache.write(STATUS_KEY, 0)
+    Rails.cache.write(ALERTS_KEY, Time.now.to_i)
+    Rails.cache.write(STATUS_KEY, 0)
 
     # call connection checker
     check_connection
@@ -62,24 +62,24 @@ class LsportsPre
         case message_type
         when 1
           # process fixtures
-          Pre::FixtureChangeWorker.perform_async(message)
+          FixtureChangeWorker.perform_async(message, PRODUCT)
         when 2
           # process live scores
-          Pre::LiveScoresWorker.perform_async(message)
+          LiveScoresWorker.perform_async(message, PRODUCT)
         when 3
           # process odds
-          Pre::OddsChangeWorker.perform_async(message)
+          OddsChangeWorker.perform_async(message, PRODUCT)
         when 32
           # process alerts
           # extract the timestamp
           timestamp = message["Header"]["ServerTimestamp"]
 
           # write this to the cache store
-          RAILS.cache.write(ALERTS_KEY, timestamp)
+          Rails.cache.write(ALERTS_KEY, timestamp)
         when 35
           # process bet settlements
           # call bet settlement worker
-          Live::BetSettlementWorker.perform_async(message)
+          BetSettlementWorker.perform_async(message, PRODUCT)
         end
       end
     rescue => e
@@ -104,16 +104,16 @@ class LsportsPre
       while true
         # every 15 seconds check the connection
         # if current time - last update > 90 seconds,deactivate all markets
-        last_update = RAILS.cache.read(ALERTS_KEY)
-        status = RAILS.cache.read(STATUS_KEY)
+        last_update = Rails.cache.read(ALERTS_KEY)
+        status = Rails.cache.read(STATUS_KEY)
 
         if (Time.now.to_i - last_update) > CONNECTION_THRESHOLD
           # change the connection status
-          RAILS.cache.write(STATUS_KEY, 0)
+          Rails.cache.write(STATUS_KEY, 0)
           # deactivate markets
           DeactivateMarketsWorker.perform_async(PRODUCT)
         else
-          RAILS.cache.write(STATUS_KEY, 1) if status == 0
+          Rails.cache.write(STATUS_KEY, 1) if status == 0
         end
         sleep 15
       end
@@ -122,7 +122,7 @@ class LsportsPre
 end
 
 # run this is enviroment is not test
-if Rails.env.production?
+if Rails.env.production? #|| Rails.env.development?
   # instantiate and start listening to the queue
   listener = LsportsPre.new
   listener.start

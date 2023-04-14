@@ -4,9 +4,9 @@
 require "sidekiq"
 require "json"
 
-class BetSettlementWorker
+class Live::BetSettlementWorker
   include Sidekiq::Worker
-  sidekiq_options queue: "critical", retry: false
+  sidekiq_options queue: "high", retry: false
 
   def perform(message)
     events = message.fetch("Body", {}).fetch("Events", nil)
@@ -54,7 +54,7 @@ class BetSettlementWorker
       bets = provider.fetch("Bets", nil)
       next if bets.nil?
 
-      bets_with_baseline = bets.group_by { |bet| bet.fetch("BaseLine", nil) }
+      bets_with_baseline = bets.group_by { |bet| bet.fetch("BaseLine", []) }
       bets_with_baseline.each do |baseline, settlements|
         specifier = baseline
         settlement = settlements.each_with_object({}) do |bet, result|
@@ -64,16 +64,23 @@ class BetSettlementWorker
         market_entry = fixture.live_markets.find_or_initialize_by(market_identifier: market["Id"], specifier: specifier)
         market_entry.assign_attributes(status: "Settled", results: settlement)
         market_entry.save
+
+        # settle the bets
+        settle_bets(fixture.id, "1", market["Id"], settlement, specifier)
       end
 
       #   settle bets without baseline
       bets_without_baseline = bets - bets_with_baseline
 
       bets_without_baseline.each do |bet|
+        specifier = nil
         settlement = settlement_status[bet["Settlement"]]
         market_entry = fixture.live_markets.find_or_initialize_by(market_identifier: market["Id"])
         market_entry.assign_attributes(status: "Settled", results: settlement)
         market_entry.save
+
+        # settle the bets
+        settle_bets(fixture.id, "1", market["Id"], settlement, specifier)
       end
     end
   end

@@ -1,11 +1,11 @@
 require "sidekiq"
 
-class Live::FixtureChangeWorker
+class FixtureChangeWorker
   include Sidekiq::Worker
   sidekiq_options queue: "critical"
   sidekiq_options retry: false
 
-  def perform(message)
+  def perform(message, product)
     events = message.fetch("Body", {}).fetch("Events", nil)
     # exit if events is nil
     return if events.nil?
