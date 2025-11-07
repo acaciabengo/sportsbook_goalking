@@ -16,6 +16,7 @@
         <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
 
         <!-- =============== APP STYLES ===============-->
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
         <%= stylesheet_link_tag 'user_assets/application', media: 'all', id: "maincss",'data-turbolinks-track': 'reload' %>
         <!-- =============== VIEW STYLES ===============-->
         <%= csrf_meta_tags %>
@@ -34,7 +35,8 @@
             s0.parentNode.insertBefore(s1,s0);
             })();
         </script>
-        <!--End of Tawk.to Script-->  
+        <!--End of Tawk.to Script-->
+    <%= javascript_importmap_tags %>  
 
     </head>
 

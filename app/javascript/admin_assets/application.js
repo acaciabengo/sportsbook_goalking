@@ -5,7 +5,7 @@
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 
-require("modernizr/modernizr.custom.js");
+// require("modernizr/modernizr.custom.js");
 
 require("@rails/ujs").start();
 // //require("turbolinks").start()

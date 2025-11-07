@@ -3,12 +3,12 @@ class Backend::ApiUsersController < ApplicationController
 
   load_and_authorize_resource
 
-  layout 'admin_application.html.erb'
+  layout "admin_application"
 
-  require 'mobile_money/mtn_open_api'
+  require "mobile_money/mtn_open_api"
 
   def index
-    @api_users = ApiUser.all.order('created_at DESC')
+    @api_users = ApiUser.all.order("created_at DESC")
   end
 
   def new
@@ -19,11 +19,11 @@ class Backend::ApiUsersController < ApplicationController
     @api_user = ApiUser.new(api_user_params)
     @api_user.api_id = generate_uuid
     if @api_user.save
-      flash[:notice] = 'API User Successfully Created.'
-      redirect_to action: 'index'
+      flash[:notice] = "API User Successfully Created."
+      redirect_to action: "index"
     else
       flash.now[:alert] = @api_user.errors
-      render action: 'new'
+      render action: "new"
     end
   end
 
@@ -40,15 +40,15 @@ class Backend::ApiUsersController < ApplicationController
       api_key = MobileMoney::MtnOpenApi.receive_api_key(@api_user.api_id)
 
       if api_key && @api_user.update(api_key: api_key)
-        flash[:notice] = 'API Key Successfully Created.'
-        redirect_to action: 'index'
+        flash[:notice] = "API Key Successfully Created."
+        redirect_to action: "index"
       else
-        flash[:alert] = 'Oops! Something Went Wrong'
-        redirect_to action: 'index'
+        flash[:alert] = "Oops! Something Went Wrong"
+        redirect_to action: "index"
       end
     else
-      flash[:alert] = 'Oops! Something Went Wrong. Please Try Again.'
-      redirect_to action: 'index'
+      flash[:alert] = "Oops! Something Went Wrong. Please Try Again."
+      redirect_to action: "index"
     end
   end
 

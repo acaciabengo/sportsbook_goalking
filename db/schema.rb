@@ -10,8 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_05_03_224702) do
-
+ActiveRecord::Schema[7.2].define(version: 2025_08_21_095931) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -22,8 +21,8 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.bigint "resource_id"
     t.string "author_type"
     t.bigint "author_id"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["author_type", "author_id"], name: "index_active_admin_comments_on_author_type_and_author_id"
     t.index ["namespace"], name: "index_active_admin_comments_on_namespace"
     t.index ["resource_type", "resource_id"], name: "index_active_admin_comments_on_resource_type_and_resource_id"
@@ -33,10 +32,10 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
     t.string "reset_password_token"
-    t.datetime "reset_password_sent_at"
-    t.datetime "remember_created_at"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "reset_password_sent_at", precision: nil
+    t.datetime "remember_created_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["email"], name: "index_admin_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_admin_users_on_reset_password_token", unique: true
   end
@@ -45,18 +44,18 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
     t.string "reset_password_token"
-    t.datetime "reset_password_sent_at"
-    t.datetime "remember_created_at"
+    t.datetime "reset_password_sent_at", precision: nil
+    t.datetime "remember_created_at", precision: nil
     t.integer "sign_in_count", default: 0, null: false
-    t.datetime "current_sign_in_at"
-    t.datetime "last_sign_in_at"
+    t.datetime "current_sign_in_at", precision: nil
+    t.datetime "last_sign_in_at", precision: nil
     t.inet "current_sign_in_ip"
     t.inet "last_sign_in_ip"
     t.integer "failed_attempts", default: 0, null: false
     t.string "unlock_token"
-    t.datetime "locked_at"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "locked_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.string "first_name"
     t.string "last_name"
     t.string "role", default: "support"
@@ -71,8 +70,8 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.string "api_key"
     t.boolean "registered", default: false
     t.string "user_type"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "audits", force: :cascade do |t|
@@ -89,7 +88,7 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.string "comment"
     t.string "remote_address"
     t.string "request_uuid"
-    t.datetime "created_at"
+    t.datetime "created_at", precision: nil
     t.index ["associated_type", "associated_id"], name: "associated_index"
     t.index ["auditable_type", "auditable_id", "version"], name: "auditable_index"
     t.index ["created_at"], name: "index_audits_on_created_at"
@@ -101,8 +100,8 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.bigint "bet_slip_id", null: false
     t.string "status"
     t.string "reason"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.string "code"
     t.index ["bet_slip_id"], name: "index_bet_slip_cancels_on_bet_slip_id"
   end
@@ -115,13 +114,15 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.decimal "payout", precision: 12, scale: 2
     t.string "status"
     t.boolean "paid", default: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.string "result"
     t.string "reason"
     t.decimal "bonus", precision: 10, scale: 2
     t.decimal "tax", precision: 10, scale: 2
+    t.string "bet_slip_status"
+    t.string "bet_slip_result"
     t.index ["user_id"], name: "index_bet_slips_on_user_id"
   end
 
@@ -130,8 +131,8 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.string "status"
     t.string "product"
     t.string "reason"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.bigint "fixture_id", null: false
     t.bigint "bet_slip_id", null: false
@@ -150,34 +151,34 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
   create_table "betstop_reasons", force: :cascade do |t|
     t.integer "betstop_reason_id"
     t.string "description"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "betting_statuses", force: :cascade do |t|
     t.integer "betting_status_id"
     t.string "description"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "broadcasts", force: :cascade do |t|
     t.string "subject"
     t.integer "contacts"
     t.string "message"
-    t.datetime "execution_time"
+    t.datetime "execution_time", precision: nil
     t.bigint "admin_id"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.string "status"
-    t.datetime "start_date"
-    t.datetime "end_date"
+    t.datetime "start_date", precision: nil
+    t.datetime "end_date", precision: nil
     t.index ["admin_id"], name: "index_broadcasts_on_admin_id"
   end
 
   create_table "carts", force: :cascade do |t|
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "deposits", force: :cascade do |t|
@@ -194,8 +195,8 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.string "message"
     t.string "currency"
     t.string "phone_number"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.string "transaction_reference"
     t.index ["ext_transaction_id"], name: "index_deposits_on_ext_transaction_id", unique: true
@@ -207,7 +208,7 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
 
   create_table "fixtures", force: :cascade do |t|
     t.string "event_id"
-    t.datetime "start_date"
+    t.datetime "start_date", precision: nil
     t.string "live_odds"
     t.string "status"
     t.string "tournament_round"
@@ -227,12 +228,14 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.string "home_score"
     t.string "away_score"
     t.string "match_status"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.boolean "booked", default: false
     t.string "priority"
     t.string "match_time"
     t.boolean "featured", default: false
+    t.integer "fixture_status", default: 0
+    t.integer "booking_status", default: 0
     t.index ["booked"], name: "index_fixtures_on_booked"
     t.index ["event_id"], name: "index_fixtures_on_event_id", unique: true
     t.index ["location"], name: "index_fixtures_on_location"
@@ -251,8 +254,8 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.string "description"
     t.string "market"
     t.string "outcome"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.string "market_identifier"
     t.string "specifier"
     t.string "sport"
@@ -266,8 +269,8 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.string "status"
     t.string "market_identifier"
     t.bigint "fixture_id", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.string "specifier"
     t.string "name"
     t.index ["fixture_id", "market_identifier", "specifier"], name: "custom_index_on_live_markets", unique: true
@@ -278,31 +281,31 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.bigint "timestamp"
     t.integer "product"
     t.integer "subscribed"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.boolean "status", default: false
   end
 
   create_table "markets", force: :cascade do |t|
     t.integer "market_id"
     t.string "description"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "match_statuses", force: :cascade do |t|
     t.integer "match_status_id"
     t.string "description"
     t.string "sports", default: [], array: true
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "outcomes", force: :cascade do |t|
     t.string "outcome_id"
     t.string "description"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "pre_markets", force: :cascade do |t|
@@ -311,8 +314,8 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.string "status"
     t.string "market_identifier"
     t.bigint "fixture_id", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.string "specifier"
     t.string "name"
     t.index ["fixture_id", "market_identifier", "specifier"], name: "custom_index_on_pre_markets", unique: true
@@ -322,16 +325,16 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
   create_table "recovery_requests", force: :cascade do |t|
     t.string "product"
     t.string "timestamp"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "sign_up_bonuses", force: :cascade do |t|
     t.decimal "amount", precision: 10, scale: 2
     t.string "status"
-    t.datetime "expiry"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "expiry", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "slip_bonuses", force: :cascade do |t|
@@ -339,18 +342,18 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.decimal "min_accumulator"
     t.decimal "max_accumulator"
     t.string "status"
-    t.datetime "expiry"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "expiry", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "topup_bonuses", force: :cascade do |t|
     t.decimal "amount", precision: 10, scale: 2
     t.decimal "multiplier", precision: 5, scale: 2
     t.string "status"
-    t.datetime "expiry"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "expiry", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "transactions", force: :cascade do |t|
@@ -360,8 +363,8 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.string "reference"
     t.string "currency"
     t.string "status"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.string "phone_number"
     t.decimal "balance_before", precision: 12, scale: 2
     t.decimal "balance_after", precision: 12, scale: 2
@@ -371,8 +374,8 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.bigint "user_id", null: false
     t.decimal "amount", precision: 10, scale: 2
     t.string "status"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_user_bonuses_on_user_id"
   end
 
@@ -381,30 +384,30 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.string "phone_number", default: "", null: false
     t.string "encrypted_password", default: "", null: false
     t.string "reset_password_token"
-    t.datetime "reset_password_sent_at"
-    t.datetime "remember_created_at"
+    t.datetime "reset_password_sent_at", precision: nil
+    t.datetime "remember_created_at", precision: nil
     t.integer "sign_in_count", default: 0, null: false
-    t.datetime "current_sign_in_at"
-    t.datetime "last_sign_in_at"
+    t.datetime "current_sign_in_at", precision: nil
+    t.datetime "last_sign_in_at", precision: nil
     t.inet "current_sign_in_ip"
     t.inet "last_sign_in_ip"
     t.string "confirmation_token"
-    t.datetime "confirmed_at"
-    t.datetime "confirmation_sent_at"
+    t.datetime "confirmed_at", precision: nil
+    t.datetime "confirmation_sent_at", precision: nil
     t.string "unconfirmed_email"
     t.integer "failed_attempts", default: 0, null: false
     t.string "unlock_token"
-    t.datetime "locked_at"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "locked_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.string "first_name"
     t.string "last_name"
     t.decimal "balance", precision: 10, scale: 2, default: "0.0"
     t.integer "pin"
-    t.datetime "pin_sent_at"
+    t.datetime "pin_sent_at", precision: nil
     t.boolean "verified", default: false
     t.integer "password_reset_code"
-    t.datetime "password_reset_sent_at"
+    t.datetime "password_reset_sent_at", precision: nil
     t.boolean "account_active", default: true
     t.boolean "agreement"
     t.string "nationality"
@@ -423,8 +426,8 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
   create_table "void_reasons", force: :cascade do |t|
     t.integer "void_reason_id"
     t.string "description"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "withdraws", force: :cascade do |t|
@@ -441,8 +444,8 @@ ActiveRecord::Schema.define(version: 2022_05_03_224702) do
     t.string "message"
     t.string "currency"
     t.string "phone_number"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.string "transaction_reference"
     t.index ["ext_transaction_id"], name: "index_withdraws_on_ext_transaction_id", unique: true

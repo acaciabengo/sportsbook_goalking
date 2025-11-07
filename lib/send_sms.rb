@@ -1,4 +1,4 @@
-module SendSMS
+module SendSms
    require 'net/http'
    require 'uri'
    require "cgi"

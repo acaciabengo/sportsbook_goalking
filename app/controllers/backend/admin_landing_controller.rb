@@ -1,7 +1,7 @@
 class Backend::AdminLandingController < ApplicationController
   before_action :authenticate_admin!
 
-  layout 'admin_application.html.erb'
+  layout "admin_application"
 
   def index
     ##Dates
@@ -20,28 +20,24 @@ class Backend::AdminLandingController < ApplicationController
 
       ##Get stake totals per day
       stake_totals =
-        BetSlip
-          .where(
-            'created_at >= ? and created_at <= ?',
-            date.beginning_of_day,
-            date.end_of_day
-          )
-          .sum(:stake)
+        BetSlip.where(
+          "created_at >= ? and created_at <= ?",
+          date.beginning_of_day,
+          date.end_of_day
+        ).sum(:stake)
 
       ##Get amounts won totals per day
       amount_won_totals =
-        BetSlip
-          .where(
-            'created_at >= ? and created_at <= ?',
-            date.beginning_of_day,
-            date.end_of_day
-          )
-          .sum(:payout)
+        BetSlip.where(
+          "created_at >= ? and created_at <= ?",
+          date.beginning_of_day,
+          date.end_of_day
+        ).sum(:payout)
 
       ##Get total bets placed per day
       bets_totals =
         BetSlip.where(
-          'created_at >= ? and created_at <= ?',
+          "created_at >= ? and created_at <= ?",
           date.beginning_of_day,
           date.end_of_day
         ).count

@@ -13,7 +13,7 @@ class SmsWorker
     # })
   
     def perform(phone_number, message, sender_id)
-      SendSMS.process_sms_now(receiver: phone_number, content: message, sender_id: sender_id)
+      sendSms.process_sms_now(receiver: phone_number, content: message, sender_id: sender_id)
     end
-  end
+end
   
