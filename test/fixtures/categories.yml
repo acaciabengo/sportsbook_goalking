@@ -1,0 +1,11 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  betradar_category_id: 1
+  sport_id: one
+  name: MyString
+
+two:
+  betradar_category_id: 1
+  sport_id: two
+  name: MyString

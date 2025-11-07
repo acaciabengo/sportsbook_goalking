@@ -33,7 +33,7 @@ class Fixture < ApplicationRecord
   has_many :live_markets
   has_many :bets
 
-  include Lsports
+  include BetBalancer
 
   paginates_per 100
 

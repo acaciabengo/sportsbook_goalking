@@ -13,7 +13,8 @@ gem "pg"
 # gem 'puma', '~> 3.11'
 gem "puma", "~> 6.4", ">= 6.4.2"
 # Use SCSS for stylesheets
-gem "sass-rails", "~> 5.0"
+# gem "sass-rails", "~> 5.0"
+gem "sassc-rails"
 # Use Uglifier as compressor for JavaScript assets
 gem "uglifier", ">= 1.3.0"
 # See https://github.com/rails/execjs#readme for more supported runtimes
@@ -90,7 +91,7 @@ gem "inherited_resources",
 gem "devise"
 gem "draper"
 gem "pundit"
-gem "sidekiq"
+gem "sidekiq", "~> 8.0", ">= 8.0.9"
 gem "cancancan"
 gem "ransack" #, '~> 2.3', '>= 2.3.2'
 gem "gon"
@@ -134,3 +135,4 @@ gem "tailwindcss-ruby", "~> 4.1"
 
 gem "tailwindcss-rails", "~> 4.3"
 gem "faraday", "~> 2.14"
+gem "whenever", require: false
