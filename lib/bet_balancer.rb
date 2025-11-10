@@ -1,7 +1,7 @@
 class BetBalancer
   require "nokogiri"
 
-  AUTH_URL = "https://api.betbalancer.com/v1/authenticate"
+  BASE_URL = "http://yourrefdomain"
 
   def initialize()
     @client = client()
@@ -13,7 +13,7 @@ class BetBalancer
 
   def client()
     conn =
-      Faraday.new(url: AUTH_URL) do |faraday|
+      Faraday.new(url: BASE_URL) do |faraday|
         faraday.request :url_encoded
         faraday.adapter Faraday.default_adapter
       end
@@ -29,12 +29,13 @@ class BetBalancer
         req.params = params || @default_params
       end
     # parse xml
+    status = response.status
     data = Nokogiri.XML(response.body)
-    return data
+    return status, data
   end
 
   def get_categories(sport_id: nil, category_id: nil)
-    params = @default_params.duplicate
+    params = @default_params.dup
     params[:sportId] = sport_id if sport_id
     params[:categoryId] = category_id if category_id
 
@@ -45,12 +46,13 @@ class BetBalancer
         req.params = params
       end
     # parse xml
+    status = response.status
     data = Nokogiri.XML(response.body)
-    return data
+    return status, data
   end
 
   def get_tournaments(sport_id: nil, category_id: nil, tournament_id: nil)
-    params = @default_params.duplicate
+    params = @default_params.dup
     params[:sportId] = sport_id if sport_id
     params[:categoryId] = category_id if category_id
     params[:tournamentId] = tournament_id if tournament_id
@@ -62,8 +64,9 @@ class BetBalancer
         req.params = params
       end
     # parse xml
+    status = response.status
     data = Nokogiri.XML(response.body)
-    return data
+    return status, data
   end
 
   def get_markets(
@@ -72,7 +75,7 @@ class BetBalancer
     tournament_id: nil,
     market_id: nil
   )
-    params = @default_params.duplicate
+    params = @default_params.dup
     params[:sportId] = sport_id if sport_id
     params[:categoryId] = category_id if category_id
     params[:tournamentId] = tournament_id if tournament_id
@@ -85,8 +88,9 @@ class BetBalancer
         req.params = params
       end
     # parse xml
+    status = response.status
     data = Nokogiri.XML(response.body)
-    return data
+    return status, data
   end
 
   def get_matches(
@@ -99,7 +103,7 @@ class BetBalancer
     date_to: nil,
     want_score: nil
   )
-    params = @default_params.duplicate
+    params = @default_params.dup
     params[:sportId] = sport_id if sport_id
     params[:categoryId] = category_id if category_id
     params[:tournamentId] = tournament_id if tournament_id
@@ -116,7 +120,8 @@ class BetBalancer
         req.params = params
       end
     # parse xml
+    status = response.status
     data = Nokogiri.XML(response.body)
-    return data
+    return status, data
   end
 end
