@@ -62,10 +62,11 @@ group :development do
   gem "capistrano-bundler"
   gem "capistrano-rbenv", "~> 2.1"
   gem "rspec-rails", "~> 7.0.0"
+  gem "webmock"
 end
 
 group :test do
-  gem "rspec-rails"
+  # gem "rspec-rails"
 
   # Adds support for Capybara system testing and selenium driver
   gem "capybara", ">= 2.15"
@@ -120,7 +121,6 @@ gem "newrelic_rpm"
 gem "local_time"
 gem "anycable"
 gem "anycable-rails", "~> 1.0"
-gem "webmock", "~> 2.1"
 gem "mimemagic",
     github: "mimemagicrb/mimemagic",
     ref: "01f92d86d15d85cfd0f20dabd025dcbd36a8a60f"

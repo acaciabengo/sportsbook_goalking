@@ -1,21 +1,19 @@
 class Relworks
-  @base_url = " https://payments.relworx.com/api"
-
   def initialize()
-    @client = client()
     @default_headers = {
       "Authorization" => "Bearer #{ENV["RELWORKS_BEARER_TOKEN"]}",
       "Accept" => "application/vnd.relworx.v2",
       "Content-Type" => "application/json"
     }
+    @base_url = "https://payments.relworx.com/api"
+    @client = client()
   end
 
   def client()
     conn =
-      Faraday.new(url: @base_url) do |faraday|
+      Faraday.new(url: @base_url, headers: @default_headers) do |faraday|
         faraday.request :url_encoded
         faraday.adapter Faraday.default_adapter
-        faraday.headers = @default_headers
       end
     conn
   end

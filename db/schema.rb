@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_21_095931) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_07_082732) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -181,6 +181,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_21_095931) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "categories", force: :cascade do |t|
+    t.integer "ext_category_id"
+    t.bigint "sport_id", null: false
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ext_category_id"], name: "index_categories_on_ext_category_id"
+    t.index ["sport_id"], name: "index_categories_on_sport_id"
+  end
+
   create_table "deposits", force: :cascade do |t|
     t.decimal "amount", precision: 12, scale: 2
     t.string "network"
@@ -288,9 +298,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_21_095931) do
 
   create_table "markets", force: :cascade do |t|
     t.integer "market_id"
-    t.string "description"
+    t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "sport_id", null: false
+    t.index ["sport_id"], name: "index_markets_on_sport_id"
   end
 
   create_table "match_statuses", force: :cascade do |t|
@@ -347,6 +359,15 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_21_095931) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "sports", force: :cascade do |t|
+    t.integer "ext_sport_id"
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ext_sport_id"], name: "index_sports_on_ext_sport_id"
+    t.index ["name"], name: "index_sports_on_name"
+  end
+
   create_table "topup_bonuses", force: :cascade do |t|
     t.decimal "amount", precision: 10, scale: 2
     t.decimal "multiplier", precision: 5, scale: 2
@@ -354,6 +375,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_21_095931) do
     t.datetime "expiry", precision: nil
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "tournaments", force: :cascade do |t|
+    t.bigint "category_id", null: false
+    t.integer "ext_tournament_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "name"
+    t.string "#<ActiveRecord::ConnectionAdapters::PostgreSQL::TableDefinition"
+    t.index ["category_id"], name: "index_tournaments_on_category_id"
+    t.index ["ext_tournament_id"], name: "index_tournaments_on_ext_tournament_id"
   end
 
   create_table "transactions", force: :cascade do |t|
@@ -462,11 +494,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_21_095931) do
   add_foreign_key "bets", "fixtures"
   add_foreign_key "bets", "users"
   add_foreign_key "broadcasts", "users", column: "admin_id"
+  add_foreign_key "categories", "sports"
   add_foreign_key "deposits", "users"
   add_foreign_key "line_bets", "carts"
   add_foreign_key "line_bets", "fixtures"
   add_foreign_key "live_markets", "fixtures"
+  add_foreign_key "markets", "sports"
   add_foreign_key "pre_markets", "fixtures"
+  add_foreign_key "tournaments", "categories"
   add_foreign_key "user_bonuses", "users"
   add_foreign_key "withdraws", "users"
 end
