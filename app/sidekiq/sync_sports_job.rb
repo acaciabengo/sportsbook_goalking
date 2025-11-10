@@ -7,18 +7,27 @@ class SyncSportsJob
     sports_data = bet_balancer.get_sports
 
     sports_data
-      .xpath("//sports")
+      .xpath("//Sports/Sport")
       .each do |sport|
         sport_id = sport["BetbalancerSportID"].to_i
-        sport_name = sport.at_xpath("/Text[@Language='en']/Value").content
+        sport_name = sport.at_xpath("Texts/Text[@Language='en']/Value").content
 
-        if Sport.exists?(external_id: sport_id)
-          existing_sport = Sport.find_by(external_id: sport_id)
+        if Sport.exists?(ext_sport_id: sport_id)
+          existing_sport = Sport.find_by(ext_sport_id: sport_id)
           if existing_sport.name != sport_name
-            existing_sport.update(name: sport_name)
+            unless existing_sport.update(name: sport_name)
+              Rails.logger.error(
+                "Failed to update Sport ID #{sport_id}: #{existing_sport.errors.full_messages.join(", ")}"
+              )
+            end
           end
         else
-          Sport.create(external_id: sport_id, name: sport_name)
+          new_sport = Sport.create(ext_sport_id: sport_id, name: sport_name)
+          if !new_sport.persisted?
+            Rails.logger.error(
+              "Failed to create Sport ID #{sport_id}: #{new_sport.errors.full_messages.join(", ")}"
+            )
+          end
         end
       end
   end
