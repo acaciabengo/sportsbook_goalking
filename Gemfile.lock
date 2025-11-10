@@ -607,7 +607,7 @@ DEPENDENCIES
   devise
   dotenv-rails
   draper
-  fabrication (~> 2.15, >= 2.15.2)
+  fabrication
   factory_bot
   factory_bot_rails
   faker
