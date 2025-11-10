@@ -61,6 +61,7 @@ group :development do
   gem "capistrano-rvm"
   gem "capistrano-bundler"
   gem "capistrano-rbenv", "~> 2.1"
+  gem "rspec-rails", "~> 7.0.0"
 end
 
 group :test do

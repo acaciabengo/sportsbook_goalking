@@ -1,17 +1,11 @@
 class MarketAlert < ApplicationRecord
-  include Recovery
-
   def check_producers
     (0..5).each do
-      ["1", "3"].each do |product|
-        if product == "3"
-          threshold = 90
-        end
+      %w[1 3].each do |product|
+        threshold = 90 if product == "3"
 
-        if product == "1"
-          threshold = 20
-        end
-        last_update = MarketAlert.where(:product => product).last
+        threshold = 20 if product == "1"
+        last_update = MarketAlert.where(product: product).last
         if last_update
           if ((Time.now.to_i) - last_update[:timestamp].to_i) > threshold
             #first close all active markets

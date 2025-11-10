@@ -33,8 +33,6 @@ class Fixture < ApplicationRecord
   has_many :live_markets
   has_many :bets
 
-  include BetBalancer
-
   paginates_per 100
 
   def self.ransackable_attributes(auth_object = nil)

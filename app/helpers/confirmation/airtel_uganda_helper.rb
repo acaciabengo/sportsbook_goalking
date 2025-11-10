@@ -1,2 +1,0 @@
-module Confirmation::AirtelUgandaHelper
-end
