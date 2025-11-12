@@ -4,45 +4,54 @@ class PreMatch::PullSettlementsJob
 
   def perform()
     # Find markets of fixtures that are finished but not yet settled
-    Markets
-      .join(:fixture)
-      .where(fixtures: { status: "finished" }, markets: { status: "active" })
+    PreMarket
+      .joins(:fixture)
+      .where(fixtures: { fixture_status: "finished" }, status: "active")
       .find_in_batches(batch_size: 50)
-      .each_batch do |markets|
+      .each do |markets|
         markets.each do |market|
           # Logic to settle bets based on fixture results
           fixture = market.fixture
           bet_balancer = BetBalancer.new
-          settlement_data =
+          status, settlement_data =
             bet_balancer.get_matches(
               match_id: fixture.event_id,
-              want_scores: true
+              want_score: true
             )
+
+          if status != 200 || settlement_data.nil?
+            # puts "Failed to fetch settlement data for fixture #{fixture.id}"
+            next
+          end
+
+          # puts "settlements data: #{settlement_data.to_xml}"
           results = {}
           settlement_data
-            .xpath("//Match/BetResults/W")
+            .xpath("//Match/BetResult/*")
             .each do |bet_result|
-              odds_type = bet_result["OddsType"]
+              # puts "found bet result: #{bet_result.to_xml}"
+              status = bet_result.name # e.g., "W" or "L"
               specifier = bet_result["SpecialBetValue"]
-              results[odds_type] = {
-                outcome: bet_result["OutCome"],
-                outcome_id: bet_result["OutComeID"],
-                specifier: specifier,
-                void_factor: bet_result["VoidFactor"],
-                status: bet_result["Status"]
+              outcome_id = bet_result["OutComeId"]
+              outcome = bet_result["OutCome"]
+              results[outcome] = {
+                "status" => status,
+                "outcome_id" => outcome_id,
+                "specifier" => specifier,
+                "void_factor" => bet_result["VoidFactor"]
               }
             end
 
-          merged_results = (market.results || {}).deep_merge(results)
-          market.update(results: merged_results, status: "settled")
+          # puts "results to be saved: #{results}"
+
+          existing_results = JSON.parse(market.results)
+          existing_results = existing_results.deep_transform_keys(&:to_s)
+          merged_results = existing_results.deep_merge(results)
+          market.update(results: merged_results.to_json, status: "settled")
+          # puts "Settled market #{market.id} for fixture #{fixture.id}"
 
           # close settled bets
-          CloseSettledBetsWorker.perform_async(
-            fixture.id,
-            market.id,
-            results,
-            specifier
-          )
+          CloseSettledBetsWorker.perform_async(fixture.id, market.id, results)
         end
       end
   end

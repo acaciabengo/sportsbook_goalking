@@ -5,50 +5,108 @@ class PreMatch::PullOddsJob
   def perform()
     # Find all fixtures that are not yet started or live
     Fixture
-      .where(status: "not_started", fixture_status: ["not_started"])
+      .where(fixture_status: ["not_started"])
       .find_in_batches(batch_size: 50)
-      .each_batch do |fixtures|
+      .each do |fixtures|
         fixtures.each do |fixture|
           bet_balancer = BetBalancer.new
-          odds_data = bet_balancer.get_matches(match_id: fixture.event_id)
+          status, odds_data =
+            bet_balancer.get_matches(match_id: fixture.event_id)
+
+          if status != 200
+            Rails.logger.error(
+              "Failed to fetch odds for fixture #{fixture.id} with event_id #{fixture.event_id}: Status #{status}"
+            )
+            next
+          end
+
+          # check fixture data
+          fixture_node =
+            odds_data.xpath(
+              "//Match[@BetbalancerMatchID='#{fixture.event_id}']/Fixture"
+            )
+          if fixture_node
+            status_info = fixture_node.xpath("StatusInfo/Off").text
+            if status_info == "1"
+              fixture.update(status: "cancelled", fixture_status: "cancelled")
+            end
+          end
 
           # Process odds_data as needed
           odds_data
             .xpath("//Match/MatchOdds/Bet")
             .each do |market|
-              odds = {}
-              ext_market_id = market["BetID"].to_i
+              new_odds = {}
+              ext_market_id = market["OddsType"].to_i
               market
                 .xpath("Odds")
                 .each do |odd|
                   outcome = odd["OutCome"]
-                  value = odd.content.to_f
-                  odds[outcome] = value
+                  outcome_id = odd["OutcomeID"]&.to_i
+                  value = odd.text.to_f
+                  specifier = odd["SpecialBetValue"]
+                  new_odds[outcome] = {
+                    "odd" => value, # String keys from the start!
+                    "outcome_id" => outcome_id,
+                    "specifier" => specifier
+                  }.compact
                 end
+
+              # log the new odds being processed
               # Find the pre-market by fixture and market identifier
               pre_market =
                 PreMarket.find_by(
                   fixture_id: fixture.id,
                   market_identifier: ext_market_id
                 )
-              merged_odds = (pre_market.odds || {}).deep_merge(odds)
+
               if pre_market
-                # Update the odds
-                pre_market.update(odds: merged_odds)
+                # Pre-market exists - merge and update
+                existing_odds = JSON.parse(pre_market.odds) || {}
+                existing_odds = existing_odds.deep_transform_keys(&:to_s)
+
+                # Deep merge new odds into existing odds
+                merged_odds = existing_odds.deep_merge(new_odds)
+
+                unless pre_market.update(
+                         odds: merged_odds.to_json,
+                         status: "active"
+                       )
+                  Rails.logger.error(
+                    "Failed to update pre-market #{pre_market.id} for fixture #{fixture.id}: #{pre_market.errors.full_messages.join(", ")}"
+                  )
+                end
+              else
+                # Pre-market doesn't exist - create new one
+                new_pre_market =
+                  PreMarket.create(
+                    fixture_id: fixture.id,
+                    market_identifier: ext_market_id,
+                    odds: new_odds.to_json,
+                    status: "active"
+                  )
+
+                unless new_pre_market.persisted?
+                  Rails.logger.error(
+                    "Failed to create pre-market for fixture #{fixture.id}, market #{ext_market_id}: #{new_pre_market.errors.full_messages.join(", ")}"
+                  )
+                end
               end
             end
 
           # check if it has FT results and close the fixture bets
-          ft_result =
-            odds_data.xpath(
-              "//Match/Result/ScoreInfo/Score[@Type='FT']"
-            ).content
+          # check if results exist in the match node
+          results_node = odds_data.xpath("//Match/Result")
+          next if results_node.empty?
+
+          # extract full-time result
+          ft_result = results_node.xpath("ScoreInfo/Score[@Type='FT']").text
+
           if ft_result.present?
             fixture.update(
-              status: "finished",
               fixture_status: "finished",
-              home_score: ft_result.split("-")[0].to_i,
-              away_score: ft_result.split("-")[1].to_i
+              home_score: ft_result.split(":")[0].to_i,
+              away_score: ft_result.split(":")[1].to_i
             )
           end
         end

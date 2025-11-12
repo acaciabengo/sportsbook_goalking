@@ -59,6 +59,7 @@ class PreMatch::PullFixturesJob
     part_two_name = part_two_node.at_xpath("Value")&.text
 
     unless Fixture.exists?(event_id: event_id)
+      status == "0" ? "active" : "cancelled"
       fixture_status = status == "0" ? "not_started" : "cancelled"
       fixture =
         Fixture.new(
@@ -114,7 +115,7 @@ class PreMatch::PullFixturesJob
       PreMarket.new(
         fixture_id: fixture_id,
         market_identifier: ext_market_id,
-        odds: odds_data.to_json,
+        odds: odds_data&.transform_keys(&:to_s).to_json,
         status: "active"
       )
 

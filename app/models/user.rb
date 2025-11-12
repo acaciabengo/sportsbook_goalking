@@ -21,7 +21,7 @@ class User < ApplicationRecord
   has_many :user_bonuses
 
   after_save :send_pin!
-  before_create :process_signup_bonus
+  # before_create :process_signup_bonus
   after_commit :broadcast_balance_updates, if: :persisted?
 
   def login
@@ -111,7 +111,7 @@ class User < ApplicationRecord
   def send_password_reset_code
     message =
       "Your BetSports Password Reset Code is #{self.password_reset_code}"
-    sendSms.process_sms_now(
+    SendSms.process_sms_now(
       receiver: self.phone_number,
       content: message,
       sender_id: ENV["DEFAULT_SENDER"]
@@ -136,7 +136,7 @@ class User < ApplicationRecord
     reset_pin!
     unverify!
     message = "Your BetSports Account verification code is #{self.pin}"
-    sendSms.process_sms_now(
+    SendSms.process_sms_now(
       receiver: self.phone_number,
       content: message,
       sender_id: ENV["DEFAULT_SENDER"]
