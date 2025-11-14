@@ -9,6 +9,25 @@ class PreMarket < ApplicationRecord
 
   after_commit :broadcast_updates, if: :persisted?
 
+  def self.ransackable_associations(auth_object = nil)
+    ["fixture"]
+  end
+
+  def self.ransackable_attributes(auth_object = nil)
+    %w[
+      created_at
+      fixture_id
+      id
+      market_identifier
+      name
+      odds
+      results
+      specifier
+      status
+      updated_at
+    ]
+  end
+
   def broadcast_updates
     ## Create a fixture replica object
     # fixture = {"id": self.fixture_id}

@@ -4,7 +4,15 @@ class SyncSportsJob
 
   def perform()
     bet_balancer = BetBalancer.new
-    sports_data = bet_balancer.get_sports
+    status, sports_data = bet_balancer.get_sports
+
+    if status != 200
+      Rails.logger.error("Failed to fetch sports data: HTTP #{status}")
+      return
+    end
+
+    # print the raw XML response for debugging
+    # puts sports_data.to_xml
 
     sports_data
       .xpath("//Sports/Sport")

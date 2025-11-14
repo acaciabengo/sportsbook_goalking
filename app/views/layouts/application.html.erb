@@ -36,7 +36,8 @@
             })();
         </script>
         <!--End of Tawk.to Script-->
-    <%= javascript_importmap_tags %>  
+    <%= javascript_importmap_tags %>
+    <%= stylesheet_link_tag "application" %>  
 
     </head>
 
@@ -45,6 +46,6 @@
         
         </div>
         <!-- =============== APP SCRIPTS ===============-->
-        <%= javascript_packs_with_chunks_tag 'user_application', 'data-turbolinks-track': 'reload'  %>
+        <%= javascript_packs_with_chunks_tag 'application', 'data-turbolinks-track': 'reload'  %>
     <body>
 </html>

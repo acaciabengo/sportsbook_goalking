@@ -6,7 +6,12 @@ class SyncMarketsJob
     bet_balancer = BetBalancer.new
 
     Sport.all.each do |sport|
-      markets_data = bet_balancer.get_markets(sport_id: sport.ext_sport_id)
+      status, markets_data =
+        bet_balancer.get_markets(sport_id: sport.ext_sport_id)
+      if status != 200
+        Rails.logger.error("Failed to fetch markets data: HTTP #{status}")
+        next
+      end
 
       markets_data
         .xpath("//MatchOdds/Bet")

@@ -137,3 +137,6 @@ gem "tailwindcss-ruby", "~> 4.1"
 gem "tailwindcss-rails", "~> 4.3"
 gem "faraday", "~> 2.14"
 gem "whenever", require: false
+gem "activeadmin_assets", "~> 1.0", ">= 1.0.2"
+
+gem "cssbundling-rails", "= 1.4.1"

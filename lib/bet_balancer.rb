@@ -1,7 +1,7 @@
 class BetBalancer
   require "nokogiri"
 
-  BASE_URL = "http://yourrefdomain"
+  BASE_URL = ENV["BET_BALANCER_BASE_URL"]
 
   def initialize()
     @client = client()

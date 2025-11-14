@@ -9,7 +9,12 @@ class SyncCategoriesJob
     bet_balancer = BetBalancer.new
 
     sports_ids.each do |sport_id, ext_sport_id|
-      categories_data = bet_balancer.get_categories(sport_id: ext_sport_id)
+      status, categories_data =
+        bet_balancer.get_categories(sport_id: ext_sport_id)
+      if status != 200
+        Rails.logger.error("Failed to fetch categories data: HTTP #{status}")
+        next
+      end
 
       categories_data
         .xpath("//Category")

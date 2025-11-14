@@ -14,20 +14,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_10_191703) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "active_admin_comments", force: :cascade do |t|
-    t.string "namespace"
-    t.text "body"
-    t.string "resource_type"
-    t.bigint "resource_id"
-    t.string "author_type"
-    t.bigint "author_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["author_type", "author_id"], name: "index_active_admin_comments_on_author_type_and_author_id"
-    t.index ["namespace"], name: "index_active_admin_comments_on_namespace"
-    t.index ["resource_type", "resource_id"], name: "index_active_admin_comments_on_resource_type_and_resource_id"
-  end
-
   create_table "admin_users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -244,8 +230,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_10_191703) do
     t.string "priority"
     t.string "match_time"
     t.boolean "featured", default: false
-    t.integer "fixture_status", default: 0
-    t.integer "booking_status", default: 0
     t.integer "ext_category_id", default: 0, null: false
     t.integer "ext_tournament_id", default: 0, null: false
     t.index ["booked"], name: "index_fixtures_on_booked"

@@ -6,8 +6,13 @@ class SyncTournamentsJob
     bet_balancer = BetBalancer.new
 
     Category.all.each do |category|
-      tournaments_data =
+      status, tournaments_data =
         bet_balancer.get_tournaments(category_id: category.ext_category_id)
+
+      if status != 200
+        Rails.logger.error("Failed to fetch tournaments data: HTTP #{status}")
+        next
+      end
 
       tournaments_data
         .xpath("//Category/Tournament")

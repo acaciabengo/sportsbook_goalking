@@ -73,6 +73,9 @@ GEM
       kaminari (>= 1.2.1)
       railties (>= 7.0)
       ransack (>= 4.0)
+    activeadmin_assets (1.1.0)
+      activeadmin (>= 4.0.0.beta16, < 5.0.0)
+      importmap-rails (>= 2.0.0)
     activejob (7.2.2.2)
       activesupport (= 7.2.2.2)
       globalid (>= 0.3.6)
@@ -191,6 +194,8 @@ GEM
       bigdecimal
       rexml
     crass (1.0.6)
+    cssbundling-rails (1.4.1)
+      railties (>= 6.0.0)
     csv (3.3.5)
     database_cleaner-active_record (2.2.2)
       activerecord (>= 5.a)
@@ -584,6 +589,7 @@ PLATFORMS
 DEPENDENCIES
   action-cable-testing
   activeadmin
+  activeadmin_assets (~> 1.0, >= 1.0.2)
   anycable
   anycable-rails (~> 1.0)
   audited (~> 5.0)
@@ -603,6 +609,7 @@ DEPENDENCIES
   capistrano-rvm
   capybara (>= 2.15)
   coffee-rails (~> 5.0.0)
+  cssbundling-rails (= 1.4.1)
   database_cleaner-active_record
   devise
   dotenv-rails
