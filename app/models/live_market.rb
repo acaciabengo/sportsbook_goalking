@@ -8,6 +8,15 @@ class LiveMarket < ApplicationRecord
   validates :fixture_id, uniqueness: { scope: [:market_identifier, :specifier] }
 
   after_commit :broadcast_updates, if: :persisted?
+
+  def self.ransackable_attributes(auth_object = nil)
+    ["created_at", "fixture_id", "id", "market_identifier", "name", "odds", "results", "specifier", "status", "updated_at"]
+  end
+
+  def self.ransackable_associations(auth_object = nil)
+    ["fixture"]
+  end
+
    
    
   def broadcast_updates
@@ -43,5 +52,5 @@ class LiveMarket < ApplicationRecord
       #  CableWorker.perform_async("betslips_#{self.market_identifier}_#{self.fixture_id}", self.as_json)
       #  CableWorker.perform_async("markets_#{self.market_identifier}_#{self.fixture_id}", self.as_json)
     end
- end
+  end
 end

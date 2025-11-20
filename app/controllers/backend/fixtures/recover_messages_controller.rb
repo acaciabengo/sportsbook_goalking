@@ -1,5 +1,5 @@
 class Backend::Fixtures::RecoverMessagesController < ApplicationController
-  include Betradar
+  
   before_action :authenticate_admin!
 
   layout "admin_application"

@@ -43,7 +43,7 @@ module MobileMoney
 
                 #Set request body
                 request_body = {
-                    reference: "BetSports Deposit",
+                    reference: "GoalKing Deposit",
                     subscriber: {
                         msisdn: phone_number
                     },
@@ -134,7 +134,7 @@ module MobileMoney
                     payee: {
                         msisdn: phone_number
                     },
-                    reference: "Payment From BetSports",
+                    reference: "Payment From GoalKing",
                     pin: passcode,
                     transaction: {
                         amount: amount,

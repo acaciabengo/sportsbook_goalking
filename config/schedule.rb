@@ -23,7 +23,7 @@ every sunday, at: "2:00 am" do
   # run sidekiq workers
   runner "SyncSportsJob.perform_async"
   runner "SyncCategoriesJob.perform_async"
-  runner "SyncTournamentJob.perform_async"
+  runner "SyncTournamentsJob.perform_async"
   runner "SyncMarketsJob.perform_async"
 end
 

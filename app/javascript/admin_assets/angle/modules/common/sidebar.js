@@ -1,7 +1,7 @@
 // SIDEBAR
 // -----------------------------------
 
-import $ from "jquery";
+// import $ from "jquery";
 
 var $html;
 var $body;

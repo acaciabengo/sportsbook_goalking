@@ -3,7 +3,7 @@
  * Triggers a window resize event from any element
  =========================================================*/
 
-import $ from "jquery";
+// import $ from "jquery";
 
 function initTriggerResize() {
   var element = $("[data-trigger-resize]");

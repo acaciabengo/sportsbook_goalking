@@ -1,4 +1,9 @@
 class MarketAlert < ApplicationRecord
+
+  def self.ransackable_attributes(auth_object = nil)
+    ["created_at", "id", "product", "status", "subscribed", "timestamp", "updated_at"]
+  end
+  
   def check_producers
     (0..5).each do
       %w[1 3].each do |product|

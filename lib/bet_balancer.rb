@@ -115,7 +115,7 @@ class BetBalancer
 
     response =
       @client.get do |req|
-        req.url "/export/getMatches"
+        req.url "/export/getMatch"
         req.headers["Content-Type"] = "application/xml"
         req.params = params
       end

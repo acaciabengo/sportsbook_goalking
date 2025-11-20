@@ -4,7 +4,7 @@
 require "sidekiq"
 require "json"
 
-class Live::BetSettlementWorker
+class BetSettlementWorker
   include Sidekiq::Worker
   sidekiq_options queue: "high", retry: false
 

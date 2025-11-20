@@ -93,7 +93,7 @@ gem "inherited_resources",
 gem "devise"
 gem "draper"
 gem "pundit"
-gem "sidekiq", "~> 8.0", ">= 8.0.9"
+gem "sidekiq", "~> 8.0"
 gem "cancancan"
 gem "ransack" #, '~> 2.3', '>= 2.3.2'
 gem "gon"
@@ -104,7 +104,7 @@ gem "audited", "~> 5.0"
 gem "roo", "~> 2.8.0"
 gem "brakeman"
 # gem 'sentry-raven'
-gem "webpacker" #, '~> 4.0'
+# gem "webpacker" #, '~> 4.0'
 gem "bunny", ">= 2.16.1"
 gem "sneakers"
 # gem 'httparty', '~> 0.13.7'
@@ -140,3 +140,4 @@ gem "whenever", require: false
 gem "activeadmin_assets", "~> 1.0", ">= 1.0.2"
 
 gem "cssbundling-rails", "= 1.4.1"
+

@@ -5,4 +5,12 @@ class Transaction < ApplicationRecord
   paginates_per 10
 
   belongs_to :user
+
+  def self.ransackable_associations(auth_object = nil)
+    ["audits", "user"]
+  end
+
+  def self.ransackable_attributes(auth_object = nil)
+    ["amount", "balance_after", "balance_before", "category", "created_at", "currency", "id", "phone_number", "reference", "status", "updated_at", "user_id"]
+  end
 end

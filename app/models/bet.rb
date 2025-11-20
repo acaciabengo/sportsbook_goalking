@@ -26,4 +26,8 @@ class Bet < ApplicationRecord
       void_factor
     ]
   end
+
+  def self.ransackable_associations(auth_object = nil)
+    ["audits", "bet_slip", "fixture", "user"]
+  end
 end

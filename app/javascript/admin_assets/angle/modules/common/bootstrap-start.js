@@ -1,7 +1,7 @@
 // Start Bootstrap JS
 // -----------------------------------
 
-import $ from "jquery";
+// import $ from "jquery";
 
 function initBootstrap() {
   // necessary check at least til BS doesn't require jQuery

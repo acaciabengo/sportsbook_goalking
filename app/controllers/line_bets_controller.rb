@@ -1,7 +1,6 @@
 class LineBetsController < ApplicationController
   protect_from_forgery except: %i[refresh line_bet_delete create destroy]
   include CurrentCart
-  include BetslipCartHelper
   before_action :set_cart,
                 only: %i[
                   create

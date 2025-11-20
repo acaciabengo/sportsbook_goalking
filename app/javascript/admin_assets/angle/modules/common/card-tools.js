@@ -1,7 +1,7 @@
 // Module: card-tools
 // -----------------------------------
 
-import Storages from "js-storage";
+// import Storages from "js-storage";
 
 /**
  * Helper function to find the closest

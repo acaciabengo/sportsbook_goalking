@@ -136,7 +136,7 @@ GEM
       activesupport (>= 5.2, < 8.2)
     base64 (0.3.0)
     bcrypt (3.1.20)
-    benchmark (0.4.1)
+    benchmark (0.5.0)
     bigdecimal (3.3.1)
     bindex (0.8.1)
     bootsnap (1.18.6)
@@ -238,6 +238,7 @@ GEM
       logger
     faraday-net_http (3.4.1)
       net-http (>= 0.5.0)
+    ffi (1.17.2-aarch64-linux-gnu)
     ffi (1.17.2-arm64-darwin)
     flag-icons-rails (3.4.6.1)
       sass-rails
@@ -253,11 +254,17 @@ GEM
       i18n (>= 0.7)
       multi_json
       request_store (>= 1.0)
+    google-protobuf (4.32.0-aarch64-linux-gnu)
+      bigdecimal
+      rake (>= 13)
     google-protobuf (4.32.0-arm64-darwin)
       bigdecimal
       rake (>= 13)
     googleapis-common-protos-types (1.20.0)
       google-protobuf (>= 3.18, < 5.a)
+    grpc (1.74.1-aarch64-linux-gnu)
+      google-protobuf (>= 3.25, < 5.0)
+      googleapis-common-protos-types (~> 1.0)
     grpc (1.74.1-arm64-darwin)
       google-protobuf (>= 3.25, < 5.0)
       googleapis-common-protos-types (~> 1.0)
@@ -321,7 +328,7 @@ GEM
     matrix (0.4.3)
     method_source (1.1.0)
     mini_mime (1.1.5)
-    minitest (5.25.5)
+    minitest (5.26.2)
     momentjs-rails (2.29.4.1)
       railties (>= 3.1)
     msgpack (1.8.0)
@@ -344,12 +351,15 @@ GEM
     net-ssh (7.3.0)
     newrelic_rpm (9.20.0)
     nio4r (2.7.4)
+    nokogiri (1.18.9-aarch64-linux-gnu)
+      racc (~> 1.4)
     nokogiri (1.18.9-arm64-darwin)
       racc (~> 1.4)
     openssl (3.3.0)
     orm_adapter (0.5.0)
     ostruct (0.6.3)
     pagy (3.11.0)
+    pg (1.6.1-aarch64-linux)
     pg (1.6.1-arm64-darwin)
     pg_search (2.3.7)
       activerecord (>= 6.1)
@@ -375,8 +385,6 @@ GEM
       activesupport (>= 3.0.0)
     racc (1.8.1)
     rack (3.1.19)
-    rack-proxy (0.7.7)
-      rack
     rack-session (2.1.1)
       base64 (>= 0.1.0)
       rack (>= 3.0.0)
@@ -482,7 +490,6 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 3.0)
       websocket (~> 1.0)
-    semantic_range (3.1.0)
     serverengine (2.0.7)
       sigdump (~> 0.2.2)
     set (1.1.2)
@@ -537,11 +544,12 @@ GEM
     tailwindcss-rails (4.3.0)
       railties (>= 7.0.0)
       tailwindcss-ruby (~> 4.0)
+    tailwindcss-ruby (4.1.12-aarch64-linux-gnu)
     tailwindcss-ruby (4.1.12-arm64-darwin)
     temple (0.10.4)
     thor (1.4.0)
     tilt (2.6.1)
-    timeout (0.4.3)
+    timeout (0.4.4)
     turbolinks (5.2.1)
       turbolinks-source (~> 5.2)
     turbolinks-source (5.2.0)
@@ -566,11 +574,6 @@ GEM
       addressable (>= 2.8.0)
       crack (>= 0.3.2)
       hashdiff (>= 0.4.0, < 2.0.0)
-    webpacker (5.4.4)
-      activesupport (>= 5.2)
-      rack-proxy (>= 0.6.1)
-      railties (>= 5.2)
-      semantic_range (>= 2.3.0)
     websocket (1.2.11)
     websocket-driver (0.8.0)
       base64
@@ -584,6 +587,7 @@ GEM
     zeitwerk (2.7.3)
 
 PLATFORMS
+  aarch64-linux
   arm64-darwin-24
 
 DEPENDENCIES
@@ -651,7 +655,7 @@ DEPENDENCIES
   sassc-rails
   selenium-webdriver
   shoulda-matchers
-  sidekiq (~> 8.0, >= 8.0.9)
+  sidekiq (~> 8.0)
   sneakers
   spring
   spring-watcher-listen (~> 2.0.0)
@@ -663,7 +667,6 @@ DEPENDENCIES
   web-console (>= 3.3.0)
   webdrivers
   webmock
-  webpacker
   whenever
   will_paginate
 

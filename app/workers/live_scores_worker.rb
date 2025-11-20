@@ -1,6 +1,6 @@
 require "sidekiq"
 
-class Live::LiveScoresWorker
+class LiveScoresWorker
   include Sidekiq::Worker
   sidekiq_options queue: "critical", retry: false
 

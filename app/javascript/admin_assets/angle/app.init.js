@@ -9,7 +9,7 @@
  *
  */
 
-import $ from "jquery";
+// import $ from "jquery";
 
 import initScreenFull from "./modules/common/fullscreen";
 import initLoadCSS from "./modules/common/load-css";

@@ -17,6 +17,15 @@ class Withdraw < ApplicationRecord
    #validates :ext_transaction_id, uniqueness: true
    validates :resource_id, uniqueness: true
 
+   def self.ransackable_associations(auth_object = nil)
+      ["audits", "user"]
+   end
+
+   def self.ransackable_attributes(auth_object = nil)
+      ["amount", "balance_after", "balance_before", "created_at", "currency", "ext_transaction_id", "id", "message", "network", "payment_method", "phone_number", "receiving_fri", "resource_id", "status", "transaction_id", "transaction_reference", "updated_at", "user_id"]
+   end
+   
+
    def self.to_csv
 
       CSV.generate(headers: true) do |csv|

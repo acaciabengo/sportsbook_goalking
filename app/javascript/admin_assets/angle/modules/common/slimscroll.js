@@ -1,7 +1,7 @@
 // SLIMSCROLL
 // -----------------------------------
 
-import $ from "jquery";
+// import $ from "jquery";
 // Slimscroll
 import "jquery-slimscroll";
 

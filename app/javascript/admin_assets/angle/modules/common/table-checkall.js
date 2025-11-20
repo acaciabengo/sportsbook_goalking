@@ -1,7 +1,7 @@
 // Table Check All
 // -----------------------------------
 
-import $ from "jquery";
+// import $ from "jquery";
 
 function initTableCheckAll() {
   $("[data-check-all]").on("change", function () {

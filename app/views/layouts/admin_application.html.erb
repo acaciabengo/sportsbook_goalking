@@ -6,7 +6,7 @@
    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
    <meta name="description" content="Bootstrap Admin App + Ruby on Rails">
    <meta name="keywords" content="app, responsive, jquery, bootstrap, dashboard, admin">
-   <title>BetSports | <%= yield(:title) %></title>
+   <title>GoalKing | <%= yield(:title) %></title>
    <%= Gon::Base.render_data %>
    <!-- =============== APP STYLES ===============-->
    <%= stylesheet_link_tag 'admin_assets/application', media: 'all', id: "maincss" %>
@@ -15,6 +15,22 @@
    <%= csrf_meta_tags %>
    <%= csp_meta_tag %>
    <%= action_cable_meta_tag %>
+
+   <!-- Font Awesome from CDN -->
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+   
+   <!-- Simple Line Icons from CDN -->
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-line-icons@2.5.5/css/simple-line-icons.min.css">
+   
+   <!-- Animate.css from CDN (optional) -->
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css">
+   
+
+   <!-- Load jQuery and plugins BEFORE your app JavaScript -->
+   <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/tempusdominus-bootstrap-4@5.39.0/build/js/tempusdominus-bootstrap-4.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 
 <body class="aside-collapsed-text" style="zoom: 1;">
@@ -42,7 +58,7 @@
    </div>
 
    <!-- =============== APP SCRIPTS ===============-->
-   <%= javascript_packs_with_chunks_tag 'application' %>
+   <%= javascript_importmap_tags "admin_assets/application" %>
    <%= yield :vendor_js_area %>
 
    <%= yield :body_area %>

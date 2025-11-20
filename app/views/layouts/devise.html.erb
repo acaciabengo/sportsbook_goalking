@@ -6,11 +6,12 @@
    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
    <meta name="description" content="Bootstrap Admin App + Ruby on Rails">
    <meta name="keywords" content="app, responsive, jquery, bootstrap, dashboard, admin">
-   <title>BetSports |
+   <title>GoalKing |
         <%= yield(:title) %>
     </title>
    <!-- =============== APP STYLES ===============-->
-   <%= stylesheet_link_tag 'admin_assets/application', media: 'all', id: "maincss" %>
+   <%= stylesheet_link_tag 'admin_assets/application', media: 'all', 'data-turbo-track': 'reload', id: "maincss" %>
+   
    <!-- =============== VIEW STYLES ===============-->
    <!-- <#%= stylesheet_link_tag params[:controller] %> -->
    <%= yield :vendor_css_area %>
@@ -32,14 +33,14 @@
          <span>&copy;</span>
          <span><%= Date.today.year %></span>
          <span>-</span>
-         <span>BetSports</span>
+         <span>GoalKing</span>
          <br>
          <span>Uganda</span>
       </div>
    </div>
 
    <!-- =============== APP SCRIPTS ===============-->
-   <%= javascript_packs_with_chunks_tag 'application' %>
+   <%= javascript_importmap_tags 'application' %>
    <%= yield :vendor_js_area %>
 
    <%= yield :body_area %>

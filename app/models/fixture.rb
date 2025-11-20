@@ -9,20 +9,20 @@ class Fixture < ApplicationRecord
                     }
                   }
 
-  enum :fixture_status,
-       %i[
-         not_started
-         live
-         finished
-         cancelled
-         interrupted
-         postponed
-         abandoned
-         about_to_start
-         coverage_lost
-       ]
+  # enum :fixture_status,
+  #      %i[
+  #        not_started
+  #        live
+  #        finished
+  #        cancelled
+  #        interrupted
+  #        postponed
+  #        abandoned
+  #        about_to_start
+  #        coverage_lost
+  #      ]
 
-  enum :booking_status, { select_one: "", true: true, false: false }
+  # enum :booking_status, { select_one: "", true: true, false: false }
 
   after_commit :broadcast_updates, if: :persisted?
 
@@ -36,40 +36,9 @@ class Fixture < ApplicationRecord
   paginates_per 100
 
   def self.ransackable_attributes(auth_object = nil)
-    %w[
-      away_score
-      booked
-      booking_status
-      created_at
-      event_id
-      ext_provider_id
-      featured
-      fixture_status
-      home_score
-      id
-      league_id
-      league_name
-      live_odds
-      location
-      location_id
-      match_status
-      match_time
-      part_one_id
-      part_one_name
-      part_two_id
-      part_two_name
-      priority
-      season_id
-      season_name
-      sport
-      sport_id
-      start_date
-      status
-      tournament_round
-      updated_at
-    ]
+    ["away_score", "booked", "created_at", "event_id", "ext_category_id", "ext_provider_id", "ext_tournament_id", "featured", "home_score", "id", "league_id", "league_name", "live_odds", "location", "location_id", "match_status", "match_time", "part_one_id", "part_one_name", "part_two_id", "part_two_name", "priority", "season_id", "season_name", "sport", "sport_id", "start_date", "status", "tournament_round", "updated_at"]
   end
-
+  
   def self.ransackable_associations(auth_object = nil)
     %w[bets live_markets pre_markets]
   end

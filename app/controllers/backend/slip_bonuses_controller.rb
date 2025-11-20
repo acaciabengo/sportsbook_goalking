@@ -20,7 +20,7 @@ class Backend::SlipBonusesController < ApplicationController
       flash[:notice] = "Slip Bonus Successfully Created."
     else
       flash[:alert] = @slip_bonus.errors
-      redirect_to new_backend_slip_bonus_path
+      redirect_to new_backend_slip_bonuse_path
     end
   end
 

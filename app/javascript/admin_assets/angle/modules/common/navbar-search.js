@@ -1,7 +1,7 @@
 // NAVBAR SEARCH
 // -----------------------------------
 
-import $ from "jquery";
+// import $ from "jquery";
 
 function initNavbarSearch() {
   var navSearch = new navbarSearchInput();

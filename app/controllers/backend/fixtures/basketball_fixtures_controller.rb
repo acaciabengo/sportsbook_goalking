@@ -1,5 +1,5 @@
 class Backend::Fixtures::BasketballFixturesController < ApplicationController
-  include Lsports
+  
   before_action :authenticate_admin!
 
   layout "admin_application"

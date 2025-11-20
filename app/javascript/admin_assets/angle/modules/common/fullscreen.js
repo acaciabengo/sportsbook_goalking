@@ -1,7 +1,7 @@
 // FULLSCREEN
 // -----------------------------------
 
-import $ from "jquery";
+// import $ from "jquery";
 import screenfull from "screenfull";
 
 function initScreenFull() {

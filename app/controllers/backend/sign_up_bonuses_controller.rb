@@ -29,7 +29,7 @@ class Backend::SignUpBonusesController < ApplicationController
       flash[:notice] = "Signup Bonus Successfully Created."
     else
       flash[:alert] = @signup_bonus.errors
-      redirect_to new_backend_sign_up_bonus_path
+      redirect_to action: "new"
     end
   end
 

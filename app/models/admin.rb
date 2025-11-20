@@ -21,4 +21,8 @@ class Admin < ApplicationRecord
 
      errors.add :password, 'Complexity requirement not met. Length should be 8-70 characters and include: 1 uppercase, 1 lowercase, 1 digit and 1 special character'
   end
+
+  def self.ransackable_attributes(auth_object = nil)
+    ["created_at", "current_sign_in_at", "current_sign_in_ip", "email", "encrypted_password", "failed_attempts", "first_name", "id", "last_name", "last_sign_in_at", "last_sign_in_ip", "locked_at", "remember_created_at", "reset_password_sent_at", "reset_password_token", "role", "sign_in_count", "unlock_token", "updated_at"]
+  end
 end

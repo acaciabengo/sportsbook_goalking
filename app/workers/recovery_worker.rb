@@ -4,9 +4,6 @@ class RecoveryWorker
    sidekiq_options queue: "high"
    sidekiq_options retry: false
 
-   include Lsports
-   include Recovery
-
    def perform(product)
       if product == "3"
          #get a Snapshot

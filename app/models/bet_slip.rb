@@ -109,4 +109,9 @@ class BetSlip < ApplicationRecord
   def phone_number
     self.user.phone_number
   end
+
+  def self.ransackable_associations(auth_object = nil)
+    ["audits", "bets", "user"]
+  end
+  
 end

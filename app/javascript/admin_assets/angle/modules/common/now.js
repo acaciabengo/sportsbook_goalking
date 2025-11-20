@@ -1,7 +1,7 @@
 // NOW TIMER
 // -----------------------------------
 
-import $ from "jquery";
+// import $ from "jquery";
 import moment from "moment";
 
 function initNowTimer() {

@@ -1,7 +1,7 @@
 // LOAD CUSTOM CSS
 // -----------------------------------
 
-import $ from "jquery";
+// import $ from "jquery";
 
 function initLoadCSS() {
   $("[data-load-css]").on("click", function (e) {

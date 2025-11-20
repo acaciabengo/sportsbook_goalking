@@ -29,7 +29,7 @@ class Backend::TopupBonusesController < ApplicationController
       flash[:notice] = "Topup Bonus Successfully Created."
     else
       flash[:alert] = @topup_bonus.errors
-      redirect_to new_backend_topup_bonus_path
+      redirect_to new_backend_topup_bonuse_path
     end
   end
 

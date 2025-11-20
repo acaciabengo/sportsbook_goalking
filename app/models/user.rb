@@ -18,7 +18,7 @@ class User < ApplicationRecord
   has_many :transactions
   has_many :deposits
   has_many :withdraws
-  has_many :user_bonuses
+  has_many :user_bonuses, class_name: "UserBonus"
 
   after_save :send_pin!
   # before_create :process_signup_bonus
@@ -40,46 +40,11 @@ class User < ApplicationRecord
   # validate :password_complexity
   #
   def self.ransackable_attributes(auth_object = nil)
-    %w[
-      account_active
-      activated_first_deposit_bonus
-      activated_signup_bonus
-      agreement
-      balance
-      bonus
-      confirmation_sent_at
-      confirmation_token
-      confirmed_at
-      created_at
-      current_sign_in_at
-      current_sign_in_ip
-      email
-      encrypted_password
-      failed_attempts
-      first_deposit_bonus_amount
-      first_name
-      id
-      id_number
-      last_name
-      last_sign_in_at
-      last_sign_in_ip
-      locked_at
-      nationality
-      password_reset_code
-      password_reset_sent_at
-      phone_number
-      pin
-      pin_sent_at
-      remember_created_at
-      reset_password_sent_at
-      reset_password_token
-      sign_in_count
-      signup_bonus_amount
-      unconfirmed_email
-      unlock_token
-      updated_at
-      verified
-    ]
+    ["account_active", "activated_first_deposit_bonus", "activated_signup_bonus", "agreement", "balance", "bonus", "confirmation_sent_at", "confirmation_token", "confirmed_at", "created_at", "current_sign_in_at", "current_sign_in_ip", "email", "encrypted_password", "failed_attempts", "first_deposit_bonus_amount", "first_name", "id", "id_number", "last_name", "last_sign_in_at", "last_sign_in_ip", "locked_at", "nationality", "password_reset_code", "password_reset_sent_at", "phone_number", "pin", "pin_sent_at", "remember_created_at", "reset_password_sent_at", "reset_password_token", "sign_in_count", "signup_bonus_amount", "unconfirmed_email", "unlock_token", "updated_at", "verified"]
+  end
+
+  def self.ransackable_associations(auth_object = nil)
+    ["audits", "bet_slips", "bets", "deposits", "transactions", "user_bonuses", "withdraws"]
   end
 
   def active_for_authentication?
@@ -110,7 +75,7 @@ class User < ApplicationRecord
 
   def send_password_reset_code
     message =
-      "Your BetSports Password Reset Code is #{self.password_reset_code}"
+      "Your GoalKing Password Reset Code is #{self.password_reset_code}"
     SendSms.process_sms_now(
       receiver: self.phone_number,
       content: message,
@@ -135,7 +100,7 @@ class User < ApplicationRecord
   def resend_user_pin!
     reset_pin!
     unverify!
-    message = "Your BetSports Account verification code is #{self.pin}"
+    message = "Your GoalKing Account verification code is #{self.pin}"
     SendSms.process_sms_now(
       receiver: self.phone_number,
       content: message,

@@ -1,7 +1,7 @@
 desc "System Start up Tasks"
 
 task system_start_up: :environment do
-   include Lsports
+   
    ## Describe all required actions on system start up here below
    
    #Pull fixtures from today up to 3 days for the different sports

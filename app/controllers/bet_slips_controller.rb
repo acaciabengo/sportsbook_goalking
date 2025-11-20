@@ -1,7 +1,6 @@
 class BetSlipsController < ApplicationController
   before_action :authenticate_user!
   include CurrentCart
-  include BetslipCartHelper
   before_action :set_cart
 
   def index; end

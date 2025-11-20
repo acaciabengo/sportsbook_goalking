@@ -7,8 +7,8 @@
  * ------------------------------
  * ---- FontAwesome
  *= require font-awesome
- * ---- Simple Line Icons
- *= require simple-line-icons/css/simple-line-icons
+ * ---- Simple Line Icons (FIXED PATH)
+ *= require simple-line-icons/scss/simple-line-icons
  * ---- Animate.css
  *= require animate.css/animate.min
  *
@@ -26,6 +26,16 @@
  *= require soccer_fixtures
  *= require admin_assets/time_picker
  */
+
+//  define a new modern font
+// import Google Fonts - Roboto and Helvetica Neue
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;700&display=swap');
+body, .navbar, .panel, .modal-content {
+  font-family: 'Helvetica Neue','Roboto', sans-serif;
+  font-size: 14px;
+  color: #60605f;
+}
 
 .navbar-header > a {
   color: #ffff;
@@ -46,14 +56,10 @@
 }
 
 .errors{
-	margin-top: 0.25rem;
+    margin-top: 0.25rem;
     // font-size: 80%;
     color: #f05050;
 }
 .errors h2{
   font-size: 15px;
 }
-
-// .container .alert-top {
-//   padding-top: 10px;
-// }
