@@ -1,9 +1,7 @@
 Rails.application.routes.draw do
   devise_for :admin_users, ActiveAdmin::Devise.config
-  root to: "home#index"
-  match "basket_ball" => "home#basket_ball", :via => [:get]
-  match "tennis" => "home#tennis", :via => [:get]
-
+  root to: "backend/admin_landing#index"
+  
   ##React routes
   match "cart_fixtures" => "line_bets#cart_fixtures", :via => [:get]
   match "check_bonus" => "line_bets#check_bonus", :via => [:get]
@@ -177,19 +175,6 @@ Rails.application.routes.draw do
     resources :broadcasts
   end
 
-  namespace :amqp do
-    namespace :v1 do
-      namespace :mts do
-        match "confirm" => "confirm#create", :via => [:post]
-        match "reply" => "reply#create", :via => [:post]
-      end
-    end
-  end
-
-  ## Devise routes for the react FE
-
-  # match 'users/sign_in' => "users/sessions/create", via: [:post]
-
   devise_for :users,
              path: "users",
              controllers: {
@@ -218,7 +203,6 @@ Rails.application.routes.draw do
           as: :unauthenticated_admins_root
     end
   end
-  # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
   #   devise_for :admin_users, ActiveAdmin::Devise.config
   ActiveAdmin.routes(self)
   #   ActiveAdmin.routes(self)

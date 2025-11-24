@@ -5,7 +5,8 @@ class SyncMarketsJob
   def perform(*args)
     bet_balancer = BetBalancer.new
 
-    Sport.all.each do |sport|
+    # Use find_each to process in batches and avoid loading all records into memory
+    Sport.find_each do |sport|
       status, markets_data =
         bet_balancer.get_markets(sport_id: sport.ext_sport_id)
       if status != 200
@@ -45,6 +46,10 @@ class SyncMarketsJob
             end
           end
         end
+      
+      # Clear Nokogiri document from memory after processing each sport
+      markets_data = nil
+      GC.start if (sport.id % 10).zero? # Periodic GC hint every 10 sports
     end
   end
 end

@@ -65,7 +65,7 @@ class PreMatch::PullFixturesJob
 
     unless Fixture.exists?(event_id: event_id)
       status == "0" ? "active" : "cancelled"
-      fixture_status = status == "0" ? "not_started" : "cancelled"
+      match_status = status == "0" ? "not_started" : "cancelled"
       fixture =
         Fixture.new(
           event_id: event_id,
@@ -73,12 +73,12 @@ class PreMatch::PullFixturesJob
           ext_category_id: category_id,
           ext_tournament_id: tournament_id,
           start_date: start_date,
-          match_status: status,
+          status: status,
           part_one_id: part_one_id,
           part_one_name: part_one_name,
           part_two_id: part_two_id,
           part_two_name: part_two_name,
-          fixture_status: fixture_status
+          match_status: match_status
         )
 
       unless fixture.save

@@ -5,7 +5,8 @@ class SyncTournamentsJob
   def perform(*args)
     bet_balancer = BetBalancer.new
 
-    Category.all.each do |category|
+    # Use find_each to process in batches and avoid loading all records into memory
+    Category.find_each do |category|
       status, tournaments_data =
         bet_balancer.get_tournaments(category_id: category.ext_category_id)
 
@@ -54,6 +55,10 @@ class SyncTournamentsJob
             end
           end
         end
+      
+      # Clear Nokogiri document from memory after processing each category
+      tournaments_data = nil
+      GC.start if (category.id % 10).zero? # Periodic GC hint every 10 categories
     end
   end
 end

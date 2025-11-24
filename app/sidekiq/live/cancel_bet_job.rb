@@ -2,7 +2,9 @@ class Live::CancelBetJob
   include Sidekiq::Job
   sidekiq_options queue: :critical, retry: 1
 
-  def perform(doc)
+  def perform(xml_string)
+    # Parse XML string to Nokogiri document
+    doc = Nokogiri.XML(xml_string) { |config| config.strict.nonet }
     doc.xpath("//Match").each do |match|
       bet_status = match["betstatus"]
       match_id = match["matchid"].to_i
@@ -29,7 +31,8 @@ class Live::CancelBetJob
         end
       
     end
-    
+    # Clear parsed document from memory
+    doc = nil
   end
 end
 

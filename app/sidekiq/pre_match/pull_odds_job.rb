@@ -5,11 +5,12 @@ class PreMatch::PullOddsJob
   def perform()
     # Find all fixtures that are not yet started or live
     Fixture
-      .where(fixture_status: ["not_started"])
+      .where(match_status: ["not_started"])
       .find_in_batches(batch_size: 50)
       .each do |fixtures|
+        # Create BetBalancer instance once per batch to reuse HTTP connection
+        bet_balancer = BetBalancer.new
         fixtures.each do |fixture|
-          bet_balancer = BetBalancer.new
           status, odds_data =
             bet_balancer.get_matches(match_id: fixture.event_id)
 
@@ -28,7 +29,7 @@ class PreMatch::PullOddsJob
           if fixture_node
             status_info = fixture_node.xpath("StatusInfo/Off").text
             if status_info == "1"
-              fixture.update(status: "cancelled", fixture_status: "cancelled")
+              fixture.update(status: "cancelled", match_status: "cancelled")
             end
           end
 
@@ -104,7 +105,7 @@ class PreMatch::PullOddsJob
 
           if ft_result.present?
             fixture.update(
-              fixture_status: "finished",
+              match_status: "finished",
               home_score: ft_result.split(":")[0].to_i,
               away_score: ft_result.split(":")[1].to_i
             )

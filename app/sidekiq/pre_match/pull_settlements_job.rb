@@ -6,7 +6,7 @@ class PreMatch::PullSettlementsJob
     # Find markets of fixtures that are finished but not yet settled
     PreMarket
       .joins(:fixture)
-      .where(fixtures: { fixture_status: "finished" }, status: "active")
+      .where(fixtures: { match_status: "finished" }, status: "active")
       .find_in_batches(batch_size: 50)
       .each do |markets|
         markets.each do |market|

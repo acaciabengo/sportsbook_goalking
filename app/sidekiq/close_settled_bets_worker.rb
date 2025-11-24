@@ -41,11 +41,20 @@ class CloseSettledBetsWorker
     )
 
     # Bulk update losing bets (everything else)
-    losing_outcomes = bets.pluck(:outcome) - winning_bets - void_outcomes
-    bets.where(outcome: losing_outcomes).update_all(
-      result: "Loss",
-      status: "Closed"
-    )
+    # Avoid loading all outcomes into memory by using SQL NOT IN instead of pluck
+    all_processed_outcomes = winning_bets + void_outcomes
+    if all_processed_outcomes.any?
+      bets.where.not(outcome: all_processed_outcomes).update_all(
+        result: "Loss",
+        status: "Closed"
+      )
+    else
+      # If no winning/void bets, all remaining are losing
+      bets.update_all(
+        result: "Loss",
+        status: "Closed"
+      )
+    end
 
     # Update void_factor individually (if needed for specific outcomes)
     results.each do |outcome, data|

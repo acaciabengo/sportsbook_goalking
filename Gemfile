@@ -141,3 +141,7 @@ gem "activeadmin_assets", "~> 1.0", ">= 1.0.2"
 
 gem "cssbundling-rails", "= 1.4.1"
 
+# memory leak detection
+gem 'memory_profiler'
+gem 'derailed_benchmarks', require: false
+

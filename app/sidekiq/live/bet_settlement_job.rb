@@ -2,7 +2,9 @@ class Live::BetSettlementJob
   include Sidekiq::Job
   sidekiq_options queue: :critical, retry: 1
 
-  def perform(doc)
+  def perform(xml_string)
+    # Parse XML string to Nokogiri document
+    doc = Nokogiri.XML(xml_string) { |config| config.strict.nonet }
     doc.xpath("//Match").each do |match|
       bet_status = match["betstatus"]
       match_id = match["matchid"].to_i
@@ -19,7 +21,7 @@ class Live::BetSettlementJob
         update_attrs[:away_score] = clearedscore.split(':')[1].to_i
       end
       update_attrs[:status] = 'inactive'
-      update_attrs[:fixture_status] = 'finished'
+      update_attrs[:match_status] = 'finished'
       fixture.update(update_attrs) if update_attrs.any?
 
       match.xpath("Odds").each do |odds_node|
@@ -47,6 +49,8 @@ class Live::BetSettlementJob
         CloseSettledBetsWorker.perform_async(fixture.id, market.id, results)
       end
     end
+    # Clear parsed document from memory
+    doc = nil
   end
 end
 

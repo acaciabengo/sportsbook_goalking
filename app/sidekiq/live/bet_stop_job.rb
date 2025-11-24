@@ -2,15 +2,19 @@ class Live::BetStopJob
   include Sidekiq::Job
   sidekiq_options queue: :critical, retry: 1
 
-  def perform(doc)
+  def perform(xml_string)
+    # Parse XML string to Nokogiri document
+    doc = Nokogiri.XML(xml_string) { |config| config.strict.nonet }
     doc.xpath("//Match").each do |match|
       bet_status = match["betstatus"]
       match_id = match["matchid"].to_i
 
       # find the fixture and update its status
       fixture = Fixture.find_by(event_id: match_id)
-      fixture.update(status: 'inactive', fixture_status: "not_started") if fixture
+      fixture.update(status: 'inactive', match_status: "not_started") if fixture
     end
+    # Clear parsed document from memory
+    doc = nil
   end
 end
 # <BetbalancerLiveOdds

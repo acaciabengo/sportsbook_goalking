@@ -2,7 +2,9 @@ class Live::OddsUpdateJob
   include Sidekiq::Job
   sidekiq_options queue: :critical, retry: 1
 
-  def perform(doc)
+  def perform(xml_string)
+    # Parse XML string to Nokogiri document
+    doc = Nokogiri.XML(xml_string) { |config| config.strict.nonet }
     doc.xpath("//Match").each do |match|
       match_id = match["matchid"].to_i
       score = match["score"]
@@ -38,6 +40,8 @@ class Live::OddsUpdateJob
         end
       end
     end
+    # Clear parsed document from memory
+    doc = nil
   end
 end
 
