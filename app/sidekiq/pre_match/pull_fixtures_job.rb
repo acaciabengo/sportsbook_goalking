@@ -10,38 +10,48 @@ class PreMatch::PullFixturesJob
     # sports = Sport.select(:ext_sport_id).where(
     #   ext_sport_id: ACCEPTED_SPORTS
     # )
+    # 
+    # Pull=>process fixtures for each sport for 1 days at a time
+    (0...10).each do |day_offset|
+      from = (Date.today.beginning_of_day + day_offset).to_i
+      to = (Date.today.end_of_day + day_offset).to_i
 
-    ACCEPTED_SPORTS.each do |sport_id|
-      status, fixtures_data = bet_balancer.get_matches(sport_id: sport_id)
+      ACCEPTED_SPORTS.each do |sport_id|
+        status, fixtures_data = bet_balancer.get_matches(sport_id: sport_id, date_from: from, date_to: to)
 
-      if status != 200
-        Rails.logger.error("Failed to fetch fixtures data: HTTP #{status}")
-        next
-      end
-
-      # Process fixtures_data as needed
-      fixtures_data
-        .xpath("//Category")
-        .each do |category|
-          category_id = category["BetbalancerCategoryID"].to_i
-          category
-            .xpath("//Tournament")
-            .each do |tournament|
-              tournament_id = tournament["BetbalancerTournamentID"].to_i
-
-              tournament
-                .xpath("Match")
-                .each do |match|
-                  # process_match data
-                  process_match(
-                    category_id: category_id,
-                    tournament_id: tournament_id,
-                    sport_id: sport_id,
-                    match: match
-                  )
-                end
-            end
+        if status != 200
+          Rails.logger.error("Failed to fetch fixtures data: HTTP #{status}")
+          next
         end
+
+        # Process fixtures_data as needed
+        fixtures_data
+          .xpath("//Category")
+          .each do |category|
+            category_id = category["BetbalancerCategoryID"].to_i
+            category
+              .xpath("//Tournament")
+              .each do |tournament|
+                tournament_id = tournament["BetbalancerTournamentID"].to_i
+
+                tournament
+                  .xpath("Match")
+                  .each do |match|
+                    # process_match data
+                    process_match(
+                      category_id: category_id,
+                      tournament_id: tournament_id,
+                      sport_id: sport_id,
+                      match: match
+                    )
+                  end
+              end
+          end
+
+        # Garbage collection to free memory
+        fixtures_data = nil
+        GC.start
+      end
     end
   end
 
