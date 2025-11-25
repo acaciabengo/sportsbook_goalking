@@ -43,7 +43,7 @@ class PreMatch::PullOddsJob
                 .xpath("Odds")
                 .each do |odd|
                   outcome = odd["OutCome"]
-                  outcome_id = odd["OutcomeID"]&.to_i
+                  outcome_id = odd["OutComeID"]&.to_i
                   value = odd.text.to_f
                   specifier = odd["SpecialBetValue"]
                   new_odds[outcome] = {
@@ -177,3 +177,93 @@ end
 #     </Card>
 #   </Cards>
 # </Match>
+# # # extract the odds
+# odds = {}
+# category
+#   .xpath("Match/MatchOdds/Bet/Odds")
+#   .each do |odd|
+#     outcome = odd["OutCome"]
+#     outcome_id = odd["OutcomeID"].to_i
+#     value = odd.content.to_f
+#     odds[outcome] = {
+#       value: value,
+#       outcome_id: outcome_id,
+#       specifier: odd["SpecialBetValue "]
+#     }
+#   end
+
+# ext_market_id = odd.parent["OddsType"].to_i
+
+# # Create pre-market for the fixture if not exists
+# pre_market =
+#   PreMarket.new(
+#     fixture_id: fixture.id,
+#     market_identifier: ext_market_id,
+#     odds: odds.to_json,
+#     status: "active"
+#   )
+
+# if !pre_market.save
+#   Rails.logger.error "Failed to save pre-market for fixture #{event_id}, market #{ext_market_id}: #{pre_market.errors.full_messages.join(", ")}"
+# end
+# end
+# 
+# <Sport BetbalancerSportID="1">
+#   <Texts>
+#     <Text Language="BET"><Value>Soccer</Value></Text>
+#     <Text Language="en"><Value>Soccer</Value></Text>
+#     <Text Language="it"><Value>Calcio</Value></Text>
+#   </Texts>
+#   <Category BetbalancerCategoryID="1">
+#     <Texts>
+#       <Text Language="BET"><Value>England</Value></Text>
+#       <Text Language="en"><Value>England</Value></Text>
+#       <Text Language="it"><Value>Inghilterra</Value></Text>
+#     </Texts>
+#     <Tournament BetbalancerTournamentID="17">
+#       <Texts>
+#         <Text Language="BET"><Value>Premier League</Value></Text>
+#         <Text Language="en"><Value>Premier League</Value></Text>
+#         <Text Language="it"><Value>Premier League</Value></Text>
+#       </Texts>
+#       <Match BetbalancerMatchID="123456">
+#         <Fixture>
+#           <DateInfo>
+#             <MatchDate>2025-11-24T15:00:00.000Z</MatchDate>
+#           </DateInfo>
+#           <StatusInfo>
+#             <Off>0</Off>
+#           </StatusInfo>
+#           <Competitors>
+#             <Texts>
+#               <Text ID="4871">
+#                 <Text Language="BET"><Value>Arsenal FC</Value></Text>
+#                 <Text Language="en"><Value>Arsenal FC</Value></Text>
+#                 <Text Language="it"><Value>Arsenal</Value></Text>
+#               </Text>
+#             </Texts>
+#             <Texts>
+#               <Text ID="4878">
+#                 <Text Language="BET"><Value>Liverpool FC</Value></Text>
+#                 <Text Language="en"><Value>Liverpool FC</Value></Text>
+#                 <Text Language="it"><Value>Liverpool</Value></Text>
+#               </Text>
+#             </Texts>
+#           </Competitors>
+#         </Fixture>
+#         <MatchOdds>
+#           <Bet OddsType="1">
+#             <Odds OutCome="1" OutcomeID="1">2.45</Odds>
+#             <Odds OutCome="X" OutcomeID="2">3.20</Odds>
+#             <Odds OutCome="2" OutcomeID="3">2.90</Odds>
+#           </Bet>
+#           <Bet OddsType="18">
+#             <Odds OutCome="Over" OutcomeID="12" SpecialBetValue="2.5">1.85</Odds>
+#             <Odds OutCome="Under" OutcomeID="13" SpecialBetValue="2.5">1.95</Odds>
+#           </Bet>
+#         </MatchOdds>
+#       </Match>
+#     </Tournament>
+#   </Category>
+# </Sport>
+

@@ -3,11 +3,11 @@
 # environments (by setting `ACTION_CABLE_ADAPTER=redis`).
 development:
   adapter: redis
-  url: ENV['REDIS_SOCKET_URL'] || 'redis://redis:6379/0'
+  url: <%= ENV['REDIS_SOCKET_URL'] || 'redis://redis:6379/0' %>
 
 test:
   adapter: test
 
 production:
   adapter: any_cable
-  url: ENV['REDIS_SOCKET_URL'] || 'redis://redis:6379/3'
+  url: <%= ENV['REDIS_SOCKET_URL'] || 'redis://redis:6379/3' %>

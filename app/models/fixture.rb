@@ -9,20 +9,20 @@ class Fixture < ApplicationRecord
                     }
                   }
 
-  # enum :fixture_status,
-  #      %i[
-  #        not_started
-  #        live
-  #        finished
-  #        cancelled
-  #        interrupted
-  #        postponed
-  #        abandoned
-  #        about_to_start
-  #        coverage_lost
-  #      ]
+  FIXTURE_STATUSES = 
+       %i[
+         not_started
+         live
+         finished
+         cancelled
+         interrupted
+         postponed
+         abandoned
+         about_to_start
+         coverage_lost
+       ].freeze
 
-  # enum :booking_status, { select_one: "", true: true, false: false }
+  # { select_one: "", true: true, false: false }
 
   after_commit :broadcast_updates, if: :persisted?
 

@@ -32,8 +32,20 @@ RUN yarn install
 # Copy application
 COPY . .
 
+# update cront tab from whenever gem
+RUN bundle exec whenever --update-crontab
+
 # Build Tailwind CSS
 RUN yarn build:css || echo "Tailwind build skipped (will run in entrypoint)"
+
+# Precompile Rails assets for production
+# This compiles all JS, CSS, and other assets
+RUN RAILS_ENV=production SECRET_KEY_BASE=dummy bundle exec rails assets:precompile
+
+# Clean up to reduce image size
+RUN yarn cache clean && \
+    rm -rf /tmp/* /var/tmp/* && \
+    rm -rf node_modules/.cache
 
 # Entrypoint
 COPY entrypoint.sh /usr/bin/

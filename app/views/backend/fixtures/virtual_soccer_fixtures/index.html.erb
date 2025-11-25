@@ -13,7 +13,7 @@
               <div class="col-sm-6 col-md-4">
                     <%= f.label :status, "Status", class:"col-md-4 col-form-label" %>
                     <div class="col-lg-8">
-                      <%= f.select :status_eq, Fixture.fixture_statuses.values , {prompt: "Select One"} ,{ class: "form-control", id: "status"} %>
+                      <%= f.select :status_eq, Fixture.Fixture::FIXTURE_STATUSES.map(&:to_s).values , {prompt: "Select One"} ,{ class: "form-control", id: "status"} %>
                     </div>
               </div>
               <div class="col-sm-6 col-md-4">
@@ -25,7 +25,7 @@
               <div class="col-sm-6 col-md-4">
                     <%= f.label :booked, "Booking Status", class:"col-md-4 col-form-label" %>
                     <div class="col-lg-8">
-                      <%= f.select :booked_eq, Fixture.booking_statuses.values, {prompt: "Select One"} ,{ class: "form-control", id: "status"} %>
+                      <%= f.select :booked_eq, [true, false], {prompt: "Select One"} ,{ class: "form-control", id: "status"} %>
                     </div>
               </div>
           </div>

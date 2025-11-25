@@ -7,9 +7,7 @@ class Backend::Fixtures::SoccerFixturesController < ApplicationController
   def index
     @q =
       Fixture.where(
-        "sport_id = ? AND league_id NOT IN (?)",
-        "6046",
-        %w[37364 37386 38301 37814]
+        sport_id: 1
       ).ransack(params[:q])
     @fixtures = @q.result.order("start_date DESC").page params[:page]
   end
