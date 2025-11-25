@@ -113,11 +113,7 @@
           <td><%= fixture.status %></td>
           <td><%= fixture.booked.to_s.capitalize %></td>
           <td><%= fixture.featured.to_s.capitalize %></td>
-          <td>
-            <% if  fixture.booked == false %>
-              <%= link_to "Book", backend_fixtures_tennis_fixtures_path(id: fixture.id), method: :put, :class => 'btn btn-xs btn-success booking', remote: true %>
-            <% end %>
-          </td>
+          
           <td>
             <% if fixture.featured == false %>
               <%= link_to "Add", backend_fixtures_tennis_fixtures_feature_path(id: fixture.id, data: "Add"), method: :put, :class => 'btn btn-xs btn-success booking', remote: true %>

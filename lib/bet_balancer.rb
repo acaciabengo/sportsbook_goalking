@@ -124,4 +124,21 @@ class BetBalancer
     data = Nokogiri.XML(response.body)
     return status, data
   end
+
+  def order_live_event(event_id, sport_id)
+    params = @default_params.merge({
+      eventId: event_id,
+      sportId: sport_id
+    })
+
+    response =
+      @client.get do |req|
+        req.url "/export/orderLiveEvent"
+        req.headers["Content-Type"] = "application/xml"
+        req.params = params
+      end
+    status = response.status
+    return status
+    
+  end
 end
