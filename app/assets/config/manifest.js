@@ -48,5 +48,5 @@
 //= link_tree ../../../vendor/javascript .js
 
 // import echarts and screenfull for admin dashboard charts
-//= link echarts/dist/echarts.js
-//= link screenfull/dist/screenfull.js
+//= link_tree echarts .js
+//= link_tree screenfull .js
