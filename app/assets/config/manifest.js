@@ -46,3 +46,7 @@
 //= link user_assets/application.css
 //= link_tree ../../javascript .js
 //= link_tree ../../../vendor/javascript .js
+
+// import echarts and screenfull for admin dashboard charts
+//= link echarts/dist/echarts.js
+//= link screenfull/dist/screenfull.js
