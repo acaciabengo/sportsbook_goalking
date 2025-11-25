@@ -19,7 +19,7 @@
 
 # Learn more: http://github.com/javan/whenever
 #
-every sunday, at: "2:00 am" do
+every :sunday, at: "2:00 am" do
   # run sidekiq workers
   runner "SyncSportsJob.perform_async"
   runner "SyncCategoriesJob.perform_async"

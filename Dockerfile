@@ -32,9 +32,6 @@ RUN yarn install
 # Copy application
 COPY . .
 
-# update cront tab from whenever gem
-RUN bundle exec whenever --update-crontab
-
 # Build Tailwind CSS
 RUN yarn build:css || echo "Tailwind build skipped (will run in entrypoint)"
 
