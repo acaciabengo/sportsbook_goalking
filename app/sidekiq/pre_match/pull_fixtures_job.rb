@@ -13,8 +13,12 @@ class PreMatch::PullFixturesJob
     # 
     # Pull=>process fixtures for each sport for 1 days at a time
     (0...10).each do |day_offset|
-      from = (Date.today.beginning_of_day + day_offset).to_i
-      to = (Date.today.end_of_day + day_offset).to_i
+      target_date = Date.today + day_offset.days
+      from = (target_date.beginning_of_day).to_i
+      to = (target_date.end_of_day).to_i
+
+      Rails.logger.info "🔄 Fetching fixtures for #{target_date} (day #{day_offset + 1}/#{DAYS_TO_FETCH})"
+      Rails.logger.debug "Date range: #{from} to #{to} (#{Time.at(from)} to #{Time.at(to)})"
 
       ACCEPTED_SPORTS.each do |sport_id|
         status, fixtures_data = bet_balancer.get_matches(sport_id: sport_id, date_from: from, date_to: to)
