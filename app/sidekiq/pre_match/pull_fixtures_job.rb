@@ -123,7 +123,7 @@ class PreMatch::PullFixturesJob
       .xpath("Odds")
       .each do |odd|
         outcome = odd["OutCome"]
-        outcome_id = odd["OutcomeID"]&.to_i || nil
+        outcome_id = odd["OutcomeId"]&.to_i || nil
         value = odd.text.to_f
         specifier = odd["SpecialBetValue"] || nil
         odds_data[outcome] = {

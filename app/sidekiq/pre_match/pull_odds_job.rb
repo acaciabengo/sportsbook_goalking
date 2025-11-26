@@ -43,7 +43,7 @@ class PreMatch::PullOddsJob
                 .xpath("Odds")
                 .each do |odd|
                   outcome = odd["OutCome"]
-                  outcome_id = odd["OutComeID"]&.to_i
+                  outcome_id = odd["OutComeId"]&.to_i
                   value = odd.text.to_f
                   specifier = odd["SpecialBetValue"]
                   new_odds[outcome] = {
