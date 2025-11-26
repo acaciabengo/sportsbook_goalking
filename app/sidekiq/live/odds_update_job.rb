@@ -37,6 +37,13 @@ class Live::OddsUpdateJob
           unless market.update(odds: merged_odds)
             Rails.logger.error("Failed to update odds for market #{market.id} with odds #{new_odds}: #{market.errors.full_messages.join(', ')}")
           end
+
+        else
+          # create new market
+          market = fixture.live_markets.build(ext_market_id: ext_market_id, odds: new_odds, status: 'active', specifier: specifier)
+          unless market.save
+            Rails.logger.error("Failed to create market for fixture #{fixture.id} with odds #{new_odds}: #{market.errors.full_messages.join(', ')}")
+          end
         end
       end
     end
