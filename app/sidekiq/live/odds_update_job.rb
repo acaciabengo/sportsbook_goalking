@@ -33,33 +33,44 @@ class Live::OddsUpdateJob
       
 
       match.xpath("Odds").each do |odds_node|
-        outcome = odds_node['freetext']
+        ext_market_id = odds_node['id'].to_i
         specifier = odds_node['specialoddsvalue']
-        market_identifier = odds_node['typeid'].to_i
+
+        # outcome = odds_node['freetext']
+        # specifier = odds_node['specialoddsvalue']
+        # market_identifier = odds_node['typeid'].to_i
         new_odds = {}
 
         odds_node.xpath("OddsField").each do |odds_field|
           outcome = odds_field['type']
           outcome_id = odds_field['typeid'].to_i
           odd_value = odds_field.text.to_f
-          new_odds[outcome] = { "odd_value" => odd_value, "outcome_id" => outcome_id, "specifier" => specifier }
+          new_odds[outcome] = { "odd" => odd_value, "outcome_id" => outcome_id, "specifier" => specifier }
         end
 
         # Skip if no odds fields (empty market)
         next if new_odds.empty?
 
-        market = fixture.live_markets.find_by(market_identifier: market_identifier, specifier: specifier)
-        if market
-          merged_odds = (market.odds || {}).deep_merge(new_odds)
-          unless market.update(odds: merged_odds, status: betstatus)
-            Rails.logger.error("Failed to update odds for market #{market.id} with odds #{new_odds}: #{market.errors.full_messages.join(', ')}")
+        # market = fixture.live_markets.find_by(market_identifier: ext_market_id, specifier: specifier)
+        live_market = LiveMarket.find_by(fixture_id: fixture.id, market_identifier: ext_market_id)
+        if live_market
+          merged_odds = (live_market.odds || {}).deep_merge(new_odds)
+          unless live_market.update(odds: merged_odds, status: betstatus)
+            Rails.logger.error("Failed to update odds for market #{live_market.id} with odds #{new_odds}: #{live_market.errors.full_messages.join(', ')}")
           end
 
         else
           # create new market
-          market = fixture.live_markets.build(market_identifier: market_identifier, odds: new_odds, specifier: specifier, status: betstatus)
-          unless market.save
-            Rails.logger.error("Failed to create market for fixture #{fixture.id} with market_identifier #{market_identifier}, specifier #{specifier}, odds #{new_odds}: #{market.errors.full_messages.join(', ')}")
+          # market = fixture.live_markets.build(market_identifier: ext_market_id, odds: new_odds, specifier: specifier, status: betstatus)
+          live_market = LiveMarket.new(
+            fixture_id: fixture.id,
+            market_identifier: ext_market_id,
+            odds: new_odds.to_json,
+            specifier: specifier,
+            status: betstatus
+          )
+          unless live_market.save
+            Rails.logger.error("Failed to create market for fixture #{fixture.id} with market_identifier #{ext_market_id}, specifier #{specifier}, odds #{new_odds}: #{live_market.errors.full_messages.join(', ')}")
           end
         end
       end
@@ -69,173 +80,54 @@ class Live::OddsUpdateJob
   end
 end
 
-# <BetbalancerLiveOdds
-#   xmlns="http://www.betbalancer.com/BetbalancerLiveOdds"
-#   status="change"
-#   timestamp="1199777659034">
-#   <Match
-#     active="1"
-#     betstatus="started"
-#     earlybetstatus="stopped"
-#     matchid="5984472"
-#     matchtime="38"
-#     msgnr="155"
-#     score="1:0"
-#     setscores="1:0"
-#     status="1p">
-    
-#     <Odds
-#       active="1"
-#       changed="true"
-#       combination="0"
-#       freetext="Total Corners"
-#       id="57178832"
-#       mostbalanced="0"
-#       specialoddsvalue="7.5"
-#       subtype="126"
-#       type="ftnw"
-#       typeid="8">
-#       <OddsField active="1" type="under" typeid="373">2.6</OddsField>
-#       <OddsField active="1" type="over" typeid="374">1.45</OddsField>
+# <BetbalancerLiveOdds xmlns="http://www.betbalancer.com/BetbalancerLiveOdds" timestamp="1764189033344" status="change">
+#   <Match active="1" matchid="63369877" msgnr="395" score="1:0" betstatus="started" status="1p" matchtime="30" setscores="1:0" clearedscore="1:0" matchtime_extended="29:38" cornersaway="1" cornershome="0" redcardsaway="0" redcardshome="0" yellowcardsaway="0" yellowcardshome="0" yellowredcardsaway="0" yellowredcardshome="0">
+#     <Odds active="1" changed="true" combination="0" freetext="Match Corners" id="3320" specialoddsvalue="10" subtype="2007" type="ftnw" typeid="8">
+#       <OddsField active="1" type="over" typeid="9376">5.50</OddsField>
+#       <OddsField active="1" type="exactly" typeid="9377">8.50</OddsField>
+#       <OddsField active="1" type="under" typeid="9378">1.25</OddsField>
 #     </Odds>
-    
-#     <Odds
-#       active="1"
-#       changed="false"
-#       combination="0"
-#       id="57178580"
-#       mostbalanced="1"
-#       specialoddsvalue="-1.25"
-#       subtype="36"
-#       type="ft2w"
-#       typeid="7">
-#       <OddsField active="1" type="1" typeid="17">2.8</OddsField>
-#       <OddsField active="1" type="2" typeid="18">1.4</OddsField>
+#     <Odds active="1" changed="true" combination="0" freetext="2nd Half Corners" id="3696" specialoddsvalue="5" subtype="2009" type="ft3w" typeid="6">
+#       <OddsField active="1" type="over" typeid="9382">2.40</OddsField>
+#       <OddsField active="1" type="exactly" typeid="9383">5.00</OddsField>
+#       <OddsField active="1" type="under" typeid="9384">1.95</OddsField>
 #     </Odds>
-    
-#     <Odds
-#       active="0"
-#       changed="false"
-#       combination="0"
-#       id="57173070"
-#       mostbalanced="0"
-#       specialoddsvalue="-1.5"
-#       subtype="123"
-#       type="ft2w"
-#       typeid="7" />
+#     <Odds active="1" changed="true" combination="0" freetext="Which team wins race to X corners" id="100" specialoddsvalue="7" subtype="1506" type="ftnw" typeid="8">
+#       <OddsField active="1" type="home" typeid="6384">19.00</OddsField>
+#       <OddsField active="1" type="none" typeid="6385">1.25</OddsField>
+#       <OddsField active="1" type="away" typeid="6386">3.60</OddsField>
+#     </Odds>
+#     <Odds active="1" changed="true" combination="0" freetext="1X2 60 min" id="2918" subtype="1663" type="3w" typeid="2">
+#       <OddsField active="1" type="1" typeid="1">1.36</OddsField>
+#       <OddsField active="1" type="x" typeid="2">3.50</OddsField>
+#       <OddsField active="1" type="2" typeid="3">9.50</OddsField>
+#     </Odds>
+#     <Odds active="1" changed="true" combination="0" freetext="Corner Handicap" id="7923" specialoddsvalue="2:0" subtype="2038" type="hc" typeid="4">
+#       <OddsField active="1" type="1" typeid="7">2.20</OddsField>
+#       <OddsField active="1" type="2" typeid="8">2.00</OddsField>
+#       <OddsField active="1" type="x" typeid="9">6.50</OddsField>
+#     </Odds>
+#     <Odds active="1" changed="true" combination="0" freetext="Handicap" id="57" specialoddsvalue="2:0" type="hc" typeid="4">
+#       <OddsField active="1" type="1" typeid="7">1.04</OddsField>
+#       <OddsField active="1" type="2" typeid="8">29.00</OddsField>
+#       <OddsField active="1" type="x" typeid="9">15.00</OddsField>
+#     </Odds>
+#     <Odds active="1" changed="true" combination="0" freetext="Asian total" id="956794" specialoddsvalue="1:0/3.0" subtype="33" type="ftnw" typeid="8">
+#       <OddsField active="1" type="under" typeid="114">1.80</OddsField>
+#       <OddsField active="1" type="over" typeid="115">2.05</OddsField>
+#     </Odds>
+#     <Odds active="1" changed="true" combination="0" freetext="Asian total" id="956791" specialoddsvalue="1:0/3.25" subtype="33" type="ftnw" typeid="8">
+#       <OddsField active="1" type="under" typeid="114">1.57</OddsField>
+#       <OddsField active="1" type="over" typeid="115">2.35</OddsField>
+#     </Odds>
+#     <Odds active="1" changed="true" combination="0" freetext="Asian Handicap" id="4478" specialoddsvalue="1:0/-0.25" subtype="34" type="ft2w" typeid="7">
+#       <OddsField active="1" type="1" typeid="17">2.85</OddsField>
+#       <OddsField active="1" type="2" typeid="18">1.40</OddsField>
+#     </Odds>
+#     <Odds active="1" changed="true" combination="0" freetext="Match Corners" id="3316" specialoddsvalue="6" subtype="2007" type="ftnw" typeid="8">
+#       <OddsField active="1" type="over" typeid="9376">1.44</OddsField>
+#       <OddsField active="1" type="exactly" typeid="9377">6.00</OddsField>
+#       <OddsField active="1" type="under" typeid="9378">4.00</OddsField>
+#     </Odds>
 #   </Match>
-# </BetbalancerLiveOdds>
-
-# <BetbalancerLiveOdds
-#   xmlns="http://www.betbalancer.com/BetbalancerLiveOdds"
-#   status="change"
-#   timestamp="1287056116518">
-#   <Match
-#     active="1"
-#     betstatus="started"
-#     clock_stopped="0"
-#     matchid="1467300"
-#     matchtime="32"
-#     msgnr="31"
-#     remaining_time="8:49"
-#     score="13:10"
-#     setscores="0:0 - 5:5 - 3:5"
-#     status="4q">
-    
-#     <Odds
-#       active="1"
-#       changed="false"
-#       combination="0"
-#       freetext="Asian Handicap"
-#       id="748814"
-#       specialoddsvalue="-3.5"
-#       subtype="34"
-#       type="ft2w"
-#       typeid="7">
-#       <OddsField active="1" type="1">1.75</OddsField>
-#       <OddsField active="1" type="2">1.9</OddsField>
-#     </Odds>
-    
-#     <Odds
-#       active="0"
-#       changed="true"
-#       combination="0"
-#       typeid="5" />
-      
-#     <Odds
-#       active="0"
-#       changed="false"
-#       combination="0"
-#       id="748888"
-#       specialoddsvalue="0.5"
-#       subtype="54"
-#       type="ft2w"
-#       typeid="7" />
-      
-#     <Odds
-#       active="1"
-#       changed="true"
-#       combination="0"
-#       freetext="including overtime"
-#       id="748867"
-#       specialoddsvalue="-4.5"
-#       subtype="38"
-#       type="ft2w"
-#       typeid="7">
-#       <OddsField active="1" type="1">1.85</OddsField>
-#       <OddsField active="1" type="2">1.8</OddsField>
-#     </Odds>
-    
-#   </Match>
-# </BetbalancerLiveOdds>
-
-#<BetbalancerLiveOdds
-#   xmlns="http://www.betbalancer.com/BetbalancerLiveOdds"
-#   status="change"
-#   timestamp="1413846115107">
-#   <Match
-#     active="1"
-#     betstatus="started"
-#     earlybetstatus="stopped"
-#     matchid="5650450"
-#     matchtime="1"
-#     matchtime_extended="0:00"
-#     msgnr="6"
-#     score="0:0"
-#     setscores="0:0"
-#     status="1p">
-#     </Match>
-# </BetbalancerLiveOdds>
-# 
-#<BetbalancerLiveOdds
-#   xmlns="http://www.betbalancer.com/BetbalancerLiveOdds"
-#   status="change"
-#   timestamp="1413846115107">
-#   <Match
-#     active="1"
-#     betstatus="started"
-#     earlybetstatus="stopped"
-#     matchid="5650450"
-#     matchtime="1"
-#     msgnr="6"
-#     score="0:0"
-#     setscores="0:0"
-#     status="1p">
-#     </Match>
-# </BetbalancerLiveOdds>
-# 
-#<BetbalancerLiveOdds
-#   xmlns="http://www.betbalancer.com/BetbalancerLiveOdds"
-#   status="change"
-#   timestamp="1414364604992">
-#   <Match
-#     active="1"
-#     betstatus="started"
-#     matchid="5867680"
-#     matchtime="1"
-#     msgnr="5"
-#     score="0:0"
-#     setscores="0:0"
-#     status="1p">
-#     </Match>
 # </BetbalancerLiveOdds>
