@@ -8,6 +8,7 @@
 :pidfile: ./tmp/pids/sidekiq.pid
 :concurrency: 100
 :queues:
+  - live_feed
   - critical
   - high
   - default

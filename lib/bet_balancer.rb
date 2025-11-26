@@ -141,4 +141,22 @@ class BetBalancer
     return status
     
   end
+
+  def book_match(event_id)
+    params = @default_params.merge({
+      eventId: event_id,
+      stake: stake,
+      betType: bet_type
+    })
+
+    response =
+      @client.get do |req|
+        req.url "/export/bookMatch"
+        req.headers["Content-Type"] = "application/xml"
+        req.params = params
+      end
+    status = response.status
+    data = Nokogiri.XML(response.body)
+    return status, data
+  end
 end
