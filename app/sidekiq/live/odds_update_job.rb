@@ -35,28 +35,31 @@ class Live::OddsUpdateJob
       match.xpath("Odds").each do |odds_node|
         outcome = odds_node['freetext']
         specifier = odds_node['specialoddsvalue']
-        ext_market_id = odds_node['typeid'].to_i
+        market_identifier = odds_node['typeid'].to_i
         new_odds = {}
 
         odds_node.xpath("OddsField").each do |odds_field|
           outcome = odds_field['type']
           outcome_id = odds_field['typeid'].to_i
           odd_value = odds_field.text.to_f
-          new_odds[outcome] = { "odd_value" => odd_value, "outcome_id" => outcome_id , specifier: specifier }
+          new_odds[outcome] = { "odd_value" => odd_value, "outcome_id" => outcome_id, "specifier" => specifier }
         end
 
-        market = fixture.live_markets.find_by(ext_market_id: ext_market_id)
+        # Skip if no odds fields (empty market)
+        next if new_odds.empty?
+
+        market = fixture.live_markets.find_by(market_identifier: market_identifier, specifier: specifier)
         if market
-          merged_odds = market.odds.deep_merge(new_odds)
+          merged_odds = (market.odds || {}).deep_merge(new_odds)
           unless market.update(odds: merged_odds, status: betstatus)
             Rails.logger.error("Failed to update odds for market #{market.id} with odds #{new_odds}: #{market.errors.full_messages.join(', ')}")
           end
 
         else
           # create new market
-          market = fixture.live_markets.build(ext_market_id: ext_market_id, odds: new_odds, specifier: specifier, status: betstatus)
+          market = fixture.live_markets.build(market_identifier: market_identifier, odds: new_odds, specifier: specifier, status: betstatus)
           unless market.save
-            Rails.logger.error("Failed to create market for fixture #{fixture.id} with odds #{new_odds}: #{market.errors.full_messages.join(', ')}")
+            Rails.logger.error("Failed to create market for fixture #{fixture.id} with market_identifier #{market_identifier}, specifier #{specifier}, odds #{new_odds}: #{market.errors.full_messages.join(', ')}")
           end
         end
       end
