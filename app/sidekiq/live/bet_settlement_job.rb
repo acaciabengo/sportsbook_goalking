@@ -46,7 +46,7 @@ class Live::BetSettlementJob
 
         # settle all the bets associated with this outcome
         # close settled bets
-        CloseSettledBetsWorker.perform_async(fixture.id, market.id, results)
+        # CloseSettledBetsWorker.perform_async(fixture.id, market.id, results)
       end
     end
     # Clear parsed document from memory

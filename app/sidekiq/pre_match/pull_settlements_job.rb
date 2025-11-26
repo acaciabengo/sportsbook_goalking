@@ -49,7 +49,7 @@ class PreMatch::PullSettlementsJob
           # puts "Settled market #{market.id} for fixture #{fixture.id}"
 
           # close settled bets
-          CloseSettledBetsWorker.perform_async(fixture.id, market.id, results)
+          # CloseSettledBetsWorker.perform_async(fixture.id, market.id, results)
         end
       end
   end
