@@ -6,12 +6,19 @@ class Live::OddsUpdateJob
     # Parse XML string to Nokogiri document
     doc = Nokogiri.XML(xml_string) { |config| config.strict.nonet }
     doc.xpath("//Match").each do |match|
-      match_id = match["matchid"].to_i
+      match_id = match["matchid"]
       score = match["score"]
 
       # find the fixture
       fixture = Fixture.find_by(event_id: match_id)
-      next unless fixture
+      if fixture.nil?
+        Rails.logger.error("Fixture with event_id #{match_id} not found.")
+        puts "Fixture with event_id #{match_id} not found."  
+        next
+      else
+        puts "Updating fixture #{fixture.id} for event_id #{match_id}."
+        Rails.logger.info("Updating fixture #{fixture.id} for event_id #{match_id}.")
+      end
 
       update_attributes = {}
 
