@@ -26,6 +26,6 @@ pin "@popperjs/core", to: "https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/di
 pin "bootstrap", to: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js", preload: true
 
 pin "echarts", to: "echarts/dist/echarts.js"
-pin "screenfull", to: "screenfull/dist/screenfull.js"
+pin "screenfull", to: "screenfull/index.js"
 
 pin "jquery", to: "https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js", preload: true

@@ -6,12 +6,13 @@ class Live::BetStartJob
     # Parse XML string to Nokogiri document
     doc = Nokogiri.XML(xml_string) { |config| config.strict.nonet }
     doc.xpath("//Match").each do |match|
-      bet_status = match["betstatus"]
+      # bet_status = match["betstatus"]
       match_id = match["matchid"].to_i
 
-      # find the fixture and update its status
+      # find the fixture and activate all markets
       fixture = Fixture.find_by(event_id: match_id)
-      fixture.update(status: 'active', match_status: "not_started") if fixture
+      suspended_markets = fixture.live_markets.where(status: 'suspended')
+      suspended_markets.update_all(status: 'active') 
     end
     # Clear parsed document from memory
     doc = nil

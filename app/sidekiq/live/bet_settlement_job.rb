@@ -6,7 +6,7 @@ class Live::BetSettlementJob
     # Parse XML string to Nokogiri document
     doc = Nokogiri.XML(xml_string) { |config| config.strict.nonet }
     doc.xpath("//Match").each do |match|
-      bet_status = match["betstatus"]
+      # bet_status = match["betstatus"]
       match_id = match["matchid"].to_i
 
       # find the fixture
@@ -25,7 +25,7 @@ class Live::BetSettlementJob
       fixture.update(update_attrs) if update_attrs.any?
 
       match.xpath("Odds").each do |odds_node|
-        market_name = odds_node['freetext']
+        # market_name = odds_node['freetext']
         specifier = odds_node['specialoddsvalue']
         ext_market_id = odds_node['typeid'].to_i
 
