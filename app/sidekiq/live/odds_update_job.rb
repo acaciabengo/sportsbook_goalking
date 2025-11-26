@@ -13,10 +13,24 @@ class Live::OddsUpdateJob
       fixture = Fixture.find_by(event_id: match_id)
       next unless fixture
 
-      score = match["score"]
+      update_attributes = {}
+
       if score.present?
-        fixture.update(home_score: score.split(':')[0].to_i, away_score: score.split(':')[1].to_i)
+        home_score, away_score = score.split(':').map(&:to_i)
+        update_attributes[:home_score] = home_score
+        update_attributes[:away_score] = away_score
       end
+
+      match_status = match["active"] == "1" ? "live" : "finished"
+      update_attributes[:match_status] = match_status
+
+      betstatus = match["betstatus"] == "started" ? "in_play" : "suspended"
+    
+      # upate the match
+      unless fixture.update(update_attributes)
+        Rails.logger.error("Failed to update fixture #{fixture.id} with attributes #{update_attributes}: #{fixture.errors.full_messages.join(', ')}")
+      end
+      
 
       match.xpath("Odds").each do |odds_node|
         outcome = odds_node['freetext']
@@ -34,13 +48,13 @@ class Live::OddsUpdateJob
         market = fixture.live_markets.find_by(ext_market_id: ext_market_id)
         if market
           merged_odds = market.odds.deep_merge(new_odds)
-          unless market.update(odds: merged_odds)
+          unless market.update(odds: merged_odds, status: betstatus)
             Rails.logger.error("Failed to update odds for market #{market.id} with odds #{new_odds}: #{market.errors.full_messages.join(', ')}")
           end
 
         else
           # create new market
-          market = fixture.live_markets.build(ext_market_id: ext_market_id, odds: new_odds, status: 'active', specifier: specifier)
+          market = fixture.live_markets.build(ext_market_id: ext_market_id, odds: new_odds, specifier: specifier, status: betstatus)
           unless market.save
             Rails.logger.error("Failed to create market for fixture #{fixture.id} with odds #{new_odds}: #{market.errors.full_messages.join(', ')}")
           end
