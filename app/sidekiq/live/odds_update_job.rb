@@ -8,6 +8,8 @@ class Live::OddsUpdateJob
 
     # Parse XML string to Nokogiri document
     doc = Nokogiri.XML(xml_string) { |config| config.strict.nonet }
+    # remove all namespaces for easier xpath querying
+    doc.remove_namespaces!
     doc.xpath("//Match").each do |match|
       match_id = match["matchid"]
       score = match["score"]

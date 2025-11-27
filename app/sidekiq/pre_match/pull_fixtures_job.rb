@@ -19,6 +19,7 @@ class PreMatch::PullFixturesJob
 
       ACCEPTED_SPORTS.each do |sport_id|
         status, fixtures_data = bet_balancer.get_matches(sport_id: sport_id, date_from: from, date_to: to)
+        fixtures_data.remove_namespaces!
 
         if status != 200
           Rails.logger.error("Failed to fetch fixtures data: HTTP #{status}")

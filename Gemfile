@@ -145,3 +145,8 @@ gem "cssbundling-rails", "= 1.4.1"
 gem 'memory_profiler'
 gem 'derailed_benchmarks', require: false
 
+gem 'jsonapi-serializer'
+gem 'devise-jwt'
+# CORS
+gem 'rack-cors'
+

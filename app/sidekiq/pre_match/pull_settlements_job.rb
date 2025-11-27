@@ -24,6 +24,8 @@ class PreMatch::PullSettlementsJob
             next
           end
 
+          settlement_data.remove_namespaces!
+
           # puts "settlements data: #{settlement_data.to_xml}"
           results = {}
           settlement_data

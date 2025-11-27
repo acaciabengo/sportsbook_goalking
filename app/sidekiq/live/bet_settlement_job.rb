@@ -5,6 +5,7 @@ class Live::BetSettlementJob
   def perform(xml_string)
     # Parse XML string to Nokogiri document
     doc = Nokogiri.XML(xml_string) { |config| config.strict.nonet }
+    doc.remove_namespaces!
     doc.xpath("//Match").each do |match|
       # bet_status = match["betstatus"]
       match_id = match["matchid"].to_i

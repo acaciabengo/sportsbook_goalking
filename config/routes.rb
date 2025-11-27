@@ -7,6 +7,10 @@ Rails.application.routes.draw do
   match "check_bonus" => "line_bets#check_bonus", :via => [:get]
   namespace :api do
     namespace :v1 do
+      get "live_match/index"
+      get "live_match/show"
+      get "pre_match/index"
+      get "pre_match/show"
       match "check_user" => "current_user#check_current_user", :via => [:get]
       match "verification" => "current_user#user_verification", :via => [:get]
       match "home" => "home#index", :via => [:get]

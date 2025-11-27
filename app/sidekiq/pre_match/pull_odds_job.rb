@@ -13,6 +13,7 @@ class PreMatch::PullOddsJob
         fixtures.each do |fixture|
           status, odds_data =
             bet_balancer.get_matches(match_id: fixture.event_id)
+          odds_data.remove_namespaces!
 
           if status != 200
             Rails.logger.error(
