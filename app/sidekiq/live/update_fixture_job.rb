@@ -3,6 +3,13 @@ class Live::UpdateFixtureJob
   sidekiq_options queue: :critical, retry: 1
 
   def perform(doc)
+    # print out the doc and check its type
+    Rails.logger.info("Document class: #{doc.class}")
+    puts "Document class: #{doc.class}"
+    Rails.logger.info("Document content: #{doc}")
+    Rails.logger.info("Received XML document: #{doc.to_xml}")
+    puts "Received XML document: #{doc.to_xml}"
+
     doc.xpath("//Match").each do |match|
       match_id = match["matchid"].to_i
       match_status = match["status"]
