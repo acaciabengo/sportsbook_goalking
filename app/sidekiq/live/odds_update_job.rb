@@ -3,6 +3,9 @@ class Live::OddsUpdateJob
   sidekiq_options queue: :critical, retry: 1
 
   def perform(xml_string)
+    # print out the XML string for debugging
+    puts "Live::OddsUpdateJob: Received XML string: #{xml_string}"
+
     # Parse XML string to Nokogiri document
     doc = Nokogiri.XML(xml_string) { |config| config.strict.nonet }
     doc.xpath("//Match").each do |match|
