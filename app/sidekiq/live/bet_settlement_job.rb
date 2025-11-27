@@ -42,7 +42,7 @@ class Live::BetSettlementJob
         market = fixture.live_markets.find_by(market_identifier: ext_market_id)
         existing_results = market.market_results || {}
         merged_results = existing_results.deep_merge(results)
-        unless market.update(market_results: merged_results, status: 'settled')
+        unless market.update(results: merged_results, status: 'settled')
           Rails.logger.error("Failed to update market results for market #{market.id} with results #{results}: #{market.errors.full_messages.join(', ')}")
         end
 
