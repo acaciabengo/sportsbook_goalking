@@ -44,7 +44,7 @@ class PreMatch::PullSettlementsJob
               }
             end
 
-          existing_results = market.results.present? ? JSON.parse(market.results) : {}
+          existing_results = market.results ||  {}
           existing_results = existing_results.deep_transform_keys(&:to_s)
           merged_results = existing_results.deep_merge(results)
           market.update(results: merged_results, status: "settled")

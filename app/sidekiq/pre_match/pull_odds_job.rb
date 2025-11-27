@@ -64,7 +64,7 @@ class PreMatch::PullOddsJob
 
               if pre_market
                 # Pre-market exists - merge and update
-                existing_odds = JSON.parse(pre_market.odds) || {}
+                existing_odds = pre_market.odds || {}
                 existing_odds = existing_odds.deep_transform_keys(&:to_s)
 
                 # Deep merge new odds into existing odds
