@@ -80,7 +80,7 @@ class Live::OddsUpdateJob
           live_market = LiveMarket.new(
             fixture_id: fixture.id,
             market_identifier: ext_market_id,
-            odds: new_odds,
+            odds: new_odds.to_json,
             specifier: specifier,
             status: betstatus
           )
