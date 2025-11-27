@@ -49,3 +49,4 @@
 
 // import echarts and screenfull for admin dashboard charts
 //= link echarts/dist/echarts.js
+//= link screenfull/index.js
