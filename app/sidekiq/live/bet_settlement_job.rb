@@ -40,6 +40,9 @@ class Live::BetSettlementJob
 
         
         market = fixture.live_markets.find_by(market_identifier: ext_market_id)
+
+        next if market.nil?
+        
         existing_results = market.results || {}
         merged_results = existing_results.deep_merge(results)
         unless market.update(results: merged_results, status: 'settled')
