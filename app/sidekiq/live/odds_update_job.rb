@@ -65,7 +65,7 @@ class Live::OddsUpdateJob
         next if new_odds.empty?
 
         # market = fixture.live_markets.find_by(market_identifier: ext_market_id, specifier: specifier)
-        live_market = LiveMarket.find_by(fixture_id: fixture.id, market_identifier: ext_market_id)
+        live_market = LiveMarket.find_by(fixture_id: fixture.id, market_identifier: ext_market_id, specifier: specifier)
         if live_market
           existing_odds = JSON.parse(live_market.odds || '{}')
           merged_odds = existing_odds.deep_merge(new_odds)
