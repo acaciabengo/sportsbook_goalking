@@ -71,7 +71,7 @@ class PreMatch::PullOddsJob
                 merged_odds = existing_odds.deep_merge(new_odds)
 
                 unless pre_market.update(
-                         odds: merged_odds.to_json,
+                         odds: merged_odds,
                          status: "active"
                        )
                   Rails.logger.error(
@@ -84,7 +84,7 @@ class PreMatch::PullOddsJob
                   PreMarket.create(
                     fixture_id: fixture.id,
                     market_identifier: ext_market_id,
-                    odds: new_odds.to_json,
+                    odds: new_odds,
                     status: "active"
                   )
 
@@ -178,36 +178,8 @@ end
 #     </Card>
 #   </Cards>
 # </Match>
-# # # extract the odds
-# odds = {}
-# category
-#   .xpath("Match/MatchOdds/Bet/Odds")
-#   .each do |odd|
-#     outcome = odd["OutCome"]
-#     outcome_id = odd["OutcomeID"].to_i
-#     value = odd.content.to_f
-#     odds[outcome] = {
-#       value: value,
-#       outcome_id: outcome_id,
-#       specifier: odd["SpecialBetValue "]
-#     }
-#   end
 
-# ext_market_id = odd.parent["OddsType"].to_i
 
-# # Create pre-market for the fixture if not exists
-# pre_market =
-#   PreMarket.new(
-#     fixture_id: fixture.id,
-#     market_identifier: ext_market_id,
-#     odds: odds.to_json,
-#     status: "active"
-#   )
-
-# if !pre_market.save
-#   Rails.logger.error "Failed to save pre-market for fixture #{event_id}, market #{ext_market_id}: #{pre_market.errors.full_messages.join(", ")}"
-# end
-# end
 # 
 # <Sport BetbalancerSportID="1">
 #   <Texts>
