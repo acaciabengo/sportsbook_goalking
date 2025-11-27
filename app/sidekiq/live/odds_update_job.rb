@@ -67,7 +67,7 @@ class Live::OddsUpdateJob
         # market = fixture.live_markets.find_by(market_identifier: ext_market_id, specifier: specifier)
         live_market = LiveMarket.find_by(fixture_id: fixture.id, market_identifier: ext_market_id, specifier: specifier)
         if live_market
-          existing_odds = JSON.parse(live_market.odds || '{}')
+          existing_odds = live_market.odds || {}
           merged_odds = existing_odds.deep_merge(new_odds)
           unless live_market.update(odds: merged_odds, status: betstatus)
             Rails.logger.error("Failed to update odds for market #{live_market.id} with odds #{new_odds}: #{live_market.errors.full_messages.join(', ')}")
@@ -80,7 +80,7 @@ class Live::OddsUpdateJob
           live_market = LiveMarket.new(
             fixture_id: fixture.id,
             market_identifier: ext_market_id,
-            odds: new_odds.to_json,
+            odds: new_odds,
             specifier: specifier,
             status: betstatus
           )

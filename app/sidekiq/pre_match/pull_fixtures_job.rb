@@ -139,7 +139,7 @@ class PreMatch::PullFixturesJob
       PreMarket.new(
         fixture_id: fixture_id,
         market_identifier: ext_market_id,
-        odds: odds_data&.transform_keys(&:to_s).to_json,
+        odds: odds_data&.transform_keys(&:to_s),
         status: "active"
       )
 
