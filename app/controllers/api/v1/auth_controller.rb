@@ -1,4 +1,4 @@
-class Api::V1::AuthController < BaseController
+class Api::V1::AuthController < Api::V1::BaseController
   def login
     phone_number = params[:phone_number]
     password = params[:password]
