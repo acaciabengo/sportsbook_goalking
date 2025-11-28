@@ -14,11 +14,13 @@ class Api::V1::PreMatchController < Api::V1::BaseController
         f.match_status, 
         f.status AS fixture_status,
         -- Sport Fields
-        f.sport_id,
-        s.name AS sport_name, 
+        s.id AS sport_id,
+        s.ext_sport_id,
+        s.name AS sports_name, 
         -- Tournament Fields
         t.name AS tournament_name,
         f.ext_tournament_id,
+        t.id AS tournament_id,
         -- Category Fields 
         f.ext_category_id,
         c.id AS category_id,
@@ -63,14 +65,17 @@ class Api::V1::PreMatchController < Api::V1::BaseController
           fixture_status: record["fixture_status"],
           sport: {
             id: record["sport_id"],
-            name: record["sport_name"]
+            ext_sport_id: record["ext_sport_id"],
+            name: record["sports_name"]
           },
           tournament: {
             id: record["tournament_id"],
+            ext_tournament_id: record["ext_tournament_id"],
             name: record["tournament_name"]
           },
           category: {
             id: record["category_id"],
+            ext_category_id: record["ext_category_id"],
             name: record["category_name"]
           },
           markets: {
@@ -114,19 +119,22 @@ class Api::V1::PreMatchController < Api::V1::BaseController
         f.match_status, 
         f.status AS fixture_status,
         -- Sport Fields
-        f.sport_id,
-        s.name AS sport_name, 
+        s.id AS sport_id,
+        s.name AS sports_name, 
+        s.ext_sport_id,
         -- Tournament Fields
         t.name AS tournament_name,
-        f.ext_tournament_id AS tournament_id,
+        t.ext_tournament_id,
+        t.id AS tournament_id,
         -- Category Fields 
         c.id AS category_id,
         c.name AS category_name,
+        c.ext_category_id,
         am.markets AS markets
       FROM fixtures f      
       LEFT JOIN sports s ON f.sport_id::integer = s.ext_sport_id
-      LEFT JOIN tournaments t ON f.ext_tournament_id = t.id 
-      LEFT JOIN categories c ON t.category_id = c.id
+      LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
+      LEFT JOIN categories c ON c.ext_category_id = f.ext_category_id
       LEFT JOIN aggregated_markets am ON am.fixture_id = f.id
       WHERE f.match_status = 'not_started' 
         AND f.status = 'active' 
@@ -153,16 +161,19 @@ class Api::V1::PreMatchController < Api::V1::BaseController
         match_status: record["match_status"],
         fixture_status: record["fixture_status"],
         sport: {
-          sport_id: record["sport_id"],
-          sport_name: record["sport_name"]
+          id: record["sport_id"],
+          ext_sport_id: record["ext_sport_id"],
+          name: record["sports_name"]
         },
         tournament: {
-          tournament_id: record["tournament_id"],
-          tournament_name: record["tournament_name"]
+          id: record["tournament_id"],
+          ext_tournament_id: record["ext_tournament_id"],
+          name: record["tournament_name"]
         },
         category: {
-          category_id: record["category_id"],
-          category_name: record["category_name"]
+          id: record["category_id"],
+          ext_category_id: record["ext_category_id"],
+          name: record["category_name"]
         },
         markets: record["markets"] ? JSON.parse(record["markets"]) : []
       }
