@@ -9,5 +9,5 @@ Fabricator(:fixture) do
   part_one_name { |attrs| "Team A #{attrs[:part_one_id]}" }
   part_two_id { sequence(:part_two_id) { |i| 10_000 + i } }
   part_two_name { |attrs| "Team B #{attrs[:part_two_id]}" }
-  fixture_status { "not_started" }
+  match_status { "not_started" }
 end

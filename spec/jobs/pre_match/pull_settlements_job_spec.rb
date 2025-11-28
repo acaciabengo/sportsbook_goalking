@@ -66,7 +66,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
     XML
 
   let!(:fixture) do
-    Fabricate(:fixture, event_id: 109_379, fixture_status: "finished")
+    Fabricate(:fixture, event_id: 109_379, match_status: "finished")
   end
 
   let!(:pre_market) do
@@ -208,7 +208,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
     end
 
     context "when fixture is not finished" do
-      before { fixture.update(fixture_status: "not_started") }
+      before { fixture.update(match_status: "not_started") }
 
       it "does not process the market" do
         expect(bet_balancer).not_to receive(:get_matches)
@@ -227,7 +227,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
 
     context "when processing multiple markets in batches" do
       let!(:fixture2) do
-        Fabricate(:fixture, event_id: 109_380, fixture_status: "finished")
+        Fabricate(:fixture, event_id: 109_380, match_status: "finished")
       end
 
       let!(:pre_market2) do
@@ -475,7 +475,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
             Fabricate(
               :fixture,
               event_id: 200_000 + i,
-              fixture_status: "finished"
+              match_status: "finished"
             )
           Fabricate(
             :pre_market,

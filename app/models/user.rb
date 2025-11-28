@@ -36,7 +36,7 @@ class User < ApplicationRecord
   validates :phone_number, format: { with: /\A(256)\d{9}\z/ }
   validates :first_name, presence: true
   validates :last_name, presence: true
-  validates :agreement, acceptance: { accept: true }
+  # validates :agreement, acceptance: { accept: true }
   # validate :password_complexity
   #
   def self.ransackable_attributes(auth_object = nil)

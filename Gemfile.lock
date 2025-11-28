@@ -400,7 +400,9 @@ GEM
     openssl (3.3.0)
     orm_adapter (0.5.0)
     ostruct (0.6.3)
-    pagy (3.11.0)
+    pagy (43.1.8)
+      json
+      yaml
     pg (1.6.1-aarch64-linux)
     pg (1.6.1-arm64-darwin)
     pg_search (2.3.7)
@@ -635,6 +637,7 @@ GEM
     will_paginate (4.0.1)
     xpath (3.2.0)
       nokogiri (~> 1.8)
+    yaml (0.4.0)
     zeitwerk (2.7.3)
 
 PLATFORMS
@@ -694,7 +697,7 @@ DEPENDENCIES
   momentjs-rails (>= 2.9.0)
   newrelic_rpm
   openssl
-  pagy (~> 3.5)
+  pagy (~> 43.1)
   pg
   pg_search
   prettier

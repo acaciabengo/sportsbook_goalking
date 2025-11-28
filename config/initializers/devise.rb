@@ -305,7 +305,12 @@ Devise.setup do |config|
 		Devise::UnlocksController.layout "application"
 		Devise::PasswordsController.layout "application"
 	end
+	
 	config.warden do |manager|
 		manager.failure_app = MyFailureApp
 	end
+
+	config.jwt do |jwt|
+    jwt.secret = ENV['DEVISE_JWT_SECRET_KEY']
+  end
 end

@@ -76,7 +76,7 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
       sport_id: 1,
       ext_category_id: 10,
       ext_tournament_id: 100,
-      fixture_status: "not_started",
+      match_status: "not_started",
       status: "active"
     )
   end
@@ -146,7 +146,7 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
         expect(odds["1"]["odd"]).to eq(2.15)
         expect(odds["X"]["odd"]).to eq(3.20)
         expect(odds["2"]["odd"]).to eq(3.50)
-        expect(fixture.reload.fixture_status).to eq("finished")
+        expect(fixture.reload.match_status).to eq("finished")
       end
 
       it "keeps the same outcome IDs" do
@@ -175,7 +175,7 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
     context "when pre-market does not exist" do
       before do
         existing_pre_market.destroy
-        fixture.update(fixture_status: "not_started")
+        fixture.update(match_status: "not_started")
       end
 
       it "creates new pre-market" do
@@ -474,7 +474,7 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
         worker.perform
 
         fixture.reload
-        expect(fixture.fixture_status).to eq("cancelled")
+        expect(fixture.match_status).to eq("cancelled")
       end
     end
 
@@ -486,7 +486,7 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
     #       sport_id: 1,
     #       ext_category_id: 10,
     #       ext_tournament_id: 100,
-    #       fixture_status: "not_started"
+    #       match_status: "not_started"
     #     )
     #   end
 
