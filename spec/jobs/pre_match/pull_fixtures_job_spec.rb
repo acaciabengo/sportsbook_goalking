@@ -94,7 +94,7 @@ RSpec.describe PreMatch::PullFixturesJob, type: :worker do
           part_one_name: "1. FC BRNO",
           part_two_id: "371400",
           part_two_name: "FC SLOVACKO",
-          fixture_status: "not_started"
+          match_status: "not_started"
         )
       end
 
@@ -205,7 +205,7 @@ RSpec.describe PreMatch::PullFixturesJob, type: :worker do
         worker.perform
 
         fixture = Fixture.last
-        expect(fixture.fixture_status).to eq("cancelled")
+        expect(fixture.match_status).to eq("cancelled")
         expect(fixture.match_status).to eq("1")
       end
     end

@@ -1,5 +1,5 @@
 module ApplicationHelper
-	include Pagy::Frontend
+	
 
 	def model_error(model, model_attr)
 		result = ""

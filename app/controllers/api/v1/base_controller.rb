@@ -7,7 +7,7 @@ class Api::V1::BaseController < ApplicationController
 
     begin
       # Decode the JWT token
-      decoded_token = JWT.decode(token, Rails.application.credentials.devise_jwt_secret_key!, true, algorithm: 'HS256')
+      decoded_token = JWT.decode(token, ENV['DEVISE_JWT_SECRET_KEY'], true, algorithm: 'HS256')
       payload = decoded_token.first
 
       # Find the user by ID from the payload

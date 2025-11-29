@@ -113,7 +113,7 @@ gem "sneakers"
 gem "jquery-rails"
 gem "jquery-ui-rails"
 gem "momentjs-rails", ">= 2.9.0"
-gem "pagy", "~> 3.5"
+gem 'pagy', '~> 43.1'
 gem "flag-icons-rails"
 gem "browser"
 gem "pg_search"
@@ -149,4 +149,5 @@ gem 'jsonapi-serializer'
 gem 'devise-jwt'
 # CORS
 gem 'rack-cors'
+gem 'devise-jwt'
 
