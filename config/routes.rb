@@ -218,10 +218,10 @@ Rails.application.routes.draw do
           as: :unauthenticated_admins_root
     end
   end
+ 
   #   devise_for :admin_users, ActiveAdmin::Devise.config
   ActiveAdmin.routes(self)
-  #   ActiveAdmin.routes(self)
-
+  
   require "sidekiq/web"
   mount Sidekiq::Web => "/rabbit"
 
