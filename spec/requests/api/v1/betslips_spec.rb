@@ -1,4 +1,5 @@
 require 'rails_helper'
+require 'swagger_helper'
 
 RSpec.describe "Api::V1::Betslips", type: :request do
   let(:user) { Fabricate(:user, balance: 10000.0) }

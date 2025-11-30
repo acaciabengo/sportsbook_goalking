@@ -2,63 +2,108 @@ class PreMatch::PullSettlementsJob
   include Sidekiq::Job
   sidekiq_options queue: :high, retry: 1
 
+  CHANNEL = 'live_feed_commands'
+
   def perform()
-    # Find markets of fixtures that are finished but not yet settled
-    PreMarket
-      .joins(:fixture)
-      .where(fixtures: { match_status: "finished" }, status: "active")
-      .find_in_batches(batch_size: 50)
-      .each do |markets|
-        markets.each do |market|
-          # Logic to settle bets based on fixture results
-          fixture = market.fixture
-          bet_balancer = BetBalancer.new
-          status, settlement_data =
-            bet_balancer.get_matches(
-              match_id: fixture.event_id,
-              want_score: true
-            )
+    # inititalize betbalancer
+    @bet_balancer = BetBalancer.new
 
-          if status != 200 || settlement_data.nil?
-            # puts "Failed to fetch settlement data for fixture #{fixture.id}"
-            next
-          end
+    # =============================================================
+    # Find all fixtures with unsettled pre_markets for fixtures that are finished
+    # =============================================================
 
-          settlement_data.remove_namespaces!
+    # Find fixtures that have unsettled pre_markets    
+    sql = <<-SQL
+      SELECT DISTINCT fixtures.id, fixtures.event_id
+      FROM fixtures
+      JOIN pre_markets ON pre_markets.fixture_id = fixtures.id
+      WHERE fixtures.match_status IN ('finished', 'ended')
+        AND pre_markets.status != 'settled'
+    SQL
 
-          # puts "settlements data: #{settlement_data.to_xml}"
-          results = {}
-          settlement_data
-            .xpath("//Match/BetResult/*")
-            .each do |bet_result|
-              # puts "found bet result: #{bet_result.to_xml}"
-              status = bet_result.name # e.g., "W" or "L"
-              specifier = bet_result["SpecialBetValue"]
-              outcome_id = bet_result["OutComeId"]
-              outcome = bet_result["OutCome"]
-              results[outcome] = {
-                "status" => status,
-                "outcome_id" => outcome_id,
-                "specifier" => specifier,
-                "void_factor" => bet_result["VoidFactor"]
-              }
-            end
+    # Query in batches to avoid memory issues
+    fixtures = ActiveRecord::Base.connection.exec_query(sql).to_a
+    fixtures.each do |fixture|
+      settle_pre_markets_for_fixture(fixture)
+    end
 
-          existing_results = market.results ||  {}
-          existing_results = existing_results.deep_transform_keys(&:to_s)
-          merged_results = existing_results.deep_merge(results)
-          market.update(results: merged_results, status: "settled")
-          # puts "Settled market #{market.id} for fixture #{fixture.id}"
+    # =============================================================
+    # Find all fixtures with unsettled live_markets for fixtures that are finished
+    # =============================================================
 
-          # close settled bets
-          # CloseSettledBetsWorker.perform_async(fixture.id, market.id, results)
-        end
+    sql = <<-SQL
+      SELECT DISTINCT fixtures.id, fixtures.event_id
+      FROM fixtures
+        JOIN live_markets ON live_markets.fixture_id = fixtures.id
+        WHERE fixtures.match_status IN ('finished', 'ended')
+        AND live_markets.status != 'settled'
+    SQL
+
+    fixtures = ActiveRecord::Base.connection.exec_query(sql).to_a
+    settle_live_market(fixtures)
+  end
+
+  def settle_pre_market(fixture)
+    status, settlement_data = @bet_balancer.get_matches(match_id: fixture.event_id, want_score: true)
+
+    if status != 200 || settlement_data.nil?
+      Rails.logger.error("Failed to fetch settlement data for fixture #{fixture['id']}")
+      return
+    end
+
+    settlement_data.remove_namespaces!
+
+    results = {}
+    settlement_data
+      .xpath("//Match/BetResult/*")
+      .each do |bet_result|
+        status = bet_result.name # e.g., "W" or "L"
+        specifier = bet_result["SpecialBetValue"]
+        outcome_id = bet_result["OutComeId"]
+        outcome = bet_result["OutCome"]
+        results[outcome] = {
+          "status" => status,
+          "outcome_id" => outcome_id,
+          "specifier" => specifier,
+          "void_factor" => bet_result["VoidFactor"]
+        }
       end
+
+    existing_results = market.results ||  {}
+    existing_results = existing_results.deep_transform_keys(&:to_s)
+    merged_results = existing_results.deep_merge(results)
+    market.update(results: merged_results, status: "settled")
+    
+    # close settled bets
+    CloseSettledBetsJob.perform_async(fixture.id, market.id, results, '')
+  end
+
+  def settle_live_market(fixtures)
+    fixtures.batch(10) do |fixture_batch|
+      # construct XML request for this batch
+      #  <BookmakerStatus timestamp="0">
+      #   <Match matchid="661373" />
+      # </BookmakerStatus>
+      # 
+      builder = Nokogiri::XML::Builder.new do |xml|
+        xml.BookmakerStatus(timestamp: '0') {
+          fixture_batch.each do |fixture|
+            xml.Match(matchid: fixture["event_id"])
+          end
+        }
+      end
+
+      xml_request = builder.to_xml
+
+      # connect to redis and publish the request
+      redis = Redis.new(url: ENV['REDIS_URL'])
+      redis.publish(CHANNEL, xml_request)
+    end
   end
 end
 
 # <Match BetbalancerMatchID="109379">
-#   <Fixture>
+#   <Fixture">
 #     <Competitors>
 #       <Texts>
 #         <Text Type="1" ID="9373" SUPERID="9243">

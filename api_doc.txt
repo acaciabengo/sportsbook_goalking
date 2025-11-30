@@ -1,0 +1,755 @@
+================================================================================
+                    GOALKING SPORTSBOOK API DOCUMENTATION
+================================================================================
+
+Base URL: http://localhost:3000 (Development)
+          https://api.goalking.com (Production)
+
+Authentication: Bearer Token (JWT)
+Content-Type: application/json
+
+================================================================================
+                          1. AUTHENTICATION API
+================================================================================
+
+--------------------------------------------------------------------------------
+1.1 User Login
+--------------------------------------------------------------------------------
+Endpoint: POST /api/v1/login
+Authentication: Not Required
+
+Description:
+  Authenticates a user and returns a JWT token valid for 24 hours.
+
+Request Body:
+  {
+    "phone_number": "256700000000",
+    "password": "password123"
+  }
+
+Success Response (200 OK):
+  {
+    "token": "eyJhbGciOiJIUzI1NiJ9...",
+    "user": {
+      "id": 1,
+      "phone_number": "256700000000",
+      "balance": 10000.0,
+      "created_at": "2024-01-01T12:00:00.000Z"
+    }
+  }
+
+Error Response (401 Unauthorized):
+  {
+    "error": "Invalid credentials"
+  }
+
+Notes:
+  - Password must match the stored encrypted password
+  - Token expires in 24 hours
+  - Token contains user ID in 'sub' claim
+  - Sensitive fields (password, encrypted_password) are never exposed
+
+--------------------------------------------------------------------------------
+1.2 User Registration
+--------------------------------------------------------------------------------
+Endpoint: POST /api/v1/signup
+Authentication: Not Required
+
+Description:
+  Creates a new user account and returns a JWT token.
+
+Request Body:
+  {
+    "phone_number": "256700000001",
+    "password": "password123",
+    "password_confirmation": "password123",
+    "first_name": "Jane",
+    "last_name": "Doe"
+  }
+
+Success Response (201 Created):
+  {
+    "token": "eyJhbGciOiJIUzI1NiJ9...",
+    "user": {
+      "id": 2,
+      "phone_number": "256700000001",
+      "balance": 0.0,
+      "created_at": "2024-01-01T12:00:00.000Z"
+    }
+  }
+
+Error Response (422 Unprocessable Entity):
+  {
+    "errors": [
+      "Phone number has already been taken",
+      "Password confirmation doesn't match Password",
+      "Password is too short (minimum is 6 characters)"
+    ]
+  }
+
+Validations:
+  - phone_number: Required, must be unique
+  - password: Required, minimum 6 characters
+  - password_confirmation: Required, must match password
+
+================================================================================
+                          2. PRE-MATCH API
+================================================================================
+
+--------------------------------------------------------------------------------
+2.1 List All Pre-Match Fixtures
+--------------------------------------------------------------------------------
+Endpoint: GET /api/v1/pre_match
+Authentication: Required (Bearer Token)
+
+Description:
+  Retrieves paginated list of all upcoming fixtures (not started).
+
+Query Parameters:
+  - page (integer, optional): Page number for pagination (default: 1)
+
+Request Headers:
+  Authorization: Bearer <JWT_TOKEN>
+
+Success Response (200 OK):
+  {
+    "current_page": 1,
+    "total_pages": 5,
+    "total_count": 100,
+    "fixtures": [
+      {
+        "id": 1,
+        "event_id": "sr:match:12345",
+        "home_team": "Arsenal",
+        "away_team": "Chelsea",
+        "match_status": "not_started",
+        "fixture_status": "active",
+        "start_date": "2024-01-15T15:00:00.000Z",
+        "sport": {
+          "id": 1,
+          "name": "Football",
+          "ext_sport_id": 1
+        },
+        "tournament": {
+          "id": 10,
+          "name": "Premier League",
+          "ext_tournament_id": 100
+        },
+        "category": {
+          "id": 5,
+          "name": "England",
+          "ext_category_id": 50
+        },
+        "markets": {
+          "name": "1X2",
+          "market_id": "1",
+          "odds": "{\"1\":2.5,\"X\":3.2,\"2\":2.8}"
+        }
+      }
+    ]
+  }
+
+Error Response (401 Unauthorized):
+  {
+    "error": "Unauthorized"
+  }
+
+Filters Applied:
+  - Only fixtures with match_status = 'not_started'
+  - Only fixtures with status = 'active'
+  - Only fixtures with start_date > NOW()
+  - Only shows market_identifier = 1 (1X2 market)
+
+Sorting:
+  - Fixtures ordered by start_date ASC
+
+Pagination:
+  - Default page size: 20 fixtures per page
+
+--------------------------------------------------------------------------------
+2.2 Get Specific Pre-Match Fixture
+--------------------------------------------------------------------------------
+Endpoint: GET /api/v1/pre_match/:event_id
+Authentication: Required (Bearer Token)
+
+Description:
+  Retrieves details for a specific fixture with all available markets.
+
+Path Parameters:
+  - event_id (string): The event ID of the fixture (e.g., "sr:match:12345")
+
+Request Headers:
+  Authorization: Bearer <JWT_TOKEN>
+
+Success Response (200 OK):
+  [
+    {
+      "id": 1,
+      "event_id": "sr:match:12345",
+      "home_team": "Manchester United",
+      "away_team": "Liverpool",
+      "match_status": "not_started",
+      "fixture_status": "active",
+      "start_date": "2024-01-15T15:00:00.000Z",
+      "sport": {
+        "id": 1,
+        "name": "Football",
+        "ext_sport_id": 1
+      },
+      "tournament": {
+        "id": 10,
+        "name": "Premier League",
+        "ext_tournament_id": 100
+      },
+      "category": {
+        "id": 5,
+        "name": "England",
+        "ext_category_id": 50
+      },
+      "markets": [
+        {
+          "name": "1X2",
+          "market_id": 1,
+          "odds": {
+            "1": 2.1,
+            "X": 3.5,
+            "2": 3.2
+          }
+        },
+        {
+          "name": "Over/Under 2.5",
+          "market_id": 2,
+          "odds": {
+            "over": 1.85,
+            "under": 1.95
+          }
+        }
+      ]
+    }
+  ]
+
+Error Response (404 Not Found):
+  {
+    "error": "Fixture with event_id sr:match:99999 not found or not available."
+  }
+
+Error Response (401 Unauthorized):
+  {
+    "error": "Unauthorized"
+  }
+
+Notes:
+  - Returns all active markets for the fixture
+  - Odds are parsed from JSON to objects
+  - Only returns fixtures that are not_started, active, and in the future
+
+================================================================================
+                          3. LIVE MATCH API
+================================================================================
+
+--------------------------------------------------------------------------------
+3.1 List All Live Fixtures
+--------------------------------------------------------------------------------
+Endpoint: GET /api/v1/live_match
+Authentication: Required (Bearer Token)
+
+Description:
+  Retrieves paginated list of all currently live (in-play) fixtures.
+
+Query Parameters:
+  - page (integer, optional): Page number for pagination (default: 1)
+
+Request Headers:
+  Authorization: Bearer <JWT_TOKEN>
+
+Success Response (200 OK):
+  {
+    "current_page": 1,
+    "total_pages": 3,
+    "total_count": 50,
+    "fixtures": [
+      {
+        "id": 100,
+        "event_id": "sr:match:live1",
+        "home_team": "Bayern Munich",
+        "away_team": "Borussia Dortmund",
+        "match_status": "in_play",
+        "fixture_status": "active",
+        "start_date": "2024-01-15T14:00:00.000Z",
+        "sport": {
+          "id": 1,
+          "name": "Football",
+          "ext_sport_id": 1
+        },
+        "tournament": {
+          "id": 15,
+          "name": "Bundesliga",
+          "ext_tournament_id": 150
+        },
+        "category": {
+          "id": 8,
+          "name": "Germany",
+          "ext_category_id": 80
+        },
+        "markets": {
+          "id": 10,
+          "name": "1X2",
+          "market_id": "1",
+          "odds": "{\"1\":1.95,\"X\":3.8,\"2\":3.5}"
+        }
+      }
+    ]
+  }
+
+Error Response (401 Unauthorized):
+  {
+    "error": "Unauthorized"
+  }
+
+Filters Applied:
+  - Only fixtures with match_status = 'in_play'
+  - Only fixtures with status = 'active'
+  - Only shows market_identifier = '1' (1X2 market)
+
+Sorting:
+  - Fixtures ordered by start_date ASC
+
+Pagination:
+  - Default page size: 20 fixtures per page
+
+--------------------------------------------------------------------------------
+3.2 Get Specific Live Fixture
+--------------------------------------------------------------------------------
+Endpoint: GET /api/v1/live_match/:event_id
+Authentication: Required (Bearer Token)
+
+Description:
+  Retrieves details for a specific live fixture with all available markets.
+
+Path Parameters:
+  - event_id (string): The event ID of the fixture (e.g., "sr:match:12345")
+
+Request Headers:
+  Authorization: Bearer <JWT_TOKEN>
+
+Success Response (200 OK):
+  [
+    {
+      "id": 100,
+      "event_id": "sr:match:12345",
+      "home_team": "Real Madrid",
+      "away_team": "Barcelona",
+      "match_status": "in_play",
+      "fixture_status": "active",
+      "start_date": "2024-01-15T14:00:00.000Z",
+      "sport": {
+        "id": 1,
+        "name": "Football",
+        "ext_sport_id": 1
+      },
+      "tournament": {
+        "id": 12,
+        "name": "La Liga",
+        "ext_tournament_id": 120
+      },
+      "category": {
+        "id": 7,
+        "name": "Spain",
+        "ext_category_id": 70
+      },
+      "markets": [
+        {
+          "name": "1X2",
+          "market_id": 1,
+          "odds": {
+            "1": 2.15,
+            "X": 3.20,
+            "2": 3.50
+          }
+        },
+        {
+          "name": "Over/Under 2.5",
+          "market_id": 2,
+          "odds": {
+            "over": 1.85,
+            "under": 1.95
+          }
+        },
+        {
+          "name": "Both Teams to Score",
+          "market_id": 29,
+          "odds": {
+            "yes": 1.75,
+            "no": 2.05
+          }
+        }
+      ]
+    }
+  ]
+
+Error Response (404 Not Found):
+  {
+    "error": "Fixture with event_id sr:match:99999 not found or not available."
+  }
+
+Error Response (401 Unauthorized):
+  {
+    "error": "Unauthorized"
+  }
+
+Notes:
+  - Returns all active live markets for the fixture
+  - Odds are parsed from JSON to objects
+  - Only returns fixtures that are in_play and active
+  - Live odds may change rapidly during the match
+
+================================================================================
+                          4. BETSLIPS API
+================================================================================
+
+--------------------------------------------------------------------------------
+4.1 List User Betslips
+--------------------------------------------------------------------------------
+Endpoint: GET /api/v1/betslips
+Authentication: Required (Bearer Token)
+
+Description:
+  Retrieves paginated list of authenticated user's betslips.
+
+Query Parameters:
+  - page (integer, optional): Page number for pagination (default: 1)
+
+Request Headers:
+  Authorization: Bearer <JWT_TOKEN>
+
+Success Response (200 OK):
+  {
+    "current_page": 1,
+    "total_pages": 2,
+    "total_count": 25,
+    "betslips": [
+      {
+        "id": 1,
+        "user_id": 1,
+        "stake": 1000.0,
+        "potential_win": 2500.0,
+        "total_odds": 2.5,
+        "status": "pending",
+        "created_at": "2024-01-15T10:00:00.000Z",
+        "bets": [
+          {
+            "id": 1,
+            "fixture_id": 100,
+            "market_id": 1,
+            "odd": 2.5,
+            "description": "Home Win",
+            "outcome": "1",
+            "status": "pending"
+          }
+        ]
+      }
+    ]
+  }
+
+Error Response (401 Unauthorized):
+  {
+    "error": "Unauthorized"
+  }
+
+Pagination:
+  - Default page size: 20 betslips per page
+
+--------------------------------------------------------------------------------
+4.2 Create Betslip
+--------------------------------------------------------------------------------
+Endpoint: POST /api/v1/betslips
+Authentication: Required (Bearer Token)
+
+Description:
+  Creates a new betslip with one or more bets.
+
+Request Headers:
+  Authorization: Bearer <JWT_TOKEN>
+  Content-Type: application/json
+
+Request Body:
+  {
+    "stake": 1000.0,
+    "bets": [
+      {
+        "fixture_id": 100,
+        "market_id": 1,
+        "odd": 2.5,
+        "description": "Home Win",
+        "outcome": "1",
+        "specifier": "",
+        "sport": "Football"
+      },
+      {
+        "fixture_id": 101,
+        "market_id": 18,
+        "odd": 1.85,
+        "description": "Over 2.5",
+        "outcome": "over",
+        "specifier": "total=2.5",
+        "sport": "Football"
+      }
+    ]
+  }
+
+Success Response (201 Created):
+  {
+    "id": 50,
+    "user_id": 1,
+    "stake": 1000.0,
+    "potential_win": 4625.0,
+    "total_odds": 4.625,
+    "status": "pending",
+    "created_at": "2024-01-15T12:00:00.000Z",
+    "bets": [
+      {
+        "id": 100,
+        "fixture_id": 100,
+        "market_id": 1,
+        "odd": 2.5,
+        "description": "Home Win",
+        "outcome": "1",
+        "status": "pending"
+      },
+      {
+        "id": 101,
+        "fixture_id": 101,
+        "market_id": 18,
+        "odd": 1.85,
+        "description": "Over 2.5",
+        "outcome": "over",
+        "status": "pending"
+      }
+    ]
+  }
+
+Error Response (422 Unprocessable Entity):
+  {
+    "errors": [
+      "Stake must be greater than 0",
+      "Insufficient balance",
+      "Bets can't be empty"
+    ]
+  }
+
+Error Response (401 Unauthorized):
+  {
+    "error": "Unauthorized"
+  }
+
+Validations:
+  - stake: Required, must be > 0
+  - bets: Required, must have at least 1 bet
+  - User must have sufficient balance
+  - Fixtures must exist and be active
+  - Odds must be valid
+
+Notes:
+  - Total odds = product of all bet odds
+  - Potential win = stake × total_odds
+  - Stake is deducted from user balance immediately
+  - Betslip can contain single or multiple bets (accumulator)
+
+--------------------------------------------------------------------------------
+4.3 Get Specific Betslip
+--------------------------------------------------------------------------------
+Endpoint: GET /api/v1/betslips/:id
+Authentication: Required (Bearer Token)
+
+Description:
+  Retrieves details for a specific betslip.
+
+Path Parameters:
+  - id (integer): The betslip ID
+
+Request Headers:
+  Authorization: Bearer <JWT_TOKEN>
+
+Success Response (200 OK):
+  {
+    "id": 1,
+    "user_id": 1,
+    "stake": 1000.0,
+    "potential_win": 2500.0,
+    "total_odds": 2.5,
+    "status": "won",
+    "created_at": "2024-01-15T10:00:00.000Z",
+    "settled_at": "2024-01-15T17:00:00.000Z",
+    "bets": [
+      {
+        "id": 1,
+        "fixture_id": 100,
+        "market_id": 1,
+        "odd": 2.5,
+        "description": "Home Win",
+        "outcome": "1",
+        "status": "won",
+        "fixture": {
+          "event_id": "sr:match:12345",
+          "home_team": "Arsenal",
+          "away_team": "Chelsea",
+          "final_score": "2-1"
+        }
+      }
+    ]
+  }
+
+Error Response (404 Not Found):
+  {
+    "error": "Betslip not found"
+  }
+
+Error Response (401 Unauthorized):
+  {
+    "error": "Unauthorized"
+  }
+
+Notes:
+  - Users can only view their own betslips
+  - Status can be: pending, won, lost, void, cancelled
+
+================================================================================
+                          5. COMMON DATA STRUCTURES
+================================================================================
+
+--------------------------------------------------------------------------------
+5.1 Market Types (market_identifier)
+--------------------------------------------------------------------------------
+  1   - 1X2 (Match Winner)
+  10  - Double Chance
+  11  - Half Time/Full Time
+  12  - Draw No Bet
+  14  - Correct Score
+  16  - Asian Handicap
+  18  - Over/Under 2.5
+  21  - Odd/Even
+  26  - Total Goals
+  29  - Both Teams to Score
+  60  - Next Goal
+  65  - Winning Margin
+  77  - Time of Next Goal
+
+--------------------------------------------------------------------------------
+5.2 Match Status
+--------------------------------------------------------------------------------
+  - not_started: Fixture hasn't begun (Pre-match)
+  - in_play: Fixture is currently live
+  - finished: Fixture has ended
+  - postponed: Fixture delayed
+  - cancelled: Fixture called off
+  - abandoned: Fixture stopped before completion
+
+--------------------------------------------------------------------------------
+5.3 Betslip Status
+--------------------------------------------------------------------------------
+  - pending: Waiting for fixture results
+  - won: All bets won, payout processed
+  - lost: At least one bet lost
+  - void: Betslip cancelled (fixture cancelled/void)
+  - cancelled: User cancelled before fixture start
+
+--------------------------------------------------------------------------------
+5.4 Odds Format
+--------------------------------------------------------------------------------
+Decimal odds format is used throughout the API.
+Examples:
+  - 2.50 = 150% return (£100 stake returns £250)
+  - 1.85 = 85% return (£100 stake returns £185)
+  - 10.00 = 900% return (£100 stake returns £1000)
+
+================================================================================
+                          6. ERROR CODES
+================================================================================
+
+200 OK                    - Request successful
+201 Created               - Resource created successfully
+400 Bad Request           - Invalid request format
+401 Unauthorized          - Missing or invalid authentication token
+403 Forbidden             - User doesn't have permission
+404 Not Found             - Resource doesn't exist
+422 Unprocessable Entity  - Validation errors
+500 Internal Server Error - Server error
+
+================================================================================
+                          7. AUTHENTICATION
+================================================================================
+
+--------------------------------------------------------------------------------
+7.1 JWT Token Format
+--------------------------------------------------------------------------------
+Header:
+  Authorization: Bearer <JWT_TOKEN>
+
+Token Structure:
+  {
+    "sub": 1,                    // User ID
+    "exp": 1705334400,           // Expiration timestamp
+    "iat": 1705248000            // Issued at timestamp
+  }
+
+Token Validity:
+  - Tokens expire after 24 hours
+  - No refresh token mechanism (user must re-login)
+  - Algorithm: HS256
+  - Secret: Stored in ENV['DEVISE_JWT_SECRET_KEY']
+
+--------------------------------------------------------------------------------
+7.2 Protected Endpoints
+--------------------------------------------------------------------------------
+All endpoints except /api/v1/login and /api/v1/signup require authentication.
+
+To access protected endpoints:
+1. Login or signup to get JWT token
+2. Include token in Authorization header
+3. Token must be valid (not expired)
+
+Example:
+  curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9..." \
+       http://localhost:3000/api/v1/pre_match
+
+================================================================================
+                          8. RATE LIMITING
+================================================================================
+
+Currently no rate limiting is implemented.
+
+Recommended limits for production:
+  - Authentication endpoints: 5 requests per minute
+  - Data endpoints: 60 requests per minute
+  - Betslip creation: 10 requests per minute
+
+================================================================================
+                          9. BEST PRACTICES
+================================================================================
+
+1. Always include Content-Type: application/json header
+2. Handle token expiration gracefully (re-authenticate)
+3. Cache fixture and odds data appropriately
+4. Validate odds on client side before placing bets
+5. Check fixture status before showing betting options
+6. Use event_id (not numeric id) for fixture lookups
+7. Implement exponential backoff for failed requests
+8. Store tokens securely (never in localStorage)
+9. Always verify SSL certificates in production
+
+================================================================================
+                          10. SUPPORT
+================================================================================
+
+For API support and questions:
+  Email: api-support@goalking.com
+  Documentation: https://docs.goalking.com
+  Status Page: https://status.goalking.com
+
+================================================================================
+                      END OF API DOCUMENTATION
+================================================================================
+
+Version: 1.0
+Last Updated: 2024-01-15
+Generated by: GitHub Copilot

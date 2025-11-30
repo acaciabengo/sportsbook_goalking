@@ -4,7 +4,7 @@ class Live::UpdateFixtureJob
 
   def perform(xml_string)
     # print out the XML string for debugging
-    puts "Live::UpdateFixtureJob: Received XML string: #{xml_string}"
+    # puts "Live::UpdateFixtureJob: Received XML string: #{xml_string}"
 
     doc = Nokogiri.XML(xml_string) { |config| config.strict.nonet }
     doc.remove_namespaces!

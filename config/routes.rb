@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  mount Rswag::Ui::Engine => '/api-docs'
+  mount Rswag::Api::Engine => '/api-docs'
   devise_for :admin_users, ActiveAdmin::Devise.config
   root to: "backend/admin_landing#index"
   
@@ -7,6 +9,9 @@ Rails.application.routes.draw do
   match "check_bonus" => "line_bets#check_bonus", :via => [:get]
   namespace :api do
     namespace :v1 do
+      get "transactions/index"
+      get "transactions/deposit"
+      get "transactions/withdraw"
       match "/betslips" => "betslips#index", :via => [:get]
       match "/betslips" => "betslips#create", :via => [:post]
       match "/betslips/:id" => "betslips#show", :via => [:get]

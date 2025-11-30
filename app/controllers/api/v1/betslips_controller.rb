@@ -1,5 +1,5 @@
 class Api::V1::BetslipsController < Api::V1::BaseController
-    before_action :auth_user
+	before_action :auth_user
 
 	def index
 		betslips = @current_user.bet_slips.order(created_at: :desc)

@@ -4,7 +4,7 @@ class Live::OddsUpdateJob
 
   def perform(xml_string)
     # print out the XML string for debugging
-    puts "Live::OddsUpdateJob: Received XML string: #{xml_string}"
+    # puts "Live::OddsUpdateJob: Received XML string: #{xml_string}"
 
     # Parse XML string to Nokogiri document
     doc = Nokogiri.XML(xml_string) { |config| config.strict.nonet }
@@ -18,10 +18,10 @@ class Live::OddsUpdateJob
       fixture = Fixture.find_by(event_id: match_id)
       if fixture.nil?
         Rails.logger.error("Fixture with event_id #{match_id} not found.")
-        puts "Fixture with event_id #{match_id} not found."  
+        # puts "Fixture with event_id #{match_id} not found."  
         next
       else
-        puts "Updating fixture #{fixture.id} for event_id #{match_id}."
+        # puts "Updating fixture #{fixture.id} for event_id #{match_id}."
         Rails.logger.info("Updating fixture #{fixture.id} for event_id #{match_id}.")
       end
 
@@ -41,7 +41,7 @@ class Live::OddsUpdateJob
       # upate the match
       unless fixture.update(update_attributes)
         Rails.logger.error("Failed to update fixture #{fixture.id} with attributes #{update_attributes}: #{fixture.errors.full_messages.join(', ')}")
-        puts "Failed to update fixture #{fixture.id} with attributes #{update_attributes}: #{fixture.errors.full_messages.join(', ')}"  
+        # puts "Failed to update fixture #{fixture.id} with attributes #{update_attributes}: #{fixture.errors.full_messages.join(', ')}"  
       end
       
 
@@ -71,7 +71,7 @@ class Live::OddsUpdateJob
           merged_odds = existing_odds.deep_merge(new_odds)
           unless live_market.update(odds: merged_odds, status: betstatus)
             Rails.logger.error("Failed to update odds for market #{live_market.id} with odds #{new_odds}: #{live_market.errors.full_messages.join(', ')}")
-            puts "Failed to update odds for market #{live_market.id} with odds #{new_odds}: #{live_market.errors.full_messages.join(', ')}"
+            # puts "Failed to update odds for market #{live_market.id} with odds #{new_odds}: #{live_market.errors.full_messages.join(', ')}"
           end
 
         else
@@ -86,7 +86,7 @@ class Live::OddsUpdateJob
           )
           unless live_market.save
             Rails.logger.error("Failed to create market for fixture #{fixture.id} with market_identifier #{ext_market_id}, specifier #{specifier}, odds #{new_odds}: #{live_market.errors.full_messages.join(', ')}")
-            puts "Failed to create market for fixture #{fixture.id} with market_identifier #{ext_market_id}, specifier #{specifier}, odds #{new_odds}: #{live_market.errors.full_messages.join(', ')}"
+            # puts "Failed to create market for fixture #{fixture.id} with market_identifier #{ext_market_id}, specifier #{specifier}, odds #{new_odds}: #{live_market.errors.full_messages.join(', ')}"
           end
         end
       end
