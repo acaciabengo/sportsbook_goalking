@@ -173,7 +173,7 @@ RSpec.describe CloseSettledBetsWorker, type: :worker do
 
   describe "bulk updates performance" do
     it "updates bets in bulk instead of individually" do
-      expect(Bets).to receive(:update_all).at_least(3).times
+      expect(Bet).to receive(:update_all).at_least(3).times
 
       described_class.new.perform(fixture.id, market_id, results, specifier)
     end

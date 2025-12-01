@@ -1,4 +1,5 @@
 class Api::V1::LiveMatchController < Api::V1::BaseController
+  before_action :auth_user
 
   def index
     # find all fixtures that are in play (live)
@@ -32,7 +33,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
         lm.odds
       FROM fixtures f      
       LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
-      LEFT JOIN tournaments t ON f.ext_tournament_id = t.id 
+      LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
       LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
       LEFT JOIN live_markets lm ON lm.fixture_id = f.id 
       LEFT JOIN markets m ON m.ext_market_id = CAST(lm.market_identifier AS INTEGER) 
@@ -79,7 +80,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
             id: record["market_id"],
             name: record["market_name"],
             market_id: record["market_identifier"],
-            odds: record["odds"]
+            odds: record["odds"] ? JSON.parse(record["odds"]) : {}
           }
         }
       end
@@ -99,7 +100,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           JSON_AGG(jsonb_build_object(
             'name', m.name,
             'market_id', lm.market_identifier::integer,
-            'odds', lm.odds
+            'odds', lm.odds::jsonb
           )
           ) AS markets
         FROM live_markets lm

@@ -8,7 +8,7 @@ class CloseSettledBetsJob
   def perform(fixture_id, market_id, results, specifier)
     # find bets
     bets =
-      Bets.joins(:fixture).where(
+      Bet.joins(:fixture).where(
         fixtures: {
           id: fixture_id
         },

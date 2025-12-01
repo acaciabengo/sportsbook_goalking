@@ -59,7 +59,7 @@ RSpec.describe SyncTournamentsJob, type: :worker do
   before do
     allow(BetBalancer).to receive(:new).and_return(bet_balancer)
     allow(bet_balancer).to receive(:get_tournaments).and_return(
-      Nokogiri.XML(xml_response)
+      [200, Nokogiri.XML(xml_response)]
     )
   end
 
@@ -189,11 +189,11 @@ RSpec.describe SyncTournamentsJob, type: :worker do
       before do
         allow(bet_balancer).to receive(:get_tournaments).with(
           category_id: 10
-        ).and_return(Nokogiri.XML(xml_response))
+        ).and_return([200, Nokogiri.XML(xml_response)])
 
         allow(bet_balancer).to receive(:get_tournaments).with(
           category_id: 20
-        ).and_return(Nokogiri.XML(poland_xml))
+        ).and_return([200, Nokogiri.XML(poland_xml)])
       end
 
       it "creates tournaments for all categories" do
@@ -394,11 +394,11 @@ RSpec.describe SyncTournamentsJob, type: :worker do
       before do
         allow(bet_balancer).to receive(:get_tournaments).with(
           category_id: 10
-        ).and_return(Nokogiri.XML(xml_response))
+        ).and_return([200, Nokogiri.XML(xml_response)])
 
         allow(bet_balancer).to receive(:get_tournaments).with(
           category_id: 20
-        ).and_return(Nokogiri.XML(poland_xml))
+        ).and_return([200, Nokogiri.XML(poland_xml)])
       end
 
       it "creates separate tournaments for different categories" do

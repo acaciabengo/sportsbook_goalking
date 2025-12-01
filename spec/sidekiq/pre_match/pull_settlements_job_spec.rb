@@ -75,7 +75,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
       fixture: fixture,
       market_identifier: 10,
       status: "active",
-      results: {}.to_json
+      results: {}
     )
   end
 
@@ -153,7 +153,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
     context "when pre-market already has results" do
       before do
         pre_market.update(
-          results: { "X" => { "status" => "W", "outcome_id" => "2" } }.to_json
+          results: { "X" => { "status" => "W", "outcome_id" => "2" } }
         )
       end
 
@@ -236,7 +236,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
           fixture: fixture2,
           market_identifier: 10,
           status: "active",
-          results: {}.to_json
+          results: {}
         )
       end
 
@@ -326,7 +326,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
           fixture: fixture,
           market_identifier: 18,
           status: "active",
-          results: {}.to_json
+          results: {}
         )
       end
 
@@ -481,7 +481,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
             :pre_market,
             fixture: fixture,
             status: "active",
-            results: {}.to_json
+            results: {}
           )
         end
       end

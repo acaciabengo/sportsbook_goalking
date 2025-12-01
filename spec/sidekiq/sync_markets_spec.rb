@@ -61,7 +61,7 @@ RSpec.describe SyncMarketsJob, type: :worker do
   before do
     allow(BetBalancer).to receive(:new).and_return(bet_balancer)
     allow(bet_balancer).to receive(:get_markets).and_return(
-      Nokogiri.XML(xml_response)
+      [200, Nokogiri.XML(xml_response)]
     )
   end
 
@@ -197,11 +197,11 @@ RSpec.describe SyncMarketsJob, type: :worker do
       before do
         allow(bet_balancer).to receive(:get_markets).with(
           sport_id: 1
-        ).and_return(Nokogiri.XML(xml_response))
+        ).and_return([200, Nokogiri.XML(xml_response)])
 
         allow(bet_balancer).to receive(:get_markets).with(
           sport_id: 2
-        ).and_return(Nokogiri.XML(basketball_xml))
+        ).and_return([200, Nokogiri.XML(basketball_xml)])
       end
 
       it "creates markets for all sports" do
@@ -413,11 +413,11 @@ RSpec.describe SyncMarketsJob, type: :worker do
       before do
         allow(bet_balancer).to receive(:get_markets).with(
           sport_id: 1
-        ).and_return(Nokogiri.XML(xml_response))
+        ).and_return([200, Nokogiri.XML(xml_response)])
 
         allow(bet_balancer).to receive(:get_markets).with(
           sport_id: 2
-        ).and_return(Nokogiri.XML(basketball_xml))
+        ).and_return([200, Nokogiri.XML(basketball_xml)])
       end
 
       it "creates separate markets for different sports" do

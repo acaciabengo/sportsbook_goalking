@@ -283,7 +283,7 @@ RSpec.describe BetBalancer do
       XML
 
     let(:stubbed_request) do
-      stub_request(:get, %r{#{base_url}/export/getMatches*}).to_return(
+      stub_request(:get, %r{#{base_url}/export/getMatch*}).to_return(
         status: 200,
         body: xml_response,
         headers: {

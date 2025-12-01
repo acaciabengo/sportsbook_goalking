@@ -25,7 +25,7 @@ RSpec.describe SyncSportsJob, type: :worker do
   before do
     allow(BetBalancer).to receive(:new).and_return(bet_balancer)
     allow(bet_balancer).to receive(:get_sports).and_return(
-      Nokogiri.XML(xml_response)
+      [200, Nokogiri.XML(xml_response)]
     )
   end
 

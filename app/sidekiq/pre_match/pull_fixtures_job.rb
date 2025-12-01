@@ -4,7 +4,7 @@ class PreMatch::PullFixturesJob
 
   ACCEPTED_SPORTS = [1].freeze
 
-  def perform(*args)
+  def perform()
     bet_balancer = BetBalancer.new
 
     # sports = Sport.select(:ext_sport_id).where(

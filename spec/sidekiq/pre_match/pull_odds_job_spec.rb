@@ -99,7 +99,7 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
           "odd" => 3.00,
           "outcome_id" => 3
         }
-      }.to_json,
+      },
       status: "active"
     )
   end
@@ -271,7 +271,7 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
               "odd" => 2.00,
               "outcome_id" => 5
             }
-          }.to_json,
+          },
           status: "active"
         )
       end
@@ -495,7 +495,7 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
     #       :pre_market,
     #       fixture: fixture_2,
     #       market_identifier: 10,
-    #       odds: { "1" => { "odd" => 1.50, "outcome_id" => 1 } }.to_json,
+    #       odds: { "1" => { "odd" => 1.50, "outcome_id" => 1 } },
     #       status: "active"
     #     )
     #   end

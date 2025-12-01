@@ -117,7 +117,7 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
           expect(fixture['markets']).to be_present
           expect(fixture['markets']['name']).to eq("1X2")
           expect(fixture['markets']['market_id']).to eq("1")
-          expect(fixture['markets']['odds']).to be_a(String)
+          expect(fixture['markets']['odds']).to be_a(Hash)
         end
 
         it "orders fixtures by start_date ascending" do

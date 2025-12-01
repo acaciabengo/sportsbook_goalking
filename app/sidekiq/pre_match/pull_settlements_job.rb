@@ -24,7 +24,7 @@ class PreMatch::PullSettlementsJob
     # Query in batches to avoid memory issues
     fixtures = ActiveRecord::Base.connection.exec_query(sql).to_a
     fixtures.each do |fixture|
-      settle_pre_markets_for_fixture(fixture)
+      settle_pre_market(fixture)
     end
 
     # =============================================================
@@ -44,7 +44,7 @@ class PreMatch::PullSettlementsJob
   end
 
   def settle_pre_market(fixture)
-    status, settlement_data = @bet_balancer.get_matches(match_id: fixture.event_id, want_score: true)
+    status, settlement_data = @bet_balancer.get_matches(match_id: fixture['event_id'], want_score: true)
 
     if status != 200 || settlement_data.nil?
       Rails.logger.error("Failed to fetch settlement data for fixture #{fixture['id']}")
