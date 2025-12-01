@@ -9,9 +9,9 @@ Rails.application.routes.draw do
   match "check_bonus" => "line_bets#check_bonus", :via => [:get]
   namespace :api do
     namespace :v1 do
-      get "transactions/index"
-      get "transactions/deposit"
-      get "transactions/withdraw"
+      match "/transactions" => "transactions#index", :via => [:get]
+      match '/transactions/deposit' => 'transactions#deposit', :via => [:post]
+      match '/transactions/withdraw' => 'transactions#withdraw', :via => [:post]
       match "/betslips" => "betslips#index", :via => [:get]
       match "/betslips" => "betslips#create", :via => [:post]
       match "/betslips/:id" => "betslips#show", :via => [:get]
