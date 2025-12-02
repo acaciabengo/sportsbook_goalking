@@ -30,7 +30,7 @@ class PreMatch::PullOddsJob
           if fixture_node
             status_info = fixture_node.xpath("StatusInfo/Off").text
             if status_info == "1"
-              fixture.update(status: "cancelled", match_status: "cancelled")
+              fixture.update(status: status_info)
             end
           end
 
