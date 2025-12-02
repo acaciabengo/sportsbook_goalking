@@ -9,7 +9,7 @@ class DepositsJob
 
     resource_id = generate_resource_id()
 
-    deposit = Deposit.create(
+    deposit = Deposit.create!(
       transaction_id: transaction.id,
       resource_id: resource_id,
       amount: transaction.amount,

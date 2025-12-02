@@ -8,7 +8,7 @@ class WithdrawsJob
     user = transaction.user
 
     resource_id = generate_resource_id()
-    withdraw = Withdraw.create(
+    withdraw = Withdraw.create!(
       transaction_id: transaction.id,
       resource_id: resource_id,
       amount: transaction.amount,
@@ -36,18 +36,29 @@ class WithdrawsJob
 
     if status == 200 && response["success"] == true
       Withdraw.transaction do
-        withdraw.update(
-        status: "COMPLETED",
-        ext_transaction_id: response["internal_reference"],
-        balance_after: user.balance - transaction.amount,
-        message: "Withdrawal successful"
-      )
+        # double check that the user has sufficient balance before deducting
+        if user.balance >= transaction.amount
+          withdraw.update(
+            status: "COMPLETED",
+            ext_transaction_id: response["internal_reference"],
+            balance_after: user.balance - transaction.amount,
+            message: "Withdrawal successful"
+          )
 
-      # Update user balance
-      user.update(balance: user.balance - transaction.amount)
+          # Update user balance
+          user.update(balance: user.balance - transaction.amount)
 
-      # Update transaction status
-      transaction.update(status: "COMPLETED")
+          # Update transaction status
+          transaction.update(status: "COMPLETED")
+        else
+          withdraw.update(
+            status: "FAILED",
+            message: "Insufficient balance at the time of processing"
+          )
+
+          # Update transaction status
+          transaction.update(status: "FAILED")
+        end
       end
       
     else
