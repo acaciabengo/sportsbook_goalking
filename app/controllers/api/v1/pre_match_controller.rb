@@ -38,7 +38,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
       LEFT JOIN pre_markets pm ON pm.fixture_id = f.id 
       LEFT JOIN markets m ON m.ext_market_id = CAST(pm.market_identifier AS INTEGER) 
       WHERE f.match_status = 'not_started' 
-        AND f.status = 'active' 
+        AND f.status = '0' 
         AND f.start_date > NOW()
         AND pm.market_identifier = '1'
 
