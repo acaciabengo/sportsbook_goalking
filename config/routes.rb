@@ -19,8 +19,8 @@ Rails.application.routes.draw do
       match "/pre_match/:id" => "pre_match#show", :via => [:get]
       match "/live_match" => "live_match#index", :via => [:get]
       match "/live_match/:id" => "live_match#show", :via => [:get]
-      match "login" => "auth#login", :via => [:post, :get]
-      match "signup" => "auth#signup", :via => [:post]
+      match "/login" => "auth#login", :via => [:post, :get]
+      match "/signup" => "auth#signup", :via => [:post]
 
       match "check_user" => "current_user#check_current_user", :via => [:get]
       match "verification" => "current_user#user_verification", :via => [:get]
