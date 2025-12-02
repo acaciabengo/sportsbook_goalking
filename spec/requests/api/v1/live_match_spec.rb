@@ -13,10 +13,10 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
   end
 
   describe "GET /api/v1/live_match" do
-    let(:live_sport) { Fabricate(:sport, name: "Football", ext_sport_id: 1) }
-    let(:live_category) { Fabricate(:category, name: "England", ext_category_id: 100) }
-    let(:live_tournament) { Fabricate(:tournament, name: "Premier League", category: live_category, ext_tournament_id: 200) }
-    let(:live_market) { Fabricate(:market, ext_market_id: 1, name: "1X2") }
+    let!(:live_sport) { Fabricate(:sport, name: "Football", ext_sport_id: 1) }
+    let!(:live_category) { Fabricate(:category, name: "England", ext_category_id: 100) }
+    let!(:live_tournament) { Fabricate(:tournament, name: "Premier League", category: live_category, ext_tournament_id: 200) }
+    let!(:live_market) { Fabricate(:market, ext_market_id: 1, name: "1X2") }
 
     context "when user is authenticated" do
       context "with live fixtures" do
@@ -39,7 +39,7 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
           Fabricate(:live_market,
             fixture: live_fixture,
             market_identifier: "1",
-            odds: { "1" => 2.5, "X" => 3.2, "2" => 2.8 }.to_json,
+            odds: { "1" => 2.5, "X" => 3.2, "2" => 2.8 },
             status: 'active'
           )
         end
@@ -113,8 +113,13 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
         it "includes market details with odds" do
           json = JSON.parse(response.body)
           fixture = json['fixtures'].first
-          
+
           expect(fixture['markets']).to be_present
+          expect(fixture['markets']).to be_a(Hash)
+
+          # print out the markets for debugging
+          puts "Markets: #{fixture['markets']}"
+          
           expect(fixture['markets']['name']).to eq("1X2")
           expect(fixture['markets']['market_id']).to eq("1")
           expect(fixture['markets']['odds']).to be_a(Hash)
@@ -306,7 +311,7 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
       Fabricate(:live_market,
         fixture: fixture,
         market_identifier: 1,
-        odds: { "1" => 2.1, "X" => 3.5, "2" => 3.2 }.to_json,
+        odds: { "1" => 2.1, "X" => 3.5, "2" => 3.2 },
         status: 'active'
       )
     end
@@ -315,7 +320,7 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
       Fabricate(:live_market,
         fixture: fixture,
         market_identifier: 2,
-        odds: { "over" => 1.85, "under" => 1.95 }.to_json,
+        odds: { "over" => 1.85, "under" => 1.95 },
         status: 'active'
       )
     end
@@ -400,6 +405,7 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
           json = JSON.parse(response.body)
           fixture_data = json.first
           markets = fixture_data['markets']
+          expect(markets).to be_an(Array)
           
           over_under = markets.find { |m| m['name'] == "Over/Under 2.5" }
           expect(over_under['odds']['over']).to eq(1.85)

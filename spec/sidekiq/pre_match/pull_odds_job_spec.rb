@@ -115,7 +115,7 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
   describe "#perform" do
     context "when pre-market exists" do
       it "updates existing pre-market odds" do
-        print("Original odds: #{JSON.parse(existing_pre_market.odds)}\n")
+        print("Original odds: #{existing_pre_market.odds}\n")
         data = Nokogiri.XML(xml_response)
         odds_node = data.xpath("//MatchOdds/Bet[@OddsType='10']").first
         print("New odds from XML: #{odds_node.to_xml}\n")
@@ -134,12 +134,12 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
           end
         odds = odds&.deep_transform_keys(&:to_s)
         print("Parsed new odds: #{odds}\n")
-        merged_odds = JSON.parse(existing_pre_market.odds).deep_merge(odds)
+        merged_odds = existing_pre_market.odds.deep_merge(odds)
         print("Merged odds: #{merged_odds}\n")
         worker.perform
 
         existing_pre_market.reload
-        odds = JSON.parse(existing_pre_market.odds)
+        odds = existing_pre_market.odds
 
         print("Updated odds: #{existing_pre_market.odds}\n")
 
@@ -153,7 +153,7 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
         worker.perform
 
         existing_pre_market.reload
-        odds = JSON.parse(existing_pre_market.odds)
+        odds = existing_pre_market.odds
 
         expect(odds["1"]["outcome_id"]).to eq(1)
         expect(odds["X"]["outcome_id"]).to eq(2)
@@ -186,7 +186,7 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
         worker.perform
 
         pre_market = PreMarket.last
-        odds = JSON.parse(pre_market.odds)
+        odds = pre_market.odds
 
         expect(odds["1"]["odd"]).to eq(2.15)
         expect(odds["X"]["odd"]).to eq(3.20)
@@ -282,8 +282,8 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
         existing_pre_market.reload
         over_under_market.reload
 
-        odds_1x2 = JSON.parse(existing_pre_market.odds)
-        odds_ou = JSON.parse(over_under_market.odds)
+        odds_1x2 = existing_pre_market.odds
+        odds_ou = over_under_market.odds
 
         expect(odds_1x2["1"]["odd"]).to eq(2.15)
         expect(odds_ou["Over"]["odd"]).to eq(1.85)
@@ -478,118 +478,7 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
       end
     end
 
-    # context "with multiple fixtures" do
-    #   let!(:fixture_2) do
-    #     Fabricate(
-    #       :fixture,
-    #       event_id: 109_380,
-    #       sport_id: 1,
-    #       ext_category_id: 10,
-    #       ext_tournament_id: 100,
-    #       match_status: "not_started"
-    #     )
-    #   end
-
-    #   let!(:pre_market_2) do
-    #     Fabricate(
-    #       :pre_market,
-    #       fixture: fixture_2,
-    #       market_identifier: 10,
-    #       odds: { "1" => { "odd" => 1.50, "outcome_id" => 1 } },
-    #       status: "active"
-    #     )
-    #   end
-
-    #   let(:xml_response) { <<~XML }
-    #       <?xml version="1.0" encoding="UTF-8"?>
-    #       <BetbalancerBetData>
-    #         <Sports>
-    #           <Sport BetbalancerSportID="1">
-    #             <Texts>
-    #               <Text Language="en"><Value>Football</Value></Text>
-    #             </Texts>
-    #             <Category BetbalancerCategoryID="10" IsoName="CZE">
-    #               <Texts>
-    #                 <Text Language="en"><Value>Czech Republic</Value></Text>
-    #               </Texts>
-    #               <Tournament BetbalancerTournamentID="100">
-    #                 <Texts>
-    #                   <Text Language="en"><Value>First League</Value></Text>
-    #                 </Texts>
-    #                 <Match BetbalancerMatchID="109379">
-    #                   <Fixture>
-    #                     <Competitors>
-    #                       <Texts>
-    #                         <Text Type="1" ID="9373">
-    #                           <Value>1. FC BRNO</Value>
-    #                         </Text>
-    #                       </Texts>
-    #                       <Texts>
-    #                         <Text Type="2" ID="371400">
-    #                           <Value>FC SLOVACKO</Value>
-    #                         </Text>
-    #                       </Texts>
-    #                     </Competitors>
-    #                     <DateInfo>
-    #                       <MatchDate>2024-08-23T16:40:00</MatchDate>
-    #                     </DateInfo>
-    #                     <StatusInfo>
-    #                       <Off>1</Off>
-    #                     </StatusInfo>
-    #                   </Fixture>
-    #                   <MatchOdds>
-    #                     <Bet OddsType="10">
-    #                       <Odds OutCome="1" OutcomeID="1">2.15</Odds>
-    #                     </Bet>
-    #                   </MatchOdds>
-    #                 </Match>
-    #                 <Match BetbalancerMatchID="109380">
-    #                   <Fixture>
-    #                     <Competitors>
-    #                       <Texts>
-    #                         <Text Type="1" ID="9375">
-    #                           <Value>Team C</Value>
-    #                         </Text>
-    #                       </Texts>
-    #                       <Texts>
-    #                         <Text Type="2" ID="9376">
-    #                           <Value>Team D</Value>
-    #                         </Text>
-    #                       </Texts>
-    #                     </Competitors>
-    #                     <DateInfo>
-    #                       <MatchDate>2024-08-24T18:00:00</MatchDate>
-    #                     </DateInfo>
-    #                     <StatusInfo>
-    #                       <Off>1</Off>
-    #                     </StatusInfo>
-    #                   </Fixture>
-    #                   <MatchOdds>
-    #                     <Bet OddsType="10">
-    #                       <Odds OutCome="1" OutcomeID="1">1.65</Odds>
-    #                     </Bet>
-    #                   </MatchOdds>
-    #                 </Match>
-    #               </Tournament>
-    #             </Category>
-    #           </Sport>
-    #         </Sports>
-    #       </BetbalancerBetData>
-    #     XML
-
-    #   it "updates odds for all fixtures" do
-    #     worker.perform
-
-    #     existing_pre_market.reload
-    #     pre_market_2.reload
-
-    #     odds_1 = JSON.parse(existing_pre_market.odds)
-    #     odds_2 = JSON.parse(pre_market_2.odds)
-
-    #     expect(odds_1["1"]["odd"]).to eq(2.15)
-    #     expect(odds_2["1"]["odd"]).to eq(1.65)
-    #   end
-    # end
+    
 
     context "when API returns no data" do
       let(:xml_response) { <<~XML }

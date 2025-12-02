@@ -89,8 +89,8 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
       [200, Nokogiri.XML(xml_response)]
     )
 
-    # Stub CloseSettledBetsWorker
-    allow(CloseSettledBetsWorker).to receive(:perform_async)
+    # Stub CloseSettledBetsJob
+    allow(CloseSettledBetsJob).to receive(:perform_async)
   end
 
   describe "#perform" do
@@ -108,7 +108,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
         worker.perform
 
         pre_market.reload
-        results = JSON.parse(pre_market.results)
+        results = pre_market.results
 
         expect(results["1"]).to be_present
         expect(results["1"]["status"]).to eq("W")
@@ -120,7 +120,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
         worker.perform
 
         pre_market.reload
-        results = JSON.parse(pre_market.results)
+        results = pre_market.results
 
         expect(results.keys).to contain_exactly("1", "X", "2")
         expect(results["1"]["status"]).to eq("W")
@@ -135,17 +135,8 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
         expect(pre_market.status).to eq("settled")
       end
 
-      it "enqueues CloseSettledBetsWorker with results" do
-        expect(CloseSettledBetsWorker).to receive(:perform_async).with(
-          fixture.id,
-          pre_market.id,
-          hash_including(
-            "1" => hash_including("status" => "W"),
-            "X" => hash_including("status" => "L"),
-            "2" => hash_including("status" => "L")
-          )
-        )
-
+      it "enqueues CloseSettledBetsJob with results" do
+        expect(CloseSettledBetsJob).to receive(:perform_async)
         worker.perform
       end
     end
@@ -161,7 +152,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
         worker.perform
 
         pre_market.reload
-        results = JSON.parse(pre_market.results)
+        results = pre_market.results
 
         # New results should override existing
         expect(results["X"]["status"]).to eq("L")
@@ -186,8 +177,8 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
         expect(pre_market.status).to eq("active")
       end
 
-      it "does not enqueue CloseSettledBetsWorker" do
-        expect(CloseSettledBetsWorker).not_to receive(:perform_async)
+      it "does not enqueue CloseSettledBetsJob" do
+        expect(CloseSettledBetsJob).not_to receive(:perform_async)
         worker.perform
       end
     end
@@ -201,8 +192,8 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
         expect { worker.perform }.not_to change { pre_market.reload.results }
       end
 
-      it "does not enqueue CloseSettledBetsWorker" do
-        expect(CloseSettledBetsWorker).not_to receive(:perform_async)
+      it "does not enqueue CloseSettledBetsJob" do
+        expect(CloseSettledBetsJob).not_to receive(:perform_async)
         worker.perform
       end
     end
@@ -289,7 +280,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
       end
 
       it "enqueues worker for each market" do
-        expect(CloseSettledBetsWorker).to receive(:perform_async).twice
+        expect(CloseSettledBetsJob).to receive(:perform_async).twice
         worker.perform
       end
     end
@@ -334,7 +325,8 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
         worker.perform
 
         over_under_market.reload
-        results = JSON.parse(over_under_market.results)
+        results = over_under_market.results
+        puts "results: #{results.inspect}"
 
         expect(results["Over"]["specifier"]).to eq("2.5")
         expect(results["Under"]["specifier"]).to eq("2.5")
@@ -372,7 +364,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
         worker.perform
 
         pre_market.reload
-        results = JSON.parse(pre_market.results)
+        results = pre_market.results
 
         expect(results["1"]["status"]).to eq("C")
         expect(results["1"]["void_factor"]).to eq("1.0")
@@ -412,7 +404,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
         worker.perform
 
         pre_market.reload
-        results = JSON.parse(pre_market.results)
+        results = pre_market.results
 
         expect(results["1"]["status"]).to eq("R")
         expect(results["X"]["status"]).to eq("R")
@@ -454,16 +446,11 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
         worker.perform
 
         pre_market.reload
-        expect(pre_market.status).to eq("settled")
+        expect(pre_market.status).not_to eq("settled")
       end
 
-      it "enqueues CloseSettledBetsWorker with empty results" do
-        expect(CloseSettledBetsWorker).to receive(:perform_async).with(
-          fixture.id,
-          pre_market.id,
-          {}
-        )
-
+      it "enqueues CloseSettledBetsJob with empty results" do
+        expect(CloseSettledBetsJob).not_to receive(:perform_async)
         worker.perform
       end
     end

@@ -19,27 +19,37 @@ class CloseSettledBetsJob
         }
       )
 
-    # Find the void factors present in results
+    return if bets.empty?
 
-    winning_bets = results.select { |k, v| v["status"] == "W" }.keys
+    # Categorize outcomes - void takes precedence
     cancelled_bets = results.select { |k, v| v["status"] == "C" }.keys
     voided_bets = results.select { |k, v| v["void_factor"].to_f > 0 }.keys
+    void_outcomes = (cancelled_bets + voided_bets).uniq
+    
+    # Winning bets (only if not void)
+    winning_bets = results.select { |k, v| v["status"] == "W" && !void_outcomes.include?(k) }.keys
+
+    # Bulk update void bets first (cancelled + voided) with void_factor
+    if void_outcomes.any?
+      void_outcomes.each do |outcome|
+        void_factor_value = results[outcome]["void_factor"].to_f
+        bets.where(outcome: outcome).update_all(
+          result: "Void",
+          status: "Closed",
+          void_factor: void_factor_value
+        )
+      end
+    end
 
     # Bulk update winning bets
-    bets.where(outcome: winning_bets).update_all(
-      result: "Win",
-      status: "Closed"
-    )
-
-    # Bulk update void bets (cancelled + voided)
-    void_outcomes = cancelled_bets + voided_bets
-    bets.where(outcome: void_outcomes).update_all(
-      result: "Void",
-      status: "Closed"
-    )
+    if winning_bets.any?
+      bets.where(outcome: winning_bets).update_all(
+        result: "Win",
+        status: "Closed"
+      )
+    end
 
     # Bulk update losing bets (everything else)
-    # Avoid loading all outcomes into memory by using SQL NOT IN instead of pluck
     all_processed_outcomes = winning_bets + void_outcomes
     if all_processed_outcomes.any?
       bets.where.not(outcome: all_processed_outcomes).update_all(
@@ -52,15 +62,6 @@ class CloseSettledBetsJob
         result: "Loss",
         status: "Closed"
       )
-    end
-
-    # Update void_factor individually (if needed for specific outcomes)
-    results.each do |outcome, data|
-      if data["void_factor"].present?
-        bets.where(outcome: outcome).update_all(
-          void_factor: data["void_factor"].to_f
-        )
-      end
     end
   end
 end
