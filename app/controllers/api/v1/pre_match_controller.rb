@@ -82,7 +82,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
             id: record["market_id"],
             name: record["market_name"],
             market_id: record["market_identifier"],
-            odds: record["odds"]
+            odds: record["odds"] ? JSON.parse(record["odds"]) : {}
           }
         }
       end
@@ -137,7 +137,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
       LEFT JOIN categories c ON c.ext_category_id = f.ext_category_id
       LEFT JOIN aggregated_markets am ON am.fixture_id = f.id
       WHERE f.match_status = 'not_started' 
-        AND f.status = 'active' 
+        AND f.status = '0' 
         AND f.start_date > NOW()
         AND f.id = #{fixture_id}
       ORDER BY f.start_date DESC
