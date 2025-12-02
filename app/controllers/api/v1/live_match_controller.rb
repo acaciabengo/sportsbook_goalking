@@ -38,7 +38,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
       LEFT JOIN live_markets lm ON lm.fixture_id = f.id 
       LEFT JOIN markets m ON m.ext_market_id = CAST(lm.market_identifier AS INTEGER) 
       WHERE f.match_status = 'in_play' 
-        AND f.status = 'active' 
+        AND f.status = '0' 
         AND lm.market_identifier = '1'
       ORDER BY f.start_date ASC
     SQL
