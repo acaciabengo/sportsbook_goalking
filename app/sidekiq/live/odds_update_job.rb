@@ -49,6 +49,7 @@ class Live::OddsUpdateJob
         # ext_market_id = odds_node['id'].to_i
         ext_market_id = odds_node['typeid'].to_i
         specifier = odds_node['specialoddsvalue']
+        market_name = odds_node['freetext']
 
         
         new_odds = {}
