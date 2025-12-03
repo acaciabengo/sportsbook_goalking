@@ -80,7 +80,8 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
             id: record["market_id"],
             name: record["market_name"],
             market_id: record["market_identifier"],
-            odds: record["odds"] ? JSON.parse(record["odds"]) : {}
+            odds: record["odds"] ? JSON.parse(record["odds"]) : {},
+            specifier: nil
           }
         }
       end
@@ -100,7 +101,8 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           JSON_AGG(jsonb_build_object(
             'name', m.name,
             'market_id', lm.market_identifier::integer,
-            'odds', lm.odds::jsonb
+            'odds', lm.odds::jsonb,
+            'specifier', lm.specifier
           )
           ) AS markets
         FROM live_markets lm
