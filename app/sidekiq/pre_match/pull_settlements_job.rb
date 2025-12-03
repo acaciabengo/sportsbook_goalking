@@ -111,7 +111,7 @@ class PreMatch::PullSettlementsJob
       # </BookmakerStatus>
       # 
       builder = Nokogiri::XML::Builder.new do |xml|
-        xml.BookmakerStatus(timestamp: '0') {
+        xml.BookmakerStatus(timestamp: '0', type: "current") {
           fixture_batch.each do |fixture|
             xml.Match(matchid: fixture["event_id"])
           end
