@@ -1,5 +1,5 @@
 class Api::V1::LiveMatchController < Api::V1::BaseController
-  before_action :auth_user
+  # before_action :auth_user
 
   def index
     # find all fixtures that are in play (live)
