@@ -118,7 +118,7 @@ class PreMatch::PullSettlementsJob
         }
       end
 
-      xml_request = builder.to_xml
+      xml_request = builder.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::NO_DECLARATION).strip
 
       # connect to redis and publish the request
       redis = Redis.new(url: ENV['REDIS_URL'])
