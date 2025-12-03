@@ -99,12 +99,14 @@ class Api::V1::PreMatchController < Api::V1::BaseController
       WITH aggregated_markets AS (
         SELECT
           pm.fixture_id,
-          JSON_AGG(jsonb_build_object(
-            'name', m.name,
-            'market_id', pm.market_identifier::integer,
-            'odds', pm.odds, 
-            'specifier', pm.specifier
-          )
+          JSON_AGG(
+            DISTINCT jsonb_build_object(
+              'id', pm.id,
+              'name', m.name,
+              'market_id', pm.market_identifier,
+              'odds', pm.odds, 
+              'specifier', pm.specifier
+            )
           ) AS markets
         FROM pre_markets pm
         LEFT JOIN markets m on m.ext_market_id = pm.market_identifier::integer

@@ -98,12 +98,14 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
       WITH aggregated_markets AS (
         SELECT
           lm.fixture_id,
-          JSON_AGG(jsonb_build_object(
-            'name', m.name,
-            'market_id', lm.market_identifier::integer,
-            'odds', lm.odds::jsonb,
-            'specifier', lm.specifier
-          )
+          JSON_AGG(
+            DISTINCT jsonb_build_object(
+              'id', lm.id,
+              'name', m.name,
+              'market_id', lm.market_identifier,
+              'odds', lm.odds::jsonb,
+              'specifier', lm.specifier
+            )
           ) AS markets
         FROM live_markets lm
         LEFT JOIN markets m on m.ext_market_id = lm.market_identifier::integer
