@@ -5,7 +5,23 @@ class CloseSettledBetsJob
 
   VOID_FACTORS = %w[Cancelled Refund].freeze
 
-  def perform(fixture_id, market_id, results, specifier)
+  def perform(fixture_id, market_id, bet_type)
+
+    # find the market
+    if bet_type == 'PreMatch'
+      market = PreMarket.find_by(id: market_id, fixture_id: fixture_id)
+    else
+      market = LiveMarket.find_by(id: market_id, fixture_id: fixture_id)
+    end
+
+    results = market&.results || {}
+
+    if results.empty?
+      Rails.logger.warn("No results found for market #{market_id} on fixture #{fixture_id}. Skipping bet settlement.")
+      return
+    end
+
+
     # find bets
     bets =
       Bet.joins(:fixture).where(
@@ -13,9 +29,10 @@ class CloseSettledBetsJob
           id: fixture_id
         },
         bets: {
-          market_identifier: market_id,
+          market_identifier: market.market_identifier,
           status: "Active",
-          specifier: specifier
+          specifier: market.specifier,
+          bet_type: bet_type
         }
       )
 

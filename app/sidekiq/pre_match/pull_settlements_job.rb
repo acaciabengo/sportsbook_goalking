@@ -45,9 +45,9 @@ class PreMatch::PullSettlementsJob
   end
 
   def settle_pre_market(fixture)
-    status, settlement_data = @bet_balancer.get_matches(match_id: fixture['event_id'], want_score: true)
+    http_status, settlement_data = @bet_balancer.get_matches(match_id: fixture['event_id'], want_score: true)
 
-    if status != 200 || settlement_data.nil?
+    if http_status != 200 || settlement_data.nil?
       Rails.logger.error("Failed to fetch settlement data for fixture #{fixture['id']}")
       return
     end
@@ -55,7 +55,7 @@ class PreMatch::PullSettlementsJob
     settlement_data.remove_namespaces!
 
     # Group by market_identifier
-    markets_by_identifier = {}
+    markets_by_identifier_and_specifier = {}
     
     settlement_data
       .xpath("//Match/BetResult/*")
@@ -65,41 +65,57 @@ class PreMatch::PullSettlementsJob
         specifier = bet_result["SpecialBetValue"]
         outcome_id = bet_result["OutComeId"]
         outcome = bet_result["OutCome"]
+        void_factor = bet_result["VoidFactor"]&.to_f || 0.0
         
-        # Initialize hash for this market if not exists
-        markets_by_identifier[market_identifier] ||= {}
+        # # Initialize hash for this market if not exists
+        # markets_by_identifier_and_specifier[market_identifier] ||= {}
         
-        # Store this outcome in the market's results (keyed by outcome name)
-        markets_by_identifier[market_identifier][outcome] = {
+        # # Store this outcome in the market's results (keyed by outcome name)
+        # markets_by_identifier[market_identifier][outcome] = {
+        #   "status" => status,
+        #   "outcome_id" => outcome_id,
+        #   "outcome" => outcome,
+        #   "void_factor" => bet_result["VoidFactor"], 
+        #   "specifier" => specifier
+        # }
+
+        markets_by_identifier_and_specifier[market_identifier] ||= {}
+        markets_by_identifier_and_specifier[market_identifier][specifier] ||= {}
+        
+        # Store result for this specific market + specifier + outcome
+        markets_by_identifier_and_specifier[market_identifier][specifier][outcome] = {
           "status" => status,
+          "void_factor" => void_factor,
           "outcome_id" => outcome_id,
-          "outcome" => outcome,
-          "specifier" => specifier,
-          "void_factor" => bet_result["VoidFactor"]
         }
       end
+    # Process each market identifier
+    markets_by_identifier_and_specifier.each do |market_identifier, specifiers_hash|
+      # Process each specifier within this market
+      specifiers_hash.each do |specifier, results|
+        # Find the specific PreMarket by fixture, market_identifier, AND specifier
+        market = PreMarket.find_by(
+          fixture_id: fixture['id'], 
+          market_identifier: market_identifier,
+          specifier: specifier
+        )
+        
+        unless market
+          Rails.logger.warn("PreMarket not found: fixture=#{fixture['id']}, market_identifier=#{market_identifier}, specifier=#{specifier}")
+          next
+        end
 
-    # Process each market
-    markets_by_identifier.each do |market_identifier, results|
-      # Get the specifier from the first result (they should all have the same specifier for a given market)
-      # first_result = results.values.first
-      # specifier = first_result["specifier"]
-      
-      market = PreMarket.find_by(
-        fixture_id: fixture['id'], 
-        market_identifier: market_identifier
-      )
-      
-      next if market.nil?
-
-      existing_results = market.results || {}
-      existing_results = existing_results.deep_transform_keys(&:to_s)
-      merged_results = existing_results.deep_merge(results)
-      
-      market.update(results: merged_results, status: "settled")
-      
-      # close settled bets
-      CloseSettledBetsJob.perform_async(fixture['id'], market.id, results, '')
+        # Update this specific market with its results (no merging needed)
+        unless market.update(results: results, status: "settled")
+          Rails.logger.error("Failed to settle pre-market #{market.id}: #{market.errors.full_messages.join(', ')}")
+          next
+        end
+        
+        Rails.logger.info("Settled pre-market #{market.id} (#{market_identifier}|#{specifier}): #{results}")
+        
+        # Close settled bets for this specific market
+        CloseSettledBetsJob.perform_in(2.minutes, fixture['id'], market.id, 'PreMatch')
+      end
     end
   end
 

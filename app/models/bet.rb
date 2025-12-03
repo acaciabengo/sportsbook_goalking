@@ -4,6 +4,11 @@ class Bet < ApplicationRecord
   belongs_to :fixture
   belongs_to :bet_slip
   # belongs_to :market
+  
+  # restrict bet_types to "PreMatch" or "Live"
+  BET_TYPES = ["PreMatch", "Live"].freeze
+  validates :bet_type, inclusion: { in: BET_TYPES }
+  
 
   def self.ransackable_attributes(auth_object = nil)
     %w[

@@ -38,65 +38,62 @@ class PreMatch::PullOddsJob
           odds_data
             .xpath("//Match/MatchOdds/Bet")
             .each do |market|
-              new_odds = {}
-              ext_market_id = market["OddsType"].to_i
-              market
-                .xpath("Odds")
-                .each do |odd|
-                  outcome = odd["OutCome"]
-                  outcome_id = odd["OutComeId"]&.to_i
-                  value = odd.text.to_f
-                  specifier = odd["SpecialBetValue"]
-                  new_odds[outcome] = {
-                    "odd" => value, # String keys from the start!
-                    "outcome_id" => outcome_id,
-                    "specifier" => specifier
-                  }.compact
-                end
+              # new_odds = {}
+              ext_market_id = market["OddsType"]&.to_i
+              # Group odds by specifier
+              odds_by_specifier = {}
+              
+              market.xpath("Odds").each do |odd|
+                outcome = odd["OutCome"]
+                outcome_id = odd["OutComeId"]&.to_i
+                value = odd.text.to_f
+                specifier = odd["SpecialBetValue"]
+                
+                # Initialize hash for this specifier if not exists
+                odds_by_specifier[specifier] ||= {}
+                
+                # Store odds without specifier in the hash 
+                odds_by_specifier[specifier][outcome] = {
+                  "odd" => value,
+                  "outcome_id" => outcome_id
+                }.compact
+              end
 
-              # log the new odds being processed
-              # Find the pre-market by fixture and market identifier
-              pre_market =
-                PreMarket.find_by(
+              # Create/update separate PreMarket for each specifier
+              odds_by_specifier.each do |specifier, odds_hash|
+                # Find the pre-market by fixture, market identifier, AND specifier
+                pre_market = PreMarket.find_by(
                   fixture_id: fixture.id,
-                  market_identifier: ext_market_id
+                  market_identifier: ext_market_id,
+                  specifier: specifier
                 )
 
-              if pre_market
-                # Pre-market exists - merge and update
-                existing_odds = pre_market.odds || {}
-                existing_odds = existing_odds.deep_transform_keys(&:to_s)
-
-                # Deep merge new odds into existing odds
-                merged_odds = existing_odds.deep_merge(new_odds)
-
-                unless pre_market.update(
-                         odds: merged_odds,
-                         status: "active"
-                       )
-                  Rails.logger.error(
-                    "Failed to update pre-market #{pre_market.id} for fixture #{fixture.id}: #{pre_market.errors.full_messages.join(", ")}"
-                  )
-                end
-              else
-                # Pre-market doesn't exist - create new one
-                new_pre_market =
-                  PreMarket.create(
+                if pre_market
+                  # Pre-market exists - update odds directly
+                  unless pre_market.update(odds: odds_hash, status: "active")
+                    Rails.logger.error(
+                      "Failed to update pre-market #{pre_market.id} for fixture #{fixture.id}: #{pre_market.errors.full_messages.join(", ")}"
+                    )
+                  end
+                else
+                  # Pre-market doesn't exist - create new one
+                  new_pre_market = PreMarket.create(
                     fixture_id: fixture.id,
                     market_identifier: ext_market_id,
-                    odds: new_odds,
+                    specifier: specifier,
+                    odds: odds_hash,
                     status: "active"
                   )
 
-                unless new_pre_market.persisted?
-                  Rails.logger.error(
-                    "Failed to create pre-market for fixture #{fixture.id}, market #{ext_market_id}: #{new_pre_market.errors.full_messages.join(", ")}"
-                  )
+                  unless new_pre_market.persisted?
+                    Rails.logger.error(
+                      "Failed to create pre-market for fixture #{fixture.id}, market #{ext_market_id}, specifier #{specifier}: #{new_pre_market.errors.full_messages.join(", ")}"
+                    )
+                  end
                 end
               end
             end
 
-          # check if it has FT results and close the fixture bets
           # check if results exist in the match node
           results_node = odds_data.xpath("//Match/Result")
           next if results_node.empty?

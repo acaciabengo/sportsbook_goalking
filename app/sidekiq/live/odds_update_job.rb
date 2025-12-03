@@ -46,40 +46,43 @@ class Live::OddsUpdateJob
       
 
       match.xpath("Odds").each do |odds_node|
-        ext_market_id = odds_node['id'].to_i
+        # ext_market_id = odds_node['id'].to_i
+        ext_market_id = odds_node['typeid'].to_i
         specifier = odds_node['specialoddsvalue']
 
-        # outcome = odds_node['freetext']
-        # specifier = odds_node['specialoddsvalue']
-        # market_identifier = odds_node['typeid'].to_i
+        
         new_odds = {}
 
         odds_node.xpath("OddsField").each do |odds_field|
           outcome = odds_field['type']
           outcome_id = odds_field['typeid'].to_i
           odd_value = odds_field.text.to_f
-          new_odds[outcome] = { "odd" => odd_value, "outcome_id" => outcome_id, "specifier" => specifier }
+          new_odds[outcome] = { "odd" => odd_value, "outcome_id" => outcome_id }
         end
 
         # Skip if no odds fields (empty market)
         next if new_odds.empty?
 
-        # market = fixture.live_markets.find_by(market_identifier: ext_market_id, specifier: specifier)
-        live_market = LiveMarket.find_by(fixture_id: fixture.id, market_identifier: ext_market_id)
+        live_market = LiveMarket.find_by(
+          fixture_id: fixture.id, 
+          market_identifier: ext_market_id,
+          specifier: specifier
+        )
+
         if live_market
-          existing_odds = live_market.odds || {}
-          merged_odds = existing_odds.deep_merge(new_odds)
-          unless live_market.update(odds: merged_odds, status: betstatus)
+          # existing_odds = live_market.odds || {}
+          # merged_odds = existing_odds.deep_merge(new_odds)
+          unless live_market.update(odds: new_odds, status: betstatus)
             Rails.logger.error("Failed to update odds for market #{live_market.id} with odds #{new_odds}: #{live_market.errors.full_messages.join(', ')}")
             # puts "Failed to update odds for market #{live_market.id} with odds #{new_odds}: #{live_market.errors.full_messages.join(', ')}"
           end
-
         else
           # create new market
-          # market = fixture.live_markets.build(market_identifier: ext_market_id, odds: new_odds, specifier: specifier, status: betstatus)
           live_market = LiveMarket.new(
             fixture_id: fixture.id,
             market_identifier: ext_market_id,
+            specifier: specifier,
+            name: market_name,
             odds: new_odds,
             status: betstatus
           )
