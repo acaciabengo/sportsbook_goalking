@@ -23,18 +23,18 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 
 	end
 
-    def show
-        betslip = @current_user.bet_slips.find_by(id: params[:id])
-        if betslip
-            render json: betslip.as_json(only: [:id, :stake, :odds, :win_amount, :status, :created_at, :result, :payout],
-                                        include: {
-                                            bets: { only: [:id, :fixture_id, :market_id, :selection, :odds, :status, :outcome, :outcome_desc, :bet_slip_id, :result, :bet_type]  } 
-                                        }
-                                    )
-        else
-            render json: { error: 'Bet slip not found' }, status: :not_found
-        end
-    end
+	def show
+			betslip = @current_user.bet_slips.find_by(id: params[:id])
+			if betslip
+					render json: betslip.as_json(only: [:id, :stake, :odds, :win_amount, :status, :created_at, :result, :payout],
+																			include: {
+																					bets: { only: [:id, :fixture_id, :market_id, :selection, :odds, :status, :outcome, :outcome_desc, :bet_slip_id, :result, :bet_type]  } 
+																			}
+																	)
+			else
+					render json: { error: 'Bet slip not found' }, status: :not_found
+			end
+	end
 
 	def create
 		stake = params[:stake]
@@ -79,10 +79,9 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 				fixture_id: bet_data[:fixture_id],
 				market_identifier: bet_data[:market_id],
 				odds: bet_data[:odd],
-				outcome_desc: bet_data[:description],
-				outcome: bet_data[:outcome],
+				outcome_desc: bet_data[:outcome],
+				outcome: bet_data[:outcome_id],
 				specifier: bet_data[:specifier],
-				sport: bet_data[:sport],
 				status: 'Active',
 				bet_type: bet_data[:bet_type]
       }
@@ -126,6 +125,6 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 	private
 
 	def betslip_params
-		params.require(:betslip).permit(:stake, bets_attributes: [:fixture_id, :market_id, :selection, :odds])
+		params.require(:betslip).permit(:stake, bets_attributes: [:fixture_id, :market_id, :odd, :outcome, :outcome_id, :specifier, :bet_type])
 	end
 end

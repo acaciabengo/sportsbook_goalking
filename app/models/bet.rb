@@ -29,6 +29,7 @@ class Bet < ApplicationRecord
       updated_at
       user_id
       void_factor
+      bet_type
     ]
   end
 
