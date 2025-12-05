@@ -1,5 +1,6 @@
 class Api::V1::AuthController < Api::V1::BaseController
   # skip_before_action :authenticate_user!, only: [:login, :signup]
+  skip_before_action :verify_authenticity_token
 
   def login
     phone_number = params[:phone_number]

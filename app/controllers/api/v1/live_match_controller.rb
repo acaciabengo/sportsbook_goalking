@@ -1,4 +1,5 @@
 class Api::V1::LiveMatchController < Api::V1::BaseController
+  skip_before_action :verify_authenticity_token
   # before_action :auth_user
 
   def index
@@ -140,7 +141,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
       LEFT JOIN categories c ON c.ext_category_id = f.ext_category_id
       LEFT JOIN aggregated_markets am ON am.fixture_id = f.id
       WHERE f.match_status = 'in_play' 
-        AND f.status = 'active' 
+        AND f.status = '0' 
         AND f.id = #{fixture_id}
       ORDER BY f.start_date DESC
       LIMIT 1

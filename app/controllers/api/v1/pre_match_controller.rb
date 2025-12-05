@@ -1,4 +1,5 @@
 class Api::V1::PreMatchController < Api::V1::BaseController
+  skip_before_action :verify_authenticity_token
   # include Pagy::Method
 
   def index
