@@ -77,13 +77,13 @@ class Api::V1::PreMatchController < Api::V1::BaseController
             ext_category_id: record["ext_category_id"],
             name: record["category_name"]
           },
-          markets: [{
+          markets: {
             id: record["pre_market_id"],
             name: record["market_name"],
             market_identifier: record["market_identifier"],
             odds: record["odds"] ? JSON.parse(record["odds"]) : {}, 
             specifier: record["specifier"]
-          }]
+          }
         }
       end
     }

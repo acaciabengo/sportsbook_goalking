@@ -30,11 +30,11 @@ class PreMatch::PullFixturesJob
         fixtures_data
           .xpath("//Category")
           .each do |category|
-            category_id = category["BetbalancerCategoryID"].to_i
+            category_id = category["BetbalancerCategoryID"]&.to_i
             category
               .xpath("//Tournament")
               .each do |tournament|
-                tournament_id = tournament["BetbalancerTournamentID"].to_i
+                tournament_id = tournament["BetbalancerTournamentID"]&.to_i
 
                 tournament
                   .xpath("Match")
