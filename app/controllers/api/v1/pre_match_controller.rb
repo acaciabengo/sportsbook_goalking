@@ -34,10 +34,11 @@ class Api::V1::PreMatchController < Api::V1::BaseController
         pm.odds,
         pm.specifier
       FROM fixtures f    
-      INNER JOIN pre_markets pm_filter ON pm_filter.fixture_id = f.id AND pm_filter.market_identifier = '1' AND pm_filter.status = 'active'  
+      INNER JOIN pre_markets pm ON pm.fixture_id = f.id AND pm.market_identifier = '1' AND pm.status = 'active'  
       LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
       LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
       LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
+      LEFT JOIN markets m ON m.ext_market_id = CAST(pm.market_identifier AS INTEGER)
       WHERE f.match_status = 'not_started' 
         AND f.status = '0' 
         AND f.start_date > NOW()
