@@ -6,8 +6,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
     # find all fixtures that are not started yet
     # show league, tournament, home and away teams, scores, match time, odds for main markets
     query_sql = <<-SQL
-      SELECT 
-        f.id, 
+      SELECT DISTINCT ON (f.id)
         f.event_id, 
         f.start_date,
         f.part_one_name AS home_team,
