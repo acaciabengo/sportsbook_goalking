@@ -7,6 +7,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
     # show league, tournament, home and away teams, scores, match time, odds for main markets
     query_sql = <<-SQL
       SELECT DISTINCT ON (f.id)
+        f.id,
         f.event_id, 
         f.start_date,
         f.part_one_name AS home_team,
@@ -80,7 +81,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
           markets: {
             id: record["pre_market_id"],
             name: record["market_name"],
-            market_identifier: record["market_identifier"],
+            market_id: record["market_identifier"],
             odds: record["odds"] ? JSON.parse(record["odds"]) : {}, 
             specifier: record["specifier"]
           }
