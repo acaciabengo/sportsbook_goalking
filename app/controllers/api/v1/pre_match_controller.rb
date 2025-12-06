@@ -31,24 +31,22 @@ class Api::V1::PreMatchController < Api::V1::BaseController
         pm.market_identifier,
         m.name AS market_name,
         m.id AS market_id,
-        pm.odds
-      FROM fixtures f      
+        pm.odds,
+        pm.specifier
+      FROM fixtures f    
+      INNER JOIN pre_markets pm_filter ON pm_filter.fixture_id = f.id AND pm_filter.market_identifier = '1' AND pm_filter.status = 'active'  
       LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
-      LEFT JOIN tournaments t ON f.ext_tournament_id = t.id 
+      LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
       LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
-      LEFT JOIN pre_markets pm ON pm.fixture_id = f.id 
-      LEFT JOIN markets m ON m.ext_market_id = CAST(pm.market_identifier AS INTEGER) 
       WHERE f.match_status = 'not_started' 
         AND f.status = '0' 
         AND f.start_date > NOW()
-        AND pm.market_identifier = '1'
-
       ORDER BY f.start_date ASC
     SQL
 
     raw_results = ActiveRecord::Base.connection.exec_query(query_sql).to_a
 
-    @pagy, @records = pagy(:offset, raw_results)
+    @pagy, @records = pagy_array(raw_results)
 
     # make a nested json response
     response = {
@@ -79,13 +77,13 @@ class Api::V1::PreMatchController < Api::V1::BaseController
             ext_category_id: record["ext_category_id"],
             name: record["category_name"]
           },
-          markets: {
-            id: record["market_id"],
+          markets: [{
+            id: record["pre_market_id"],
             name: record["market_name"],
-            market_id: record["market_identifier"],
+            market_identifier: record["market_identifier"],
             odds: record["odds"] ? JSON.parse(record["odds"]) : {}, 
-            specifier: nil
-          }
+            specifier: record["specifier"]
+          }]
         }
       end
     }
@@ -111,7 +109,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
           ) AS markets
         FROM pre_markets pm
         LEFT JOIN markets m on m.ext_market_id = pm.market_identifier::integer
-        WHERE pm.status = 'active'
+        WHERE pm.status = 'active' AND pm.market_identifier = 1
         GROUP BY pm.fixture_id
       )  
     

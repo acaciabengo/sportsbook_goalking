@@ -3,10 +3,10 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
   # before_action :auth_user
 
   def index
-    # find all fixtures that are in play (live)
-    # show league, tournament, home and away teams, scores, match time, odds for main markets
+    # Find all fixtures that are in play and have a "Match Result" market (ID '1').
+    # Show only that single market for each fixture.
     query_sql = <<-SQL
-      SELECT 
+      SELECT DISTINCT ON (f.id)
         f.id, 
         f.event_id, 
         f.start_date,
@@ -26,27 +26,27 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
         f.ext_category_id,
         c.id AS category_id,
         c.name AS category_name,
-        -- Markets Fields --
+        -- Markets Fields (Only for Market ID '1')
         lm.id AS live_market_id,
         lm.market_identifier,
         m.name AS market_name,
         m.id AS market_id,
-        lm.odds
+        lm.odds,
+        lm.specifier
       FROM fixtures f      
+      INNER JOIN live_markets lm ON lm.fixture_id = f.id AND lm.market_identifier = '1' AND lm.status = 'active'
       LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
       LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
       LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
-      LEFT JOIN live_markets lm ON lm.fixture_id = f.id 
       LEFT JOIN markets m ON m.ext_market_id = CAST(lm.market_identifier AS INTEGER) 
       WHERE f.match_status = 'in_play' 
-        AND f.status = '0' 
-        AND lm.market_identifier = '1'
-      ORDER BY f.start_date ASC
+        AND f.status = '0'
+      ORDER BY f.id, f.start_date ASC
     SQL
 
     raw_results = ActiveRecord::Base.connection.exec_query(query_sql).to_a
 
-    @pagy, @records = pagy(:offset, raw_results)
+    @pagy, @records = pagy_array(raw_results)
 
     # make a nested json response
     response = {
@@ -77,13 +77,13 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
             ext_category_id: record["ext_category_id"],
             name: record["category_name"]
           },
-          markets: {
-            id: record["market_id"],
+          markets: [{
+            id: record["live_market_id"],
             name: record["market_name"],
-            market_id: record["market_identifier"],
-            odds: record["odds"] ? JSON.parse(record["odds"]) : {},
-            specifier: nil
-          }
+            market_identifier: record["market_identifier"],
+            odds: record["odds"] ? JSON.parse(record["odds"]) : {}, 
+            specifier: record["specifier"]
+          }]
         }
       end
     }
