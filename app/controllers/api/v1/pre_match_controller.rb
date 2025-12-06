@@ -41,7 +41,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
       WHERE f.match_status = 'not_started' 
         AND f.status = '0' 
         AND f.start_date > NOW()
-      ORDER BY f.start_date ASC
+      ORDER BY f.id, f.start_date ASC
     SQL
 
     raw_results = ActiveRecord::Base.connection.exec_query(query_sql).to_a
