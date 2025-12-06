@@ -47,7 +47,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
 
     raw_results = ActiveRecord::Base.connection.exec_query(query_sql).to_a
 
-    @pagy, @records = pagy_array(raw_results)
+    @pagy, @records = pagy(:offset, raw_results)
 
     # make a nested json response
     response = {
