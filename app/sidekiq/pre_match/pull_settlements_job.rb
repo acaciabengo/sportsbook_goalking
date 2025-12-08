@@ -71,18 +71,6 @@ class PreMatch::PullSettlementsJob
         outcome_id = bet_result["OutComeId"]
         outcome = bet_result["OutCome"]
         void_factor = bet_result["VoidFactor"]&.to_f || 0.0
-        
-        # # Initialize hash for this market if not exists
-        # markets_by_identifier_and_specifier[market_identifier] ||= {}
-        
-        # # Store this outcome in the market's results (keyed by outcome name)
-        # markets_by_identifier[market_identifier][outcome] = {
-        #   "status" => status,
-        #   "outcome_id" => outcome_id,
-        #   "outcome" => outcome,
-        #   "void_factor" => bet_result["VoidFactor"], 
-        #   "specifier" => specifier
-        # }
 
         markets_by_identifier_and_specifier[market_identifier] ||= {}
         markets_by_identifier_and_specifier[market_identifier][specifier] ||= {}
@@ -134,7 +122,10 @@ class PreMatch::PullSettlementsJob
 
     # Push all CloseSettledBetsJob jobs in bulk to Sidekiq
     if jobs_to_push.any?
-      Sidekiq::Client.push_bulk(jobs_to_push)
+      Sidekiq::Client.push_bulk(
+        'class' => 'CloseSettledBetsJob',
+        'args' => jobs_to_push.map { |job| job['args'] }
+      )
       Rails.logger.info("Bulk queued #{jobs_to_push.size} settlement jobs for fixture #{fixture['id']}")
     end
   end

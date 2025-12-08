@@ -74,7 +74,10 @@ class Live::BetSettlementJob
 
       # Push all CloseSettledBetsJob jobs in bulk to Sidekiq
       if jobs_to_push.any?
-        Sidekiq::Client.push_bulk(jobs_to_push)
+        Sidekiq::Client.push_bulk(
+          'class' => 'CloseSettledBetsJob',
+          'args' => jobs_to_push.map { |job| job['args'] }
+        )
         Rails.logger.info("Bulk queued #{jobs_to_push.size} settlement jobs for fixture #{fixture.id}")
       end
     end
