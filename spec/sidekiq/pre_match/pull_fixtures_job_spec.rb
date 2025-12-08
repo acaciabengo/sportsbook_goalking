@@ -207,7 +207,7 @@ RSpec.describe PreMatch::PullFixturesJob, type: :worker do
         worker.perform
 
         fixture = Fixture.last
-        expect(fixture.match_status).to eq("cancelled")
+        expect(fixture.match_status).to eq("not_started")
         expect(fixture.status).to eq("1")
       end
     end

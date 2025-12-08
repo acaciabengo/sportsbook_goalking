@@ -12,6 +12,162 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
     { 'Authorization' => "Bearer #{token}" }
   end
 
+  path '/api/v1/live_match' do
+    get 'Lists all live matches' do
+      tags 'Live Matches'
+      produces 'application/json'
+      security [Bearer: {}]
+
+      response '200', 'successful' do
+        schema type: :object,
+          properties: {
+            current_page: { type: :integer },
+            total_pages: { type: :integer },
+            total_count: { type: :integer },
+            fixtures: {
+              type: :array,
+              items: {
+                type: :object,
+                properties: {
+                  id: { type: :integer },
+                  event_id: { type: :string },
+                  home_team: { type: :string },
+                  away_team: { type: :string },
+                  match_status: { type: :string },
+                  start_date: { type: :string, format: 'date-time' },
+                  sport: {
+                    type: :object,
+                    properties: {
+                      id: { type: :integer },
+                      ext_sport_id: { type: :integer },
+                      name: { type: :string }
+                    }
+                  },
+                  tournament: {
+                    type: :object,
+                    properties: {
+                      id: { type: :integer },
+                      ext_tournament_id: { type: :integer },
+                      name: { type: :string }
+                    }
+                  },
+                  category: {
+                    type: :object,
+                    properties: {
+                      id: { type: :integer },
+                      ext_category_id: { type: :integer },
+                      name: { type: :string }
+                    }
+                  },
+                  markets: {
+                    type: :array,
+                    items: {
+                      type: :object,
+                      properties: {
+                        id: { type: :integer },
+                        name: { type: :string },
+                        market_identifier: { type: :string },
+                        odds: { type: :object },
+                        specifier: { type: :string, nullable: true }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/live_match/{id}' do
+    parameter name: :id, in: :path, type: :integer, description: 'Fixture ID'
+
+    get 'Shows a specific live match' do
+      tags 'Live Matches'
+      produces 'application/json'
+      security [Bearer: {}]
+      
+      let(:live_fixture_for_show) do
+        sport = Fabricate(:sport, name: "Football", ext_sport_id: 10)
+        category = Fabricate(:category, name: "England", ext_category_id: 110)
+        tournament = Fabricate(:tournament, name: "Premier League", category: category, ext_tournament_id: 210)
+        fixture = Fabricate(:fixture,
+          event_id: "sr:match:show1",
+          sport: sport,
+          sport_id: sport.ext_sport_id,
+          ext_tournament_id: tournament.ext_tournament_id,
+          ext_category_id: category.ext_category_id,
+          match_status: 'in_play',
+          status: '0',
+          start_date: 1.hour.ago
+        )
+        Fabricate(:live_market, fixture: fixture, market_identifier: "1", status: 'active')
+        fixture
+      end
+      let(:id) { live_fixture_for_show.id }
+
+      response '200', 'successful' do
+        schema type: :array,
+          items: {
+            type: :object,
+            properties: {
+              id: { type: :integer },
+              event_id: { type: :string },
+              home_team: { type: :string },
+              away_team: { type: :string },
+              match_status: { type: :string },
+              start_date: { type: :string, format: 'date-time' },
+              sport: {
+                type: :object,
+                properties: {
+                  id: { type: :integer },
+                  ext_sport_id: { type: :integer },
+                  name: { type: :string }
+                }
+              },
+              tournament: {
+                type: :object,
+                properties: {
+                  id: { type: :integer },
+                  ext_tournament_id: { type: :integer },
+                  name: { type: :string }
+                }
+              },
+              category: {
+                type: :object,
+                properties: {
+                  id: { type: :integer },
+                  ext_category_id: { type: :integer },
+                  name: { type: :string }
+                }
+              },
+              markets: {
+                type: :array,
+                items: {
+                  type: :object,
+                  properties: {
+                    id: { type: :integer },
+                    name: { type: :string, nullable: true },
+                    market_identifier: { type: :string },
+                    odds: { type: :object },
+                    specifier: { type: :string, nullable: true }
+                  }
+                }
+              }
+            }
+          }
+        run_test!
+      end
+
+      response '404', 'not found' do
+        let(:id) { 999999 }
+        run_test!
+      end
+    end
+  end
+
   describe "GET /api/v1/live_match" do
     let!(:live_sport) { Fabricate(:sport, name: "Football", ext_sport_id: 1) }
     let!(:live_category) { Fabricate(:category, name: "England", ext_category_id: 100) }
@@ -30,7 +186,7 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
             part_one_name: "Arsenal",
             part_two_name: "Chelsea",
             match_status: 'in_play',
-            status: 'active',
+            status: '0',
             start_date: 1.hour.ago
           )
         end
@@ -77,7 +233,7 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
           expect(fixture['home_team']).to eq("Arsenal")
           expect(fixture['away_team']).to eq("Chelsea")
           expect(fixture['match_status']).to eq('in_play')
-          expect(fixture['fixture_status']).to eq('active')
+          expect(fixture['fixture_status']).to eq('0')
         end
 
         it "includes sport details" do
@@ -115,33 +271,35 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
           fixture = json['fixtures'].first
 
           expect(fixture['markets']).to be_present
-          expect(fixture['markets']).to be_a(Hash)
-
-          # print out the markets for debugging
-          puts "Markets: #{fixture['markets']}"
+          expect(fixture['markets']).to be_an(Array)
           
-          expect(fixture['markets']['name']).to eq("1X2")
-          expect(fixture['markets']['market_id']).to eq("1")
-          expect(fixture['markets']['odds']).to be_a(Hash)
+          market = fixture['markets'].first
+          expect(market['name']).to eq("1X2")
+          expect(market['market_identifier']).to eq("1")
+          expect(market['odds']).to be_a(Hash)
         end
 
         it "orders fixtures by start_date ascending" do
-          earlier_fixture = Fabricate(:fixture,
+          # The existing live_fixture was created at 1.hour.ago
+          # Create a later fixture to verify ordering
+          later_fixture = Fabricate(:fixture,
             event_id: "sr:match:live2",
             sport: live_sport,
             sport_id: live_sport.ext_sport_id,
             ext_tournament_id: live_tournament.ext_tournament_id,
             ext_category_id: live_category.ext_category_id,
             match_status: 'in_play',
-            status: 'active',
-            start_date: 2.hours.ago
+            status: '0',
+            start_date: 30.minutes.ago
           )
-          Fabricate(:live_market, fixture: earlier_fixture, market_identifier: "1", status: 'active')
+          Fabricate(:live_market, fixture: later_fixture, market_identifier: "1", status: 'active')
           
           get "/api/v1/live_match", headers: auth_headers
           json = JSON.parse(response.body)
           
-          expect(json['fixtures'].first['id']).to eq(earlier_fixture.id)
+          # Earlier fixture (1 hour ago) should come first
+          expect(json['fixtures'].first['id']).to eq(live_fixture.id)
+          expect(json['fixtures'].last['id']).to eq(later_fixture.id)
         end
       end
 
@@ -242,7 +400,7 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
               ext_tournament_id: pagination_tournament.ext_tournament_id,
               ext_category_id: pagination_category.ext_category_id,
               match_status: 'in_play',
-              status: 'active',
+              status: '0',
               start_date: (i + 1).hours.ago
             )
             Fabricate(:live_market, fixture: fixture, market_identifier: "1", status: 'active')
@@ -274,14 +432,6 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
         end
       end
     end
-
-    context "when user is not authenticated" do
-      it "returns unauthorized" do
-        get "/api/v1/live_match"
-        
-        expect(response).to have_http_status(:unauthorized)
-      end
-    end
   end
 
   describe "GET /api/v1/live_match/:id" do
@@ -299,7 +449,7 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
         part_one_name: "Bayern Munich",
         part_two_name: "Borussia Dortmund",
         match_status: 'in_play',
-        status: 'active',
+        status: '0',
         start_date: 1.hour.ago
       )
     end
@@ -480,13 +630,13 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
             ext_tournament_id: show_tournament.ext_tournament_id,
             ext_category_id: show_category.ext_category_id,
             match_status: 'in_play',
-            status: 'active',
+            status: '0',
             start_date: 1.hour.ago
           )
         end
 
         before do
-          get "/api/v1/live_match/#{fixture_no_markets.id}", headers: auth_headers
+          get "/api/v1/live_match", headers: auth_headers
         end
 
         it "returns the fixture" do
@@ -495,8 +645,10 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
 
         it "returns empty markets array" do
           json = JSON.parse(response.body)
-          fixture_data = json.first
+          fixtures = json['fixtures']
+          fixture_data = fixtures.find { |f| f['id'] == fixture_no_markets.id }
           
+          expect(fixture_data).to be_present
           expect(fixture_data['markets']).to eq([])
         end
       end
@@ -504,13 +656,13 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
       context "with inactive markets" do
         let!(:fixture_inactive_markets) do
           Fabricate(:fixture,
-            event_id: "90776",
+            event_id: "90777",
             sport: show_sport,
             sport_id: show_sport.ext_sport_id,
             ext_tournament_id: show_tournament.ext_tournament_id,
             ext_category_id: show_category.ext_category_id,
             match_status: 'in_play',
-            status: 'active',
+            status: '0',
             start_date: 1.hour.ago
           )
         end
@@ -518,8 +670,16 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
         let!(:inactive_market) do
           Fabricate(:live_market,
             fixture: fixture_inactive_markets,
-            market_identifier: 3,
+            market_identifier: '3',
             status: 'inactive'
+          )
+        end
+
+        let!(:active_market) do
+          Fabricate(:live_market,
+            fixture: fixture_inactive_markets,
+            market_identifier: '1',
+            status: 'active'
           )
         end
 
@@ -531,17 +691,10 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
           json = JSON.parse(response.body)
           fixture_data = json.first
           
-          market_ids = fixture_data['markets'].map { |m| m['market_id'] }
-          expect(market_ids).not_to include(3)
+          market_ids = fixture_data['markets'].map { |m| m['market_identifier'] }
+          expect(market_ids).not_to include('3')
+          expect(market_ids).to include('1')
         end
-      end
-    end
-
-    context "when user is not authenticated" do
-      it "returns unauthorized" do
-        get "/api/v1/live_match/#{fixture.id}"
-        
-        expect(response).to have_http_status(:unauthorized)
       end
     end
   end

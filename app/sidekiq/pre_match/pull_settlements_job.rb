@@ -19,6 +19,7 @@ class PreMatch::PullSettlementsJob
       JOIN pre_markets ON pre_markets.fixture_id = fixtures.id
       WHERE fixtures.match_status IN ('finished', 'ended')
         AND pre_markets.status != 'settled'
+        AND fixtures.start_date > (NOW() - INTERVAL '24 hours')
       ORDER BY fixtures.id ASC
     SQL
 
@@ -38,6 +39,7 @@ class PreMatch::PullSettlementsJob
         JOIN live_markets ON live_markets.fixture_id = fixtures.id
         WHERE fixtures.match_status IN ('finished', 'ended')
         AND live_markets.status != 'settled'
+        AND fixtures.start_date > (NOW() - INTERVAL '24 hours')
     SQL
 
     fixtures = ActiveRecord::Base.connection.exec_query(sql).to_a
@@ -53,6 +55,9 @@ class PreMatch::PullSettlementsJob
     end
 
     settlement_data.remove_namespaces!
+
+    # Find all the markets at once and group by market_identifier
+    existing_markets = PreMarket.where(fixture_id: fixture['id']).index_by { |m| [m.market_identifier, m.specifier] }
 
     # Group by market_identifier
     markets_by_identifier_and_specifier = {}
@@ -89,21 +94,25 @@ class PreMatch::PullSettlementsJob
           "outcome_id" => outcome_id,
         }
       end
+
+    # Prepare a list of jobs to push to Sidekiq in bulk later
+    jobs_to_push = []
+
     # Process each market identifier
     markets_by_identifier_and_specifier.each do |market_identifier, specifiers_hash|
       # Process each specifier within this market
       specifiers_hash.each do |specifier, results|
         # Find the specific PreMarket by fixture, market_identifier, AND specifier
-        market = PreMarket.find_by(
-          fixture_id: fixture['id'], 
-          market_identifier: market_identifier,
-          specifier: specifier
-        )
+        # Convert market_identifier to string to match DB storage
+        market = existing_markets[[market_identifier.to_s, specifier]]
         
         unless market
           Rails.logger.warn("PreMarket not found: fixture=#{fixture['id']}, market_identifier=#{market_identifier}, specifier=#{specifier}")
           next
         end
+
+        # go to the next one if the market is already settled
+        next if market.status == "settled"
 
         # Update this specific market with its results (no merging needed)
         unless market.update(results: results, status: "settled")
@@ -112,10 +121,21 @@ class PreMatch::PullSettlementsJob
         end
         
         Rails.logger.info("Settled pre-market #{market.id} (#{market_identifier}|#{specifier}): #{results}")
-        
-        # Close settled bets for this specific market
-        CloseSettledBetsJob.perform_in(2.minutes, fixture['id'], market.id, 'PreMatch')
+
+        # aggregate the jobs to settle bets for this market
+        jobs_to_push << { 
+          'class' => 'CloseSettledBetsJob', 
+          'args' => [fixture['id'], market.id, 'PreMatch'], 
+          'at' => 2.minutes.from_now.to_f # Schedule for later
+        }
+    
       end
+    end
+
+    # Push all CloseSettledBetsJob jobs in bulk to Sidekiq
+    if jobs_to_push.any?
+      Sidekiq::Client.push_bulk(jobs_to_push)
+      Rails.logger.info("Bulk queued #{jobs_to_push.size} settlement jobs for fixture #{fixture['id']}")
     end
   end
 

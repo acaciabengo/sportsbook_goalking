@@ -34,7 +34,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
         lm.odds,
         lm.specifier
       FROM fixtures f      
-      INNER JOIN live_markets lm ON lm.fixture_id = f.id AND lm.market_identifier = '1' AND lm.status = 'active'
+      LEFT JOIN live_markets lm ON lm.fixture_id = f.id AND lm.market_identifier = '1' AND lm.status = 'active'
       LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
       LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
       LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
@@ -77,13 +77,13 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
             ext_category_id: record["ext_category_id"],
             name: record["category_name"]
           },
-          markets: [{
+          markets: record["live_market_id"] ? [{
             id: record["live_market_id"],
             name: record["market_name"],
             market_identifier: record["market_identifier"],
             odds: record["odds"] ? JSON.parse(record["odds"]) : {}, 
             specifier: record["specifier"]
-          }]
+          }] : []
         }
       end
     }
@@ -103,7 +103,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
             DISTINCT jsonb_build_object(
               'id', lm.id,
               'name', m.name,
-              'market_id', lm.market_identifier,
+              'market_identifier', lm.market_identifier,
               'odds', lm.odds::jsonb,
               'specifier', lm.specifier
             )

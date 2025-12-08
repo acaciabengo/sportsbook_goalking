@@ -12,6 +12,167 @@ RSpec.describe "Api::V1::PreMatch", type: :request do
     { 'Authorization' => "Bearer #{token}" }
   end
 
+  path '/api/v1/pre_match' do
+    get 'Lists all upcoming matches' do
+      tags 'Pre-Match'
+      produces 'application/json'
+      security [Bearer: {}]
+      parameter name: :Authorization, in: :header, type: :string, description: 'Bearer token'
+
+      let(:Authorization) { auth_headers['Authorization'] }
+
+      response '200', 'successful' do
+        schema type: :object,
+          properties: {
+            current_page: { type: :integer },
+            total_pages: { type: :integer },
+            total_count: { type: :integer },
+            fixtures: {
+              type: :array,
+              items: {
+                type: :object,
+                properties: {
+                  id: { type: :integer },
+                  event_id: { type: :string },
+                  home_team: { type: :string },
+                  away_team: { type: :string },
+                  match_status: { type: :string },
+                  start_date: { type: :string, format: 'date-time' },
+                  sport: {
+                    type: :object,
+                    properties: {
+                      id: { type: :integer },
+                      ext_sport_id: { type: :integer },
+                      name: { type: :string }
+                    }
+                  },
+                  tournament: {
+                    type: :object,
+                    properties: {
+                      id: { type: :integer },
+                      ext_tournament_id: { type: :integer },
+                      name: { type: :string }
+                    }
+                  },
+                  category: {
+                    type: :object,
+                    properties: {
+                      id: { type: :integer },
+                      ext_category_id: { type: :integer },
+                      name: { type: :string }
+                    }
+                  },
+                  markets: {
+                    type: :array,
+                    items: {
+                      type: :object,
+                      properties: {
+                        id: { type: :integer },
+                        name: { type: :string },
+                        market_identifier: { type: :string },
+                        odds: { type: :object },
+                        specifier: { type: :string, nullable: true }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/pre_match/{id}' do
+    parameter name: :id, in: :path, type: :integer, description: 'Fixture ID'
+
+    get 'Shows a specific upcoming match' do
+      tags 'Pre-Match'
+      produces 'application/json'
+      security [Bearer: {}]
+      parameter name: :Authorization, in: :header, type: :string, description: 'Bearer token'
+
+      let(:Authorization) { auth_headers['Authorization'] }
+      let(:pre_match_fixture) do
+        sport = Fabricate(:sport, name: "Football", ext_sport_id: 20)
+        category = Fabricate(:category, name: "England", ext_category_id: 120)
+        tournament = Fabricate(:tournament, name: "Premier League", category: category, ext_tournament_id: 220)
+        fixture = Fabricate(:fixture,
+          event_id: "sr:match:prematch1",
+          sport: sport,
+          sport_id: sport.ext_sport_id,
+          ext_tournament_id: tournament.ext_tournament_id,
+          ext_category_id: category.ext_category_id,
+          match_status: 'not_started',
+          status: 'active',
+          start_date: 2.days.from_now
+        )
+        Fabricate(:pre_market, fixture: fixture, market_identifier: "1", status: 'active')
+        fixture
+      end
+      let(:id) { pre_match_fixture.id }
+      
+      response '200', 'successful' do
+        schema type: :array,
+          items: {
+            type: :object,
+            properties: {
+              id: { type: :integer },
+              event_id: { type: :string },
+              home_team: { type: :string },
+              away_team: { type: :string },
+              match_status: { type: :string },
+              start_date: { type: :string, format: 'date-time' },
+              sport: {
+                type: :object,
+                properties: {
+                  id: { type: :integer },
+                  ext_sport_id: { type: :integer },
+                  name: { type: :string }
+                }
+              },
+              tournament: {
+                type: :object,
+                properties: {
+                  id: { type: :integer },
+                  ext_tournament_id: { type: :integer },
+                  name: { type: :string }
+                }
+              },
+              category: {
+                type: :object,
+                properties: {
+                  id: { type: :integer },
+                  ext_category_id: { type: :integer },
+                  name: { type: :string }
+                }
+              },
+              markets: {
+                type: :array,
+                items: {
+                  type: :object,
+                  properties: {
+                    id: { type: :integer },
+                    name: { type: :string, nullable: true },
+                    market_identifier: { type: :string },
+                    odds: { type: :object },
+                    specifier: { type: :string, nullable: true }
+                  }
+                }
+              }
+            }
+          }
+        run_test!
+      end
+
+      response '404', 'not found' do
+        let(:id) { 999999 }
+        run_test!
+      end
+    end
+  end
+
   describe "GET /api/v1/pre_match" do
     let!(:sport) { Fabricate(:sport, name: "Football", ext_sport_id: 1) }
     let!(:category) { Fabricate(:category, name: "England") }
@@ -23,7 +184,7 @@ RSpec.describe "Api::V1::PreMatch", type: :request do
         let!(:upcoming_fixture) do
           Fabricate(:fixture,
             sport: sport,
-            ext_tournament_id: tournament.id,
+            ext_tournament_id: tournament.ext_tournament_id,
             part_one_name: "Arsenal",
             part_two_name: "Chelsea",
             match_status: 'not_started',
@@ -37,7 +198,7 @@ RSpec.describe "Api::V1::PreMatch", type: :request do
         let!(:pre_market) do
           Fabricate(:pre_market,
             fixture: upcoming_fixture,
-            market_identifier: 1,
+            market_identifier: "1",
             odds: { "1" => 2.5, "X" => 3.2, "2" => 2.8 }
           )
         end
@@ -114,37 +275,30 @@ RSpec.describe "Api::V1::PreMatch", type: :request do
           fixture = json['fixtures'].first
           
           expect(fixture['markets']).to be_present
+          expect(fixture['markets']).to be_a(Hash)
           expect(fixture['markets']['name']).to eq("1X2")
-          expect(fixture['markets']['market_id']).to eq("1")
-          # expect(fixture['markets']['odds']).to be_a(Hash)
-          # print out odds
-          #puts "Fixture markets odds: #{fixture['markets']['odds']}"
-          odds_1 = JSON.parse(fixture['markets']['odds'])["1"]
-          expect(odds_1).to eq(2.5)
+          expect(fixture['markets']['market_identifier']).to eq("1")
+          expect(fixture['markets']['odds']).to be_a(Hash)
+          expect(fixture['markets']['odds']["1"]).to eq(2.5)
         end
 
         it "orders fixtures by start_date ascending" do
-          earlier_fixture = Fabricate(:fixture,
+          later_fixture = Fabricate(:fixture,
             sport: sport,
-            ext_tournament_id: tournament.id,
+            ext_tournament_id: tournament.ext_tournament_id,
             match_status: 'not_started',
             status: 'active',
-            start_date: 1.day.from_now
+            start_date: 3.days.from_now
           )
 
-          Fabricate(:pre_market, fixture: earlier_fixture, market_identifier: "1")  
+          Fabricate(:pre_market, fixture: later_fixture, market_identifier: "1")  
 
-          # #puts "earlier_fixture id: #{earlier_fixture.id}"
-          # #puts "upcoming_fixture id: #{upcoming_fixture.id}"
-          # #puts "pre market id: #{pre_market.inspect}"
-
-          
           get "/api/v1/pre_match", headers: auth_headers
           json = JSON.parse(response.body)
-          # #puts "response body: #{response.body}"
           
-          expect(json['fixtures'].first['id']).to eq(earlier_fixture.id)
-          expect(json['fixtures'].last['id']).to eq(upcoming_fixture.id)
+          # Earlier start date (2 days) should come first
+          expect(json['fixtures'].first['id']).to eq(upcoming_fixture.id)
+          expect(json['fixtures'].last['id']).to eq(later_fixture.id)
         end
       end
 
@@ -229,12 +383,12 @@ RSpec.describe "Api::V1::PreMatch", type: :request do
           25.times do |i|
             fixture = Fabricate(:fixture,
               sport: sport,
-              ext_tournament_id: tournament.id,
+              ext_tournament_id: tournament.ext_tournament_id,
               match_status: 'not_started',
               status: 'active',
               start_date: (i + 1).days.from_now
             )
-            Fabricate(:pre_market, fixture: fixture, market_identifier: 1)
+            Fabricate(:pre_market, fixture: fixture, market_identifier: "1")
           end
         end
 
@@ -274,7 +428,7 @@ RSpec.describe "Api::V1::PreMatch", type: :request do
         let!(:fixture_without_market) do
           Fabricate(:fixture,
             sport: sport,
-            ext_tournament_id: tournament.id,
+            ext_tournament_id: tournament.ext_tournament_id,
             match_status: 'not_started',
             status: 'active',
             start_date: 1.day.from_now
@@ -337,7 +491,7 @@ RSpec.describe "Api::V1::PreMatch", type: :request do
     let!(:pre_market1) do
       Fabricate(:pre_market,
         fixture: fixture,
-        market_identifier: 1,
+        market_identifier: "1",
         odds: { "1" => 2.1, "X" => 3.5, "2" => 3.2 },
         status: 'active'
       )
@@ -346,7 +500,7 @@ RSpec.describe "Api::V1::PreMatch", type: :request do
     let!(:pre_market2) do
       Fabricate(:pre_market,
         fixture: fixture,
-        market_identifier: 2,
+        market_identifier: "2",
         odds: { "over" => 1.85, "under" => 1.95 },
         status: 'active'
       )
@@ -518,7 +672,7 @@ RSpec.describe "Api::V1::PreMatch", type: :request do
           Fabricate(:fixture,
             event_id: "sr:match:nomarkets",
             sport: sport,
-            ext_tournament_id: tournament.id,
+            ext_tournament_id: tournament.ext_tournament_id,
             match_status: 'not_started',
             status: 'active',
             start_date: 2.days.from_now
@@ -546,7 +700,7 @@ RSpec.describe "Api::V1::PreMatch", type: :request do
           Fabricate(:fixture,
             event_id: "sr:match:inactive_markets",
             sport: sport,
-            ext_tournament_id: tournament.id,
+            ext_tournament_id: tournament.ext_tournament_id,
             match_status: 'not_started',
             status: 'active',
             start_date: 2.days.from_now
@@ -556,7 +710,7 @@ RSpec.describe "Api::V1::PreMatch", type: :request do
         let!(:inactive_market) do
           Fabricate(:pre_market,
             fixture: fixture_inactive_markets,
-            market_identifier: 3,
+            market_identifier: "3",
             status: 'inactive'
           )
         end

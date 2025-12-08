@@ -34,13 +34,13 @@ class Api::V1::PreMatchController < Api::V1::BaseController
         pm.odds,
         pm.specifier
       FROM fixtures f    
-      INNER JOIN pre_markets pm ON pm.fixture_id = f.id AND pm.market_identifier = '1' AND pm.status = 'active'  
+      INNER JOIN pre_markets pm ON pm.fixture_id = f.id AND pm.market_identifier = '1' AND pm.status IN ('active', '0') 
       LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
       LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
       LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
       LEFT JOIN markets m ON m.ext_market_id = CAST(pm.market_identifier AS INTEGER)
       WHERE f.match_status = 'not_started' 
-        AND f.status = '0' 
+        AND f.status IN ('0', 'active') 
         AND f.start_date > NOW()
       ORDER BY f.id, f.start_date ASC
     SQL
@@ -81,7 +81,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
           markets: {
             id: record["pre_market_id"],
             name: record["market_name"],
-            market_id: record["market_identifier"],
+            market_identifier: record["market_identifier"],
             odds: record["odds"] ? JSON.parse(record["odds"]) : {}, 
             specifier: record["specifier"]
           }
@@ -103,14 +103,14 @@ class Api::V1::PreMatchController < Api::V1::BaseController
             DISTINCT jsonb_build_object(
               'id', pm.id,
               'name', m.name,
-              'market_id', pm.market_identifier,
+              'market_identifier', pm.market_identifier,
               'odds', pm.odds, 
               'specifier', pm.specifier
             )
           ) AS markets
         FROM pre_markets pm
         LEFT JOIN markets m on m.ext_market_id = pm.market_identifier::integer
-        WHERE pm.status = 'active' AND pm.market_identifier = 1
+        WHERE pm.status IN  ('active', '0')
         GROUP BY pm.fixture_id
       )  
     
@@ -141,7 +141,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
       LEFT JOIN categories c ON c.ext_category_id = f.ext_category_id
       LEFT JOIN aggregated_markets am ON am.fixture_id = f.id
       WHERE f.match_status = 'not_started' 
-        AND f.status = '0' 
+        AND f.status IN ('0', 'active') 
         AND f.start_date > NOW()
         AND f.id = #{fixture_id}
       ORDER BY f.start_date DESC

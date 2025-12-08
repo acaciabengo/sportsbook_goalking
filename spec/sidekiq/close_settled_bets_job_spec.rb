@@ -2,17 +2,17 @@ require "rails_helper"
 
 RSpec.describe CloseSettledBetsJob, type: :worker do
   let(:fixture) { Fabricate(:fixture) }
-  let(:market_id) { "1" }
-  let(:specifier) { "total=2.5" }
+  let(:market) { Fabricate(:pre_market, fixture: fixture, market_identifier: "1", specifier: "total=2.5") }
 
   let!(:winning_bet) do
     Fabricate(
       :bet,
       fixture: fixture,
-      market_identifier: market_id,
-      specifier: specifier,
+      market_identifier: market.market_identifier,
+      specifier: market.specifier,
       outcome: "1",
-      status: "Active"
+      status: "Active",
+      bet_type: "PreMatch"
     )
   end
 
@@ -20,10 +20,11 @@ RSpec.describe CloseSettledBetsJob, type: :worker do
     Fabricate(
       :bet,
       fixture: fixture,
-      market_identifier: market_id,
-      specifier: specifier,
+      market_identifier: market.market_identifier,
+      specifier: market.specifier,
       outcome: "2",
-      status: "Active"
+      status: "Active",
+      bet_type: "PreMatch"
     )
   end
 
@@ -31,10 +32,11 @@ RSpec.describe CloseSettledBetsJob, type: :worker do
     Fabricate(
       :bet,
       fixture: fixture,
-      market_identifier: market_id,
-      specifier: specifier,
+      market_identifier: market.market_identifier,
+      specifier: market.specifier,
       outcome: "3",
-      status: "Active"
+      status: "Active",
+      bet_type: "PreMatch"
     )
   end
 
@@ -55,9 +57,13 @@ RSpec.describe CloseSettledBetsJob, type: :worker do
     }
   end
 
+  before do
+    market.update!(results: results)
+  end
+
   describe "#perform" do
     it "processes bets and updates their statuses" do
-      described_class.new.perform(fixture.id, market_id, results, specifier)
+      described_class.new.perform(fixture.id, market.id, "PreMatch")
 
       expect(winning_bet.reload.result).to eq("Win")
       expect(winning_bet.status).to eq("Closed")
@@ -71,7 +77,7 @@ RSpec.describe CloseSettledBetsJob, type: :worker do
     end
 
     it "updates winning bets" do
-      described_class.new.perform(fixture.id, market_id, results, specifier)
+      described_class.new.perform(fixture.id, market.id, "PreMatch")
 
       expect(winning_bet.reload).to have_attributes(
         result: "Win",
@@ -80,7 +86,7 @@ RSpec.describe CloseSettledBetsJob, type: :worker do
     end
 
     it "updates losing bets" do
-      described_class.new.perform(fixture.id, market_id, results, specifier)
+      described_class.new.perform(fixture.id, market.id, "PreMatch")
 
       expect(losing_bet.reload).to have_attributes(
         result: "Loss",
@@ -89,7 +95,7 @@ RSpec.describe CloseSettledBetsJob, type: :worker do
     end
 
     it "updates void bets with void_factor" do
-      described_class.new.perform(fixture.id, market_id, results, specifier)
+      described_class.new.perform(fixture.id, market.id, "PreMatch")
 
       expect(void_bet.reload).to have_attributes(
         result: "Void",
@@ -99,20 +105,24 @@ RSpec.describe CloseSettledBetsJob, type: :worker do
     end
 
     context "when bet has cancelled status" do
-      let(:results) { { "1" => { "status" => "C", "void_factor" => 0.0 } } }
+      before do
+        market.update!(results: { "1" => { "status" => "C", "void_factor" => 0.0 } })
+      end
 
       it "marks bet as void" do
-        described_class.new.perform(fixture.id, market_id, results, specifier)
+        described_class.new.perform(fixture.id, market.id, "PreMatch")
 
         expect(winning_bet.reload.result).to eq("Void")
       end
     end
 
     context "when bet has void_factor greater than 0" do
-      let(:results) { { "1" => { "status" => "W", "void_factor" => 0.5 } } }
+      before do
+        market.update!(results: { "1" => { "status" => "W", "void_factor" => 0.5 } })
+      end
 
       it "marks bet as void and stores void_factor" do
-        described_class.new.perform(fixture.id, market_id, results, specifier)
+        described_class.new.perform(fixture.id, market.id, "PreMatch")
 
         expect(winning_bet.reload).to have_attributes(
           result: "Void",
@@ -122,23 +132,35 @@ RSpec.describe CloseSettledBetsJob, type: :worker do
       end
     end
 
+    context "when market does not exist" do
+      it "does not raise error and skips processing" do
+        expect {
+          described_class.new.perform(fixture.id, 99999, "PreMatch")
+        }.not_to raise_error
+      end
+    end
+
     context "when no bets exist for fixture" do
       it "does not raise error" do
         expect {
-          described_class.new.perform(999, market_id, results, specifier)
+          described_class.new.perform(999, market.id, "PreMatch")
         }.not_to raise_error
       end
     end
 
     context "when results hash is empty" do
-      let(:results) { {} }
+      before do
+        market.update!(results: {})
+      end
 
-      it "marks all bets as loss" do
-        described_class.new.perform(fixture.id, market_id, results, specifier)
+      it "logs warning and returns early without updating bets" do
+        expect(Rails.logger).to receive(:warn).with(/No results found/)
+        
+        described_class.new.perform(fixture.id, market.id, "PreMatch")
 
-        expect(winning_bet.reload.result).to eq("Loss")
-        expect(losing_bet.reload.result).to eq("Loss")
-        expect(void_bet.reload.result).to eq("Loss")
+        expect(winning_bet.reload.status).to eq("Active")
+        expect(losing_bet.reload.status).to eq("Active")
+        expect(void_bet.reload.status).to eq("Active")
       end
     end
 
@@ -147,16 +169,41 @@ RSpec.describe CloseSettledBetsJob, type: :worker do
         Fabricate(
           :bet,
           fixture: fixture,
-          market_identifier: market_id,
+          market_identifier: market.market_identifier,
           specifier: "different=1.5",
           outcome: "1",
-          status: "Active"
+          status: "Active",
+          bet_type: "PreMatch"
         )
 
-      described_class.new.perform(fixture.id, market_id, results, specifier)
+      described_class.new.perform(fixture.id, market.id, "PreMatch")
 
       expect(winning_bet.reload.status).to eq("Closed")
       expect(other_bet.reload.status).to eq("Active") # Not updated
+    end
+
+    context "with Live market" do
+      let(:live_market) { Fabricate(:live_market, fixture: fixture, market_identifier: "1", specifier: "total=2.5", results: results) }
+      let!(:live_bet) do
+        Fabricate(
+          :bet,
+          fixture: fixture,
+          market_identifier: live_market.market_identifier,
+          specifier: live_market.specifier,
+          outcome: "1",
+          status: "Active",
+          bet_type: "Live"
+        )
+      end
+
+      it "processes Live bets correctly" do
+        described_class.new.perform(fixture.id, live_market.id, "Live")
+
+        expect(live_bet.reload).to have_attributes(
+          result: "Win",
+          status: "Closed"
+        )
+      end
     end
   end
 
@@ -169,23 +216,4 @@ RSpec.describe CloseSettledBetsJob, type: :worker do
       expect(described_class.sidekiq_options["retry"]).to eq(false)
     end
   end
-
-  # describe "bulk updates performance" do
-  #   before do
-  #     allow(instance_double(ActiveRecord::Relation)).to receive(:not).and_return(instance_double(ActiveRecord::Relation))
-  #   end
-    
-  #   it "updates bets in bulk instead of individually" do
-  #     relation = instance_double(ActiveRecord::Relation)
-  #     allow(Bet).to receive(:joins).and_return(relation)
-  #     allow(relation).to receive(:where).and_return(relation)
-  #     allow(relation).to receive(:empty?).and_return(false)
-  #     allow(relation).to receive(:not).and_return(relation)
-  #     allow(relation).to receive(:update_all)
-
-  #     described_class.new.perform(fixture.id, market_id, results, specifier)
-
-  #     expect(relation).to have_received(:update_all).at_least(3).times
-  #   end
-  # end
 end

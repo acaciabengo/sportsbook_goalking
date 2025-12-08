@@ -6,6 +6,195 @@ RSpec.describe "Api::V1::Betslips", type: :request do
   let(:jwt_token) { JWT.encode({ sub: user.id, exp: 24.hours.from_now.to_i }, ENV['DEVISE_JWT_SECRET_KEY'], 'HS256') }
   let(:auth_headers) { { 'Authorization' => "Bearer #{jwt_token}" } }
 
+  path '/api/v1/betslips' do
+    get 'Lists all betslips for the current user' do
+      tags 'Betslips'
+      produces 'application/json'
+      security [Bearer: {}]
+      parameter name: :Authorization, in: :header, type: :string, description: 'Bearer token'
+
+      let(:Authorization) { auth_headers['Authorization'] }
+
+      response '200', 'successful' do
+        before do
+          Fabricate.times(2, :bet_slip, user: user)
+        end
+        schema type: :object,
+          properties: {
+            current_page: { type: :integer, example: 1 },
+            total_pages: { type: :integer, example: 1 },
+            total_count: { type: :integer, example: 5 },
+            betslips: {
+              type: :array,
+              items: {
+                type: :object,
+                properties: {
+                  id: { type: :integer },
+                  stake: { type: :string },
+                  win_amount: { type: :string },
+                  payout: { type: :string },
+                  status: { type: :string },
+                  result: { type: :string, nullable: true },
+                  created_at: { type: :string, format: 'date-time' },
+                  bets: {
+                    type: :array,
+                    items: {
+                      type: :object,
+                      properties: {
+                        id: { type: :integer },
+                        fixture_id: { type: :integer },
+                        market_identifier: { type: :string },
+                        odds: { type: :string },
+                        outcome: { type: :string },
+                        specifier: { type: :string, nullable: true },
+                        outcome_desc: { type: :string },
+                        bet_type: { type: :string },
+                        created_at: { type: :string, format: 'date-time' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:Authorization) { 'Bearer invalid_token' }
+        run_test!
+      end
+    end
+
+    post 'Creates a betslip' do
+      tags 'Betslips'
+      consumes 'application/json'
+      produces 'application/json'
+      security [Bearer: {}]
+      parameter name: :Authorization, in: :header, type: :string, description: 'Bearer token'
+
+      let(:Authorization) { auth_headers['Authorization'] }
+      let(:fixture) { Fabricate(:fixture) }
+      let(:betslip_params) do
+        {
+          stake: 1000,
+          bets: [
+            {
+              fixture_id: fixture.id,
+              market_identifier: '1',
+              outcome: 'Home Win',
+              outcome_id: '1',
+              odd: 2.5,
+              specifier: nil,
+              bet_type: 'PreMatch'
+            }
+          ]
+        }
+      end
+      
+      parameter name: :betslip_params, in: :body, schema: {
+        type: :object,
+        properties: {
+          stake: { type: :number, example: 1000 },
+          bets: {
+            type: :array,
+            items: {
+              type: :object, 
+              properties: {
+                fixture_id: { type: :integer },
+                market_identifier: { type: :string },
+                outcome: { type: :string, description: 'Outcome description' },
+                outcome_id: { type: :string, description: 'Outcome ID' },
+                odd: { type: :number },
+                specifier: { type: :string, nullable: true },
+                bet_type: { type: :string, enum: ['PreMatch', 'Live'] }
+              },
+              required: ['fixture_id', 'market_identifier', 'outcome', 'outcome_id', 'odd', 'bet_type']
+            }
+          }
+        },
+        required: ['stake', 'bets']
+      }
+
+      response '201', 'bet slip created' do
+        schema type: :object,
+          properties: {
+            message: { type: :string, example: 'Bet Slip created successfully' },
+            bet_slip_id: { type: :integer }
+          }
+        run_test!
+      end
+
+      response '400', 'bad request' do
+        let(:betslip_params) { { stake: -100 } }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:Authorization) { 'Bearer invalid_token' }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/betslips/{id}' do
+    parameter name: :id, in: :path, type: :integer, description: 'Betslip ID'
+
+    get 'Shows a specific betslip' do
+      tags 'Betslips'
+      produces 'application/json'
+      security [Bearer: {}]
+      parameter name: :Authorization, in: :header, type: :string, description: 'Bearer token'
+
+      let(:Authorization) { auth_headers['Authorization'] }
+      let(:betslip) { Fabricate(:bet_slip, user: user) }
+      let(:id) { betslip.id }
+
+      response '200', 'successful' do
+        schema type: :object,
+          properties: {
+            id: { type: :integer },
+            stake: { type: :string },
+            odds: { type: :string },
+            win_amount: { type: :string },
+            payout: { type: :string },
+            status: { type: :string },
+            result: { type: :string, nullable: true },
+            created_at: { type: :string, format: 'date-time' },
+            bets: {
+              type: :array,
+              items: {
+                type: :object,
+                properties: {
+                  id: { type: :integer },
+                  fixture_id: { type: :integer },
+                  market_identifier: { type: :string },
+                  odds: { type: :string },
+                  outcome: { type: :string },
+                  specifier: { type: :string, nullable: true },
+                  outcome_desc: { type: :string },
+                  bet_type: { type: :string },
+                  created_at: { type: :string, format: 'date-time' }
+                }
+              }
+            }
+          }
+        run_test!
+      end
+
+      response '404', 'bet slip not found' do
+        let(:id) { 999999 }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:Authorization) { 'Bearer invalid_token' }
+        let(:id) { betslip.id }
+        run_test!
+      end
+    end
+  end
+
   describe "GET /" do
     context "when user is authenticated" do
       before do
@@ -67,17 +256,15 @@ RSpec.describe "Api::V1::Betslips", type: :request do
     let(:valid_params) do
       {
         stake: 1000,
-        bet_type: 'single',
         bets: [
           {
             fixture_id: fixture.id,
-            market_id: 1,
-            selection: '1',
+            market_identifier: '1',
+            outcome: 'Home Win',
+            outcome_id: '1',
             odd: 2.5,
-            description: 'Home Win',
-            outcome: '1',
             specifier: nil,
-            sport: 'soccer'
+            bet_type: 'PreMatch'
           }
         ]
       }
@@ -140,23 +327,21 @@ RSpec.describe "Api::V1::Betslips", type: :request do
               bets: [
                 {
                   fixture_id: fixture.id,
-                  market_id: 1,
-                  selection: '1',
+                  market_identifier: '1',
+                  outcome: 'Home Win',
+                  outcome_id: '1',
                   odd: 2.0,
-                  description: 'Home Win',
-                  outcome: '1',
                   specifier: nil,
-                  sport: 'soccer'
+                  bet_type: 'PreMatch'
                 },
                 {
                   fixture_id: Fabricate(:fixture).id,
-                  market_id: 1,
-                  selection: '1',
+                  market_identifier: '1',
+                  outcome: 'Home Win',
+                  outcome_id: '1',
                   odd: 1.5,
-                  description: 'Home Win',
-                  outcome: '1',
                   specifier: nil,
-                  sport: 'soccer'
+                  bet_type: 'PreMatch'
                 }
               ]
             }
@@ -198,9 +383,9 @@ RSpec.describe "Api::V1::Betslips", type: :request do
             {
               stake: 1000,
               bets: [
-                { fixture_id: fixture.id, market_id: 1, selection: '1', odd: 2.0, description: 'Win', outcome: '1', specifier: nil, sport: 'soccer' },
-                { fixture_id: Fabricate(:fixture).id, market_id: 1, selection: '1', odd: 2.0, description: 'Win', outcome: '1', specifier: nil, sport: 'soccer' },
-                { fixture_id: Fabricate(:fixture).id, market_id: 1, selection: '1', odd: 2.0, description: 'Win', outcome: '1', specifier: nil, sport: 'soccer' }
+                { fixture_id: fixture.id, market_identifier: '1', outcome: 'Win', outcome_id: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' },
+                { fixture_id: Fabricate(:fixture).id, market_identifier: '1', outcome: 'Win', outcome_id: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' },
+                { fixture_id: Fabricate(:fixture).id, market_identifier: '1', outcome: 'Win', outcome_id: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' }
               ]
             }
           end

@@ -3,6 +3,97 @@ require 'swagger_helper'
 
 RSpec.describe "Api::V1::Auth", type: :request do
   
+  path '/api/v1/login' do
+    post 'Logs in a user' do
+      tags 'Authentication'
+      consumes 'application/json'
+      produces 'application/json'
+      parameter name: :credentials, in: :body, schema: {
+        type: :object,
+        properties: {
+          phone_number: { type: :string, example: '256700000000' },
+          password: { type: :string, example: 'password123' }
+        },
+        required: [ 'phone_number', 'password' ]
+      }
+
+      response '200', 'successful login' do
+        let(:password) { "password123" }
+        let!(:user) { Fabricate(:user, phone_number: "256700000000", password: password, password_confirmation: password, first_name: "John", last_name: "Doe") }
+        let(:credentials) { { phone_number: user.phone_number, password: password } }
+
+        schema type: :object,
+          properties: {
+            token: { type: :string, example: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.signature' },
+            user: {
+              type: :object,
+              properties: {
+                id: { type: :integer, example: 1 },
+                phone_number: { type: :string, example: '256700000000' },
+                first_name: { type: :string, example: 'John' },
+                last_name: { type: :string, example: 'Doe' },
+                balance: { type: :string, example: '10000.0' },
+                created_at: { type: :string, format: 'date-time' }
+              }
+            }
+          }
+        
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:credentials) { { phone_number: 'invalid', password: 'invalid' } }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/signup' do
+    post 'Creates a new user' do
+      tags 'Authentication'
+      consumes 'application/json'
+      produces 'application/json'
+      parameter name: :user_params, in: :body, schema: {
+        type: :object,
+        properties: {
+          phone_number: { type: :string, example: '256700000001' },
+          password: { type: :string, example: 'password123' },
+          password_confirmation: { type: :string, example: 'password123' },
+          first_name: { type: :string, example: 'Jane' },
+          last_name: { type: :string, example: 'Doe' }
+        },
+        required: [ 'phone_number', 'password', 'password_confirmation', 'first_name', 'last_name' ]
+      }
+
+      response '201', 'user created' do
+        let(:user_params) { { phone_number: "256700000001", password: "password123", password_confirmation: "password123", first_name: "Jane", last_name: "Doe" } }
+        
+        schema type: :object,
+          properties: {
+            token: { type: :string, example: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM1In0.signature' },
+            user: {
+              type: :object,
+              properties: {
+                id: { type: :integer, example: 2 },
+                phone_number: { type: :string, example: '256700000001' },
+                first_name: { type: :string, example: 'Jane' },
+                last_name: { type: :string, example: 'Doe' },
+                balance: { type: :string, example: '0.0' },
+                created_at: { type: :string, format: 'date-time' }
+              }
+            }
+          }
+
+        run_test!
+      end
+
+      response '422', 'unprocessable entity' do
+        let(:user_params) { { phone_number: "256700000001", password: "123", password_confirmation: "456" } }
+        run_test!
+      end
+    end
+  end
+
   describe "POST /api/v1/login" do
     let(:password) { "password123" }
     let!(:user) { Fabricate(:user, phone_number: "256700000000", password: password, password_confirmation: password, first_name: "John", last_name: "Doe") }

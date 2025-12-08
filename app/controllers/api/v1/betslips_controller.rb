@@ -10,7 +10,7 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 
 		slips = @records.as_json(only: [:id, :stake, :win_amount, :status, :created_at , :result, :payout],
 												include: {
-													 bets: { only: [:id, :fixture_id, :market_id, :selection, :odds, :status, :outcome, :outcome_desc, :bet_slip_id, :result, :bet_type] } 
+													 bets: { only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type, :created_at] } 
 												}
 											)
 		
@@ -28,7 +28,7 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 			if betslip
 					render json: betslip.as_json(only: [:id, :stake, :odds, :win_amount, :status, :created_at, :result, :payout],
 																			include: {
-																					bets: { only: [:id, :fixture_id, :market_id, :selection, :odds, :status, :outcome, :outcome_desc, :bet_slip_id, :result, :bet_type]  } 
+																					bets: { only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type, :created_at]  } 
 																			}
 																	)
 			else
@@ -77,7 +77,7 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 				user_id: @current_user.id,
 				bet_slip: bet_slip,
 				fixture_id: bet_data[:fixture_id],
-				market_identifier: bet_data[:market_id],
+				market_identifier: bet_data[:market_identifier],
 				odds: bet_data[:odd],
 				outcome_desc: bet_data[:outcome],
 				outcome: bet_data[:outcome_id],

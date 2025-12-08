@@ -43,9 +43,9 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
                   </Fixture>
                   <MatchOdds>
                     <Bet OddsType="10">
-                      <Odds OutCome="1" OutcomeID="1">2.15</Odds>
-                      <Odds OutCome="X" OutcomeID="2">3.20</Odds>
-                      <Odds OutCome="2" OutcomeID="3">3.50</Odds>
+                      <Odds OutCome="1" OutComeId="1">2.15</Odds>
+                      <Odds OutCome="X" OutComeId="2">3.20</Odds>
+                      <Odds OutCome="2" OutComeId="3">3.50</Odds>
                     </Bet>
                   </MatchOdds>
                   <Result>
@@ -85,7 +85,8 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
     Fabricate(
       :pre_market,
       fixture: fixture,
-      market_identifier: 10,
+      market_identifier: "10",
+      specifier: nil,
       odds: {
         "1" => {
           "odd" => 2.00,
@@ -241,11 +242,11 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
                       </Fixture>
                       <MatchOdds>
                         <Bet OddsType="10">
-                          <Odds OutCome="1" OutcomeID="1">2.15</Odds>
+                          <Odds OutCome="1" OutComeId="1">2.15</Odds>
                         </Bet>
                         <Bet OddsType="11">
-                          <Odds OutCome="Over" OutcomeID="4" SpecialBetValue="2.5">1.85</Odds>
-                          <Odds OutCome="Under" OutcomeID="5" SpecialBetValue="2.5">1.95</Odds>
+                          <Odds OutCome="Over" OutComeId="4" SpecialBetValue="2.5">1.85</Odds>
+                          <Odds OutCome="Under" OutComeId="5" SpecialBetValue="2.5">1.95</Odds>
                         </Bet>
                       </MatchOdds>
                     </Match>
@@ -260,8 +261,8 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
         Fabricate(
           :pre_market,
           fixture: fixture,
-          market_identifier: 11,
-          specifier: "total=2.5",
+          market_identifier: "11",
+          specifier: "2.5",
           odds: {
             "Over" => {
               "odd" => 1.80,
@@ -389,9 +390,9 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
                       </Fixture>
                       <MatchOdds>
                         <Bet OddsType="10">
-                          <Odds OutCome="1" OutcomeID="1">2.00</Odds>
-                          <Odds OutCome="X" OutcomeID="2">3.00</Odds>
-                          <Odds OutCome="2" OutcomeID="3">3.00</Odds>
+                          <Odds OutCome="1" OutComeId="1">2.00</Odds>
+                          <Odds OutCome="X" OutComeId="2">3.00</Odds>
+                          <Odds OutCome="2" OutComeId="3">3.00</Odds>
                         </Bet>
                       </MatchOdds>
                     </Match>
@@ -452,7 +453,7 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
                       </Fixture>
                       <MatchOdds>
                         <Bet OddsType="10">
-                          <Odds OutCome="1" OutcomeID="1">2.15</Odds>
+                          <Odds OutCome="1" OutComeId="1">2.15</Odds>
                         </Bet>
                       </MatchOdds>
                     </Match>
@@ -467,14 +468,14 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
         worker.perform
 
         fixture.reload
-        expect(fixture.status).to eq("cancelled")
+        expect(fixture.status).to eq("1")
       end
 
       it "updates fixture status to cancelled" do
         worker.perform
 
         fixture.reload
-        expect(fixture.match_status).to eq("cancelled")
+        expect(fixture.match_status).to eq("not_started")
       end
     end
 

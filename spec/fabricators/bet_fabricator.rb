@@ -13,6 +13,7 @@ Fabricator(:bet) do
   reason { nil }
   void_factor { nil }
   sport { "Football" }
+  bet_type { "PreMatch" }
 end
 
 Fabricator(:winning_bet, from: :bet) do

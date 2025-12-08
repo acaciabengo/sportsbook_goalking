@@ -66,7 +66,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
     XML
 
   let!(:fixture) do
-    Fabricate(:fixture, event_id: 109_379, match_status: "finished")
+    Fabricate(:fixture, event_id: "109379", match_status: "finished", start_date: 12.hours.ago)
   end
 
   let!(:pre_market) do
@@ -74,6 +74,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
       :pre_market,
       fixture: fixture,
       market_identifier: 10,
+      specifier: nil,
       status: "active",
       results: {}
     )
@@ -89,8 +90,8 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
       [200, Nokogiri.XML(xml_response)]
     )
 
-    # Stub CloseSettledBetsJob
-    allow(CloseSettledBetsJob).to receive(:perform_async)
+    # Stub Sidekiq bulk push
+    allow(Sidekiq::Client).to receive(:push_bulk)
   end
 
   describe "#perform" do
@@ -112,8 +113,8 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
 
         expect(results["1"]).to be_present
         expect(results["1"]["status"]).to eq("W")
-        expect(results["1"]["outcome_id"]).to be_present
-        expect(results["1"]["void_factor"]).to eq("0.0")
+        expect(results["1"]["outcome_id"]).to eq("1")
+        expect(results["1"]["void_factor"]).to eq(0.0)
       end
 
       it "updates pre-market with all outcomes" do
@@ -135,8 +136,13 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
         expect(pre_market.status).to eq("settled")
       end
 
-      it "enqueues CloseSettledBetsJob with results" do
-        expect(CloseSettledBetsJob).to receive(:perform_async)
+      it "enqueues CloseSettledBetsJob via bulk push" do
+        expect(Sidekiq::Client).to receive(:push_bulk) do |jobs|
+          expect(jobs.length).to eq(1)
+          expect(jobs[0]['class']).to eq('CloseSettledBetsJob')
+          expect(jobs[0]['args']).to eq([fixture.id, pre_market.id, 'PreMatch'])
+        end
+        
         worker.perform
       end
     end
@@ -144,11 +150,11 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
     context "when pre-market already has results" do
       before do
         pre_market.update(
-          results: { "X" => { "status" => "W", "outcome_id" => "2" } }
+          results: { "X" => { "status" => "W", "outcome_id" => "2", "void_factor" => 0.0 } }
         )
       end
 
-      it "merges new results with existing results" do
+      it "replaces existing results with new results" do
         worker.perform
 
         pre_market.reload
@@ -178,7 +184,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
       end
 
       it "does not enqueue CloseSettledBetsJob" do
-        expect(CloseSettledBetsJob).not_to receive(:perform_async)
+        expect(Sidekiq::Client).not_to receive(:push_bulk)
         worker.perform
       end
     end
@@ -193,7 +199,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
       end
 
       it "does not enqueue CloseSettledBetsJob" do
-        expect(CloseSettledBetsJob).not_to receive(:perform_async)
+        expect(Sidekiq::Client).not_to receive(:push_bulk)
         worker.perform
       end
     end
@@ -207,18 +213,35 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
       end
     end
 
+    context "when fixture is outside 24 hour window" do
+      before { fixture.update(start_date: 25.hours.ago) }
+
+      it "does not process the market" do
+        expect(bet_balancer).not_to receive(:get_matches)
+        worker.perform
+      end
+    end
+
     context "when pre-market is already settled" do
       before { pre_market.update(status: "settled") }
 
       it "does not process the market again" do
-        expect(bet_balancer).not_to receive(:get_matches)
+        worker.perform
+        
+        # Market should remain settled with same results
+        pre_market.reload
+        expect(pre_market.status).to eq("settled")
+      end
+
+      it "does not enqueue CloseSettledBetsJob" do
+        expect(Sidekiq::Client).not_to receive(:push_bulk)
         worker.perform
       end
     end
 
     context "when processing multiple markets in batches" do
       let!(:fixture2) do
-        Fabricate(:fixture, event_id: 109_380, match_status: "finished")
+        Fabricate(:fixture, event_id: "109380", match_status: "finished", start_date: 12.hours.ago)
       end
 
       let!(:pre_market2) do
@@ -226,6 +249,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
           :pre_market,
           fixture: fixture2,
           market_identifier: 10,
+          specifier: nil,
           status: "active",
           results: {}
         )
@@ -259,17 +283,17 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
 
       before do
         allow(bet_balancer).to receive(:get_matches).with(
-          match_id: 109_379,
+          match_id: "109379",
           want_score: true
         ).and_return([200, Nokogiri.XML(xml_response)])
 
         allow(bet_balancer).to receive(:get_matches).with(
-          match_id: 109_380,
+          match_id: "109380",
           want_score: true
         ).and_return([200, Nokogiri.XML(xml_response2)])
       end
 
-      it "processes all markets in batch" do
+      it "processes all markets" do
         worker.perform
 
         pre_market.reload
@@ -279,8 +303,11 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
         expect(pre_market2.status).to eq("settled")
       end
 
-      it "enqueues worker for each market" do
-        expect(CloseSettledBetsJob).to receive(:perform_async).twice
+      it "enqueues jobs for both markets via bulk push" do
+        # Each fixture gets its own bulk push call
+        expect(Sidekiq::Client).to receive(:push_bulk).twice do |jobs|
+          expect(jobs.length).to eq(1)
+        end
         worker.perform
       end
     end
@@ -316,20 +343,21 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
           :pre_market,
           fixture: fixture,
           market_identifier: 18,
+          specifier: "2.5",
           status: "active",
           results: {}
         )
       end
 
-      it "includes specifier in results" do
+      it "processes market with correct specifier" do
         worker.perform
 
         over_under_market.reload
         results = over_under_market.results
-        puts "results: #{results.inspect}"
 
-        expect(results["Over"]["specifier"]).to eq("2.5")
-        expect(results["Under"]["specifier"]).to eq("2.5")
+        expect(results["Over"]["status"]).to eq("W")
+        expect(results["Under"]["status"]).to eq("L")
+        expect(results["Over"]["void_factor"]).to eq(0.0)
       end
     end
 
@@ -367,7 +395,7 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
         results = pre_market.results
 
         expect(results["1"]["status"]).to eq("C")
-        expect(results["1"]["void_factor"]).to eq("1.0")
+        expect(results["1"]["void_factor"]).to eq(1.0)
         expect(results["X"]["status"]).to eq("C")
         expect(results["2"]["status"]).to eq("C")
       end
@@ -442,15 +470,15 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
         expect(pre_market.results).to eq(initial_results)
       end
 
-      it "marks pre-market as settled anyway" do
+      it "does not mark pre-market as settled" do
         worker.perform
 
         pre_market.reload
-        expect(pre_market.status).not_to eq("settled")
+        expect(pre_market.status).to eq("active")
       end
 
-      it "enqueues CloseSettledBetsJob with empty results" do
-        expect(CloseSettledBetsJob).not_to receive(:perform_async)
+      it "does not enqueue CloseSettledBetsJob" do
+        expect(Sidekiq::Client).not_to receive(:push_bulk)
         worker.perform
       end
     end
@@ -461,25 +489,28 @@ RSpec.describe PreMatch::PullSettlementsJob, type: :worker do
           fixture =
             Fabricate(
               :fixture,
-              event_id: 200_000 + i,
-              match_status: "finished"
+              event_id: (200_000 + i).to_s,
+              match_status: "finished",
+              start_date: 12.hours.ago
             )
           Fabricate(
             :pre_market,
             fixture: fixture,
+            market_identifier: 1,
+            specifier: nil,
             status: "active",
             results: {}
           )
         end
       end
 
-      it "processes markets in batches" do
+      it "processes markets individually" do
         # Stub all BetBalancer calls
         allow(bet_balancer).to receive(:get_matches).and_return(
           [200, Nokogiri.XML(xml_response)]
         )
 
-        # Should process all 56 markets (1 from let! + 55 from this context)
+        # Should process all 56 fixtures (1 from let! + 55 from this context)
         expect(bet_balancer).to receive(:get_matches).at_least(55).times
 
         worker.perform

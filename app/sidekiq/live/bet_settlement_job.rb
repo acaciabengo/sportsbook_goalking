@@ -25,6 +25,12 @@ class Live::BetSettlementJob
       update_attrs[:match_status] = 'finished'
       fixture.update(update_attrs) if update_attrs.any?
 
+      # Find all the markets at once and group by market_identifier
+      existing_markets = LiveMarket.where(fixture_id: fixture['id']).index_by { |m| [m.market_identifier, m.specifier] }
+
+      # Prepare a list of jobs to push to Sidekiq in bulk later
+      jobs_to_push = []
+
       match.xpath("Odds").each do |odds_node|
         # market_name = odds_node['freetext']
         specifier = odds_node['specialoddsvalue']
@@ -40,15 +46,15 @@ class Live::BetSettlementJob
         end
 
         # Find the specific market by market_identifier AND specifier
-        market = fixture.live_markets.find_by(
-          market_identifier: ext_market_id, 
-          specifier: specifier
-        )
+        market = existing_markets[[ext_market_id, specifier]]
 
         unless market
           Rails.logger.warn("Market not found: fixture=#{fixture.id}, market_identifier=#{ext_market_id}, specifier=#{specifier}")
           next
         end
+
+        # next if market already settled
+        next if market.status == 'settled'
         
         # Update this specific market directly (no merging!)
         unless market.update(results: results, status: 'settled')
@@ -58,8 +64,18 @@ class Live::BetSettlementJob
 
         Rails.logger.info("Settled market #{market.id} (#{ext_market_id}|#{specifier}): #{results}")
 
-        # Settle bets for this specific market
-        CloseSettledBetsJob.perform_in(2.minutes, fixture.id , market.id, 'Live')
+        jobs_to_push << { 
+          'class' => 'CloseSettledBetsJob', 
+          'args' => [fixture.id , market.id, 'Live'], 
+          'at' => 2.minutes.from_now.to_f # Schedule for later
+        }
+
+      end
+
+      # Push all CloseSettledBetsJob jobs in bulk to Sidekiq
+      if jobs_to_push.any?
+        Sidekiq::Client.push_bulk(jobs_to_push)
+        Rails.logger.info("Bulk queued #{jobs_to_push.size} settlement jobs for fixture #{fixture.id}")
       end
     end
     # Clear parsed document from memory

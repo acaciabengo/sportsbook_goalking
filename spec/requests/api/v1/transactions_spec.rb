@@ -1,4 +1,5 @@
 require 'rails_helper'
+require 'swagger_helper'
 
 RSpec.describe "Api::V1::Transactions", type: :request do
   let(:user) { Fabricate(:user, balance: 50000.0) }
@@ -9,6 +10,138 @@ RSpec.describe "Api::V1::Transactions", type: :request do
       'HS256'
     )
     { 'Authorization' => "Bearer #{token}" }
+  end
+
+  path '/api/v1/transactions' do
+    get 'Lists all transactions for the current user' do
+      tags 'Transactions'
+      produces 'application/json'
+      security [Bearer: {}]
+      parameter name: :Authorization, in: :header, type: :string, description: 'Bearer token'
+
+      let(:Authorization) { auth_headers['Authorization'] }
+
+      response '200', 'successful' do
+        before do
+          Fabricate.times(2, :transaction, user: user)
+        end
+        schema type: :object,
+          properties: {
+            current_page: { type: :integer },
+            total_pages: { type: :integer },
+            total_count: { type: :integer },
+            transactions: {
+              type: :array,
+              items: {
+                type: :object,
+                properties: {
+                  id: { type: :integer },
+                  amount: { type: :float },
+                  balance_before: { type: :string },
+                  balance_after: { type: :string },
+                  category: { type: :string },
+                  created_at: { type: :string, format: 'date-time' }
+                }
+              }
+            }
+          }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:Authorization) { 'Bearer invalid_token' }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/transactions/deposit' do
+    post 'Creates a deposit transaction' do
+      tags 'Transactions'
+      consumes 'application/json'
+      produces 'application/json'
+      security [Bearer: {}]
+      parameter name: :Authorization, in: :header, type: :string, description: 'Bearer token'
+      
+      let(:Authorization) { auth_headers['Authorization'] }
+      let(:deposit_params) do
+        {
+          amount: 10000,
+          phone_number: user.phone_number
+        }
+      end
+      
+      parameter name: :deposit_params, in: :body, schema: {
+        type: :object,
+        properties: {
+          amount: { type: :number, example: 10000 },
+          phone_number: { type: :string, example: '256700000000' }
+        },
+        required: ['amount']
+      }
+
+      response '200', 'deposit initiated' do
+        before do
+          allow(DepositsJob).to receive(:perform_async)
+        end
+        run_test!
+      end
+
+      response '400', 'bad request' do
+        let(:deposit_params) { { amount: -1000 } }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:Authorization) { 'Bearer invalid_token' }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/transactions/withdraw' do
+    post 'Creates a withdrawal transaction' do
+      tags 'Transactions'
+      consumes 'application/json'
+      produces 'application/json'
+      security [Bearer: {}]
+      parameter name: :Authorization, in: :header, type: :string, description: 'Bearer token'
+      
+      let(:Authorization) { auth_headers['Authorization'] }
+      let!(:user_deposit) { Fabricate(:deposit, user: user) }
+      let(:withdraw_params) do
+        {
+          amount: 5000,
+          phone_number: user.phone_number
+        }
+      end
+      
+      parameter name: :withdraw_params, in: :body, schema: {
+        type: :object,
+        properties: {
+          amount: { type: :number, example: 5000 },
+          phone_number: { type: :string, example: '256700000000' }
+        },
+        required: ['amount']
+      }
+
+      response '200', 'withdrawal initiated' do
+        before do
+          allow(WithdrawsJob).to receive(:perform_async)
+        end
+        run_test!
+      end
+
+      response '400', 'bad request (e.g. insufficient balance)' do
+        let(:withdraw_params) { { amount: 999999999 } }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:Authorization) { 'Bearer invalid_token' }
+        run_test!
+      end
+    end
   end
 
   # ===========================================================================
