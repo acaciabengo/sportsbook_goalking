@@ -3,7 +3,812 @@ openapi: 3.0.1
 info:
   title: API V1
   version: v1
-paths: {}
+paths:
+  "/api/v1/login":
+    post:
+      summary: Logs in a user
+      tags:
+      - Authentication
+      parameters: []
+      responses:
+        '200':
+          description: successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.signature
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      phone_number:
+                        type: string
+                        example: '256700000000'
+                      first_name:
+                        type: string
+                        example: John
+                      last_name:
+                        type: string
+                        example: Doe
+                      balance:
+                        type: string
+                        example: '10000.0'
+                      created_at:
+                        type: string
+                        format: date-time
+        '401':
+          description: unauthorized
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone_number:
+                  type: string
+                  example: '256700000000'
+                password:
+                  type: string
+                  example: password123
+              required:
+              - phone_number
+              - password
+  "/api/v1/signup":
+    post:
+      summary: Creates a new user
+      tags:
+      - Authentication
+      parameters: []
+      responses:
+        '201':
+          description: user created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM1In0.signature
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 2
+                      phone_number:
+                        type: string
+                        example: '256700000001'
+                      first_name:
+                        type: string
+                        example: Jane
+                      last_name:
+                        type: string
+                        example: Doe
+                      balance:
+                        type: string
+                        example: '0.0'
+                      created_at:
+                        type: string
+                        format: date-time
+        '422':
+          description: unprocessable entity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone_number:
+                  type: string
+                  example: '256700000001'
+                password:
+                  type: string
+                  example: password123
+                password_confirmation:
+                  type: string
+                  example: password123
+                first_name:
+                  type: string
+                  example: Jane
+                last_name:
+                  type: string
+                  example: Doe
+              required:
+              - phone_number
+              - password
+              - password_confirmation
+              - first_name
+              - last_name
+  "/api/v1/betslips":
+    get:
+      summary: Lists all betslips for the current user
+      tags:
+      - Betslips
+      security:
+      - Bearer: {}
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer token
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  current_page:
+                    type: integer
+                    example: 1
+                  total_pages:
+                    type: integer
+                    example: 1
+                  total_count:
+                    type: integer
+                    example: 5
+                  betslips:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        stake:
+                          type: string
+                        win_amount:
+                          type: string
+                        payout:
+                          type: string
+                        status:
+                          type: string
+                        result:
+                          type: string
+                          nullable: true
+                        created_at:
+                          type: string
+                          format: date-time
+                        bets:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              fixture_id:
+                                type: integer
+                              market_identifier:
+                                type: string
+                              odds:
+                                type: string
+                              outcome:
+                                type: string
+                              specifier:
+                                type: string
+                                nullable: true
+                              outcome_desc:
+                                type: string
+                              bet_type:
+                                type: string
+                              created_at:
+                                type: string
+                                format: date-time
+        '401':
+          description: unauthorized
+    post:
+      summary: Creates a betslip
+      tags:
+      - Betslips
+      security:
+      - Bearer: {}
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer token
+        schema:
+          type: string
+      responses:
+        '201':
+          description: bet slip created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Bet Slip created successfully
+                  bet_slip_id:
+                    type: integer
+        '400':
+          description: bad request
+        '401':
+          description: unauthorized
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                stake:
+                  type: number
+                  example: 1000
+                bets:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      fixture_id:
+                        type: integer
+                      market_identifier:
+                        type: string
+                      outcome:
+                        type: string
+                        description: Outcome description
+                      outcome_id:
+                        type: string
+                        description: Outcome ID
+                      odd:
+                        type: number
+                      specifier:
+                        type: string
+                        nullable: true
+                      bet_type:
+                        type: string
+                        enum:
+                        - PreMatch
+                        - Live
+                    required:
+                    - fixture_id
+                    - market_identifier
+                    - outcome
+                    - outcome_id
+                    - odd
+                    - bet_type
+              required:
+              - stake
+              - bets
+  "/api/v1/betslips/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: Betslip ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Shows a specific betslip
+      tags:
+      - Betslips
+      security:
+      - Bearer: {}
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer token
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  stake:
+                    type: string
+                  odds:
+                    type: string
+                  win_amount:
+                    type: string
+                  payout:
+                    type: string
+                  status:
+                    type: string
+                  result:
+                    type: string
+                    nullable: true
+                  created_at:
+                    type: string
+                    format: date-time
+                  bets:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        fixture_id:
+                          type: integer
+                        market_identifier:
+                          type: string
+                        odds:
+                          type: string
+                        outcome:
+                          type: string
+                        specifier:
+                          type: string
+                          nullable: true
+                        outcome_desc:
+                          type: string
+                        bet_type:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+        '404':
+          description: bet slip not found
+        '401':
+          description: unauthorized
+  "/api/v1/live_match":
+    get:
+      summary: Lists all live matches
+      tags:
+      - Live Matches
+      security:
+      - Bearer: {}
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  current_page:
+                    type: integer
+                  total_pages:
+                    type: integer
+                  total_count:
+                    type: integer
+                  fixtures:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        event_id:
+                          type: string
+                        home_team:
+                          type: string
+                        away_team:
+                          type: string
+                        match_status:
+                          type: string
+                        start_date:
+                          type: string
+                          format: date-time
+                        sport:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            ext_sport_id:
+                              type: integer
+                            name:
+                              type: string
+                        tournament:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            ext_tournament_id:
+                              type: integer
+                            name:
+                              type: string
+                        category:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            ext_category_id:
+                              type: integer
+                            name:
+                              type: string
+                        markets:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              name:
+                                type: string
+                              market_identifier:
+                                type: string
+                              odds:
+                                type: object
+                              specifier:
+                                type: string
+                                nullable: true
+  "/api/v1/live_match/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: Fixture ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Shows a specific live match
+      tags:
+      - Live Matches
+      security:
+      - Bearer: {}
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    event_id:
+                      type: string
+                    home_team:
+                      type: string
+                    away_team:
+                      type: string
+                    match_status:
+                      type: string
+                    start_date:
+                      type: string
+                      format: date-time
+                    sport:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        ext_sport_id:
+                          type: integer
+                        name:
+                          type: string
+                    tournament:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        ext_tournament_id:
+                          type: integer
+                        name:
+                          type: string
+                    category:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        ext_category_id:
+                          type: integer
+                        name:
+                          type: string
+                    markets:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          name:
+                            type: string
+                            nullable: true
+                          market_identifier:
+                            type: string
+                          odds:
+                            type: object
+                          specifier:
+                            type: string
+                            nullable: true
+        '404':
+          description: not found
+  "/api/v1/pre_match":
+    get:
+      summary: Lists all upcoming matches
+      tags:
+      - Pre-Match
+      security:
+      - Bearer: {}
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer token
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  current_page:
+                    type: integer
+                  total_pages:
+                    type: integer
+                  total_count:
+                    type: integer
+                  fixtures:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        event_id:
+                          type: string
+                        home_team:
+                          type: string
+                        away_team:
+                          type: string
+                        match_status:
+                          type: string
+                        start_date:
+                          type: string
+                          format: date-time
+                        sport:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            ext_sport_id:
+                              type: integer
+                            name:
+                              type: string
+                        tournament:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            ext_tournament_id:
+                              type: integer
+                            name:
+                              type: string
+                        category:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            ext_category_id:
+                              type: integer
+                            name:
+                              type: string
+                        markets:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              name:
+                                type: string
+                              market_identifier:
+                                type: string
+                              odds:
+                                type: object
+                              specifier:
+                                type: string
+                                nullable: true
+  "/api/v1/pre_match/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: Fixture ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Shows a specific upcoming match
+      tags:
+      - Pre-Match
+      security:
+      - Bearer: {}
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer token
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    event_id:
+                      type: string
+                    home_team:
+                      type: string
+                    away_team:
+                      type: string
+                    match_status:
+                      type: string
+                    start_date:
+                      type: string
+                      format: date-time
+                    sport:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        ext_sport_id:
+                          type: integer
+                        name:
+                          type: string
+                    tournament:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        ext_tournament_id:
+                          type: integer
+                        name:
+                          type: string
+                    category:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        ext_category_id:
+                          type: integer
+                        name:
+                          type: string
+                    markets:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          name:
+                            type: string
+                            nullable: true
+                          market_identifier:
+                            type: string
+                          odds:
+                            type: object
+                          specifier:
+                            type: string
+                            nullable: true
+        '404':
+          description: not found
+  "/api/v1/transactions":
+    get:
+      summary: Lists all transactions for the current user
+      tags:
+      - Transactions
+      security:
+      - Bearer: {}
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer token
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  current_page:
+                    type: integer
+                  total_pages:
+                    type: integer
+                  total_count:
+                    type: integer
+                  transactions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        amount:
+                          type: float
+                        balance_before:
+                          type: string
+                        balance_after:
+                          type: string
+                        category:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+        '401':
+          description: unauthorized
+  "/api/v1/transactions/deposit":
+    post:
+      summary: Creates a deposit transaction
+      tags:
+      - Transactions
+      security:
+      - Bearer: {}
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer token
+        schema:
+          type: string
+      responses:
+        '200':
+          description: deposit initiated
+        '400':
+          description: bad request
+        '401':
+          description: unauthorized
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  example: 10000
+                phone_number:
+                  type: string
+                  example: '256700000000'
+              required:
+              - amount
+  "/api/v1/transactions/withdraw":
+    post:
+      summary: Creates a withdrawal transaction
+      tags:
+      - Transactions
+      security:
+      - Bearer: {}
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer token
+        schema:
+          type: string
+      responses:
+        '200':
+          description: withdrawal initiated
+        '400':
+          description: bad request (e.g. insufficient balance)
+        '401':
+          description: unauthorized
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  example: 5000
+                phone_number:
+                  type: string
+                  example: '256700000000'
+              required:
+              - amount
 servers:
 - url: https://{defaultHost}
   variables:
