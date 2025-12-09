@@ -18,7 +18,11 @@ class PreMatch::PullSettlementsJob
       FROM fixtures
       JOIN pre_markets ON pre_markets.fixture_id = fixtures.id
       WHERE fixtures.match_status IN ('finished', 'ended')
-        AND pre_markets.status != 'settled'
+        AND EXISTS (
+          SELECT 1 FROM pre_markets pm
+          WHERE pm.fixture_id = fixtures.id
+            AND pm.status != 'settled'
+        )
         AND fixtures.start_date > (NOW() - INTERVAL '24 hours')
       ORDER BY fixtures.id ASC
     SQL
@@ -38,12 +42,32 @@ class PreMatch::PullSettlementsJob
       FROM fixtures
         JOIN live_markets ON live_markets.fixture_id = fixtures.id
         WHERE fixtures.match_status IN ('finished', 'ended')
-        AND live_markets.status != 'settled'
+        AND EXISTS (
+          SELECT 1 FROM live_markets lm
+          WHERE lm.fixture_id = fixtures.id
+            AND lm.status != 'settled'
+        )
         AND fixtures.start_date > (NOW() - INTERVAL '24 hours')
     SQL
 
     fixtures = ActiveRecord::Base.connection.exec_query(sql).to_a
     settle_live_market(fixtures)
+
+    # =============================================================
+    # Find all fixtures with status not_started but start_time in the past
+    # =============================================================
+    
+    sql = <<-SQL
+      SELECT 
+        DISTINCT fixtures.id, 
+        fixtures.event_id
+      FROM fixtures
+      WHERE fixtures.match_status = 'not_started'
+        AND fixtures.start_date < NOW()
+    SQL
+
+    started_fixtures = ActiveRecord::Base.connection.exec_query(sql).to_a
+    settle_live_market(started_fixtures)
   end
 
   def settle_pre_market(fixture)

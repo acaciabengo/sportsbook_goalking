@@ -11,6 +11,7 @@ class Live::UpdateFixtureJob
     doc.xpath("//Match").each do |match|
       match_id = match["matchid"].to_i
       match_status = match["status"]
+      status = match["active"] 
 
       # find the fixture
       fixture = Fixture.find_by(event_id: match_id)
@@ -20,7 +21,7 @@ class Live::UpdateFixtureJob
         fixture.booked = true
       end
 
-      fixture.status = "active"
+      fixture.status = status
       fixture.match_status = match_status
 
       # update fixture details
