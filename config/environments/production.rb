@@ -104,7 +104,8 @@ Rails.application.configure do
   # config.action_controller.default_url_options = { host: ENV.fetch("RAILS_HOST"), protocol: 'https' }
   # 
   
-  # # Restrict source for sockets connections
+  # Restrict source for sockets connections
   # config.action_cable.allowed_request_origins = [ /http:\/\/goalkingsug.*/ ]
+  config.action_cable.disable_request_forgery_protection = true
   
 end
