@@ -103,7 +103,7 @@ class PreMatch::PullOddsJob
 
           if ft_result.present?
             fixture.update(
-              match_status: "finished",
+              match_status: "ended",
               home_score: ft_result.split(":")[0].to_i,
               away_score: ft_result.split(":")[1].to_i
             )

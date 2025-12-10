@@ -24,8 +24,7 @@ class Fixture < ApplicationRecord
 
   # { select_one: "", true: true, false: false }
 
-  after_commit :broadcast_updates, if: :persisted?
-
+  
   validates :event_id, presence: true
   validates :event_id, uniqueness: true
 
@@ -41,36 +40,5 @@ class Fixture < ApplicationRecord
   
   def self.ransackable_associations(auth_object = nil)
     %w[bets live_markets pre_markets]
-  end
-
-  def broadcast_updates
-    #check if change was on status
-    if saved_change_to_attribute?(:status)
-      if self.status == "postponed" || self.status == "cancelled"
-        bets = self.bets
-        bets.update_all(
-          status: "Closed",
-          result: "Void",
-          reason: "Fixture #{self.status}"
-        )
-      end
-    end
-    #check if match status is live and change was on either scores or match time
-    if self.status == "live"
-      if saved_change_to_attribute?(:home_score) ||
-           saved_change_to_attribute?(:away_score) ||
-           saved_change_to_attribute?(:match_time)
-        fixture = { fixture_id: self.id }
-
-        ## Add scores and match time to the fixture object
-        fixture["home_score"] = self.home_score
-        fixture["away_score"] = self.away_score
-        fixture["match_time"] = self.match_time
-
-        ## Broadcast the changes
-        ActionCable.server.broadcast("fixtures_#{self.id}", fixture)
-        # CableWorker.perform_async("fixtures_#{self.id}", fixture)
-      end
-    end
   end
 end

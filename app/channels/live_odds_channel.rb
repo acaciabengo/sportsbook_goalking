@@ -1,6 +1,6 @@
 class LiveOddsChannel < ApplicationCable::Channel
   def subscribed
-    stream_from "live_odds_#{params[:market]}_#{params[:fixture]}"
+    stream_from "live_odds_#{params[:market_identifier]}_#{params[:fixture_id]}"
   end
 
   def unsubscribed

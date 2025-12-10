@@ -24,33 +24,20 @@ class LiveMarket < ApplicationRecord
     # fixture = {"id": self.fixture_id}
 
     if saved_change_to_odds?
-      # Add necessary odds and status to the fixture
-      # fixture["market_#{self.market_identifier}_odds"] = self.odds
-      # fixture["market_#{self.market_identifier}_status"] = self.status
-
-      # Specify which market
-      # fixture["market_identifier"] = self.market_identifier
-
       # Make the broadcasts
-      ActionCable.server.broadcast("live_odds_#{self.market_identifier}_#{self.fixture_id}", self.as_json)
-      ActionCable.server.broadcast("betslips_#{self.market_identifier}_#{self.fixture_id}", self.as_json)
-      # CableWorker.perform_async("live_odds_#{self.market_identifier}_#{self.fixture_id}", self.as_json)
-      # CableWorker.perform_async("betslips_#{self.market_identifier}_#{self.fixture_id}", self.as_json)
-    end
+      data = {
+        id: self.id,
+        fixture_id: self.fixture_id,
+        market_identifier: self.market_identifier,
+        specifier: self.specifier,
+        name: self.name,
+        odds: self.odds,
+        results: self.results,
+        status: self.status,
+        updated_at: self.updated_at
+      }
 
-    
-    if saved_change_to_status?
-       # Add market status to the fixture object
-      #  fixture["market_#{self.market_identifier}_status"] = self.status
-
-      #  # Specify which market
-      #  fixture["market_identifier"] = self.market_identifier
-
-       #Make the broadcast for market and betslip
-       ActionCable.server.broadcast("betslips_#{self.market_identifier}_#{self.fixture_id}", self.as_json)
-       ActionCable.server.broadcast("markets_#{self.market_identifier}_#{self.fixture_id}", self.as_json)
-      #  CableWorker.perform_async("betslips_#{self.market_identifier}_#{self.fixture_id}", self.as_json)
-      #  CableWorker.perform_async("markets_#{self.market_identifier}_#{self.fixture_id}", self.as_json)
+      ActionCable.server.broadcast("live_odds_#{self.market_identifier}_#{self.fixture_id}", data.as_json)
     end
   end
 end

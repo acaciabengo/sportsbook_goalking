@@ -72,6 +72,7 @@ Rails.application.routes.draw do
   match "/contacts", to: "footer_tabs#contacts", via: [:get]
   match "/terms", to: "footer_tabs#terms", via: [:get]
   match "/responsible_gambling", to: "footer_tabs#privacy", via: [:get]
+  
   # Serve websocket cable requests in-process
   mount ActionCable.server => "/cable"
 

@@ -9,6 +9,9 @@ class Live::BetSettlementJob
     doc.xpath("//Match").each do |match|
       # bet_status = match["betstatus"]
       match_id = match["matchid"].to_i
+      # status = match[]
+      # match_status = match["status"]
+
 
       # find the fixture
       fixture = Fixture.find_by(event_id: match_id)
@@ -21,8 +24,8 @@ class Live::BetSettlementJob
         update_attrs[:home_score] = clearedscore.split(':')[0].to_i
         update_attrs[:away_score] = clearedscore.split(':')[1].to_i
       end
-      update_attrs[:status] = 'inactive'
-      update_attrs[:match_status] = 'finished'
+      update_attrs[:status] = '1'
+      update_attrs[:match_status] = 'ended'
       fixture.update(update_attrs) if update_attrs.any?
 
       # Find all the markets at once and group by market_identifier
