@@ -9,5 +9,5 @@ test:
   adapter: test
 
 production:
-  adapter: any_cable
+  adapter: redis
   url: <%= ENV['REDIS_SOCKET_URL'] || 'redis://redis:6379/3' %>

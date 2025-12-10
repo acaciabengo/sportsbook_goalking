@@ -102,5 +102,9 @@ Rails.application.configure do
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
   # config.action_controller.default_url_options = { host: ENV.fetch("RAILS_HOST"), protocol: 'https' }
+  # 
+  
+  # # Restrict source for sockets connections
+  # config.action_cable.allowed_request_origins = [ /http:\/\/goalkingsug.*/ ]
   
 end
