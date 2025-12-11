@@ -38,7 +38,7 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 
 	def create
 		stake = params[:stake]
-		bets_data = params[:bets]
+		bets_data = params[:bets] || []
 
 		if stake.to_f < 1 || stake.to_f > 4000000
 			render json: {message: "Amount should be between 1 UGX and 4,000,000 UGX"}, status: 400
@@ -51,41 +51,47 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 			return
 		end
 
-	 
-		previous_balance = @current_user.balance
-		balance_after = @current_user.balance = (@current_user.balance - stake.to_f)
-
-		transaction =
-			@current_user.transactions.build(
-				balance_before: previous_balance,
-				balance_after: balance_after,
-				phone_number: @current_user.phone_number,
-				status: 'SUCCESS',
-				currency: 'UGX',
-				amount: stake,
-				category: 'Bet Stake'
-			)
-		
-
 		bet_slip = @current_user.bet_slips.build(stake: stake)
-		
+
+		pre_markets_data, live_markets_data = load_odds_data(bets_data)
 
 		bets_arr = []
 
 		bets_data.each do |bet_data|
-			bets_arr << {
-				user_id: @current_user.id,
-				bet_slip: bet_slip,
-				fixture_id: bet_data[:fixture_id],
-				market_identifier: bet_data[:market_identifier],
-				odds: bet_data[:odd],
-				outcome_desc: bet_data[:outcome],
-				outcome: bet_data[:outcome_id],
-				specifier: bet_data[:specifier],
-				status: 'Active',
-				bet_type: bet_data[:bet_type]
+      fixture_id = bet_data[:fixture_id]&.to_i
+      market_identifier = bet_data[:market_identifier]&.to_s
+      specifier = bet_data[:specifier].presence
+      outcome_id = bet_data[:outcome_id]&.to_i
+      bet_type = bet_data[:bet_type]
+      outcome_desc = bet_data[:outcome]&.to_s
+
+      if bet_type == 'PreMatch'
+        odds = pre_markets_data.dig(fixture_id, market_identifier, specifier) || {}
+      else
+        odds = live_markets_data.dig(fixture_id, market_identifier, specifier) || {}
+      end
+
+      odd_entry = odds.values.find { |v| v["outcome_id"]&.to_i == outcome_id&.to_i }
+      current_odds = odd_entry ? odd_entry["odd"] : nil
+
+      if current_odds.nil?
+        render json: {message: "One of the bets has changed odds or is no longer available. Please review your bet and try again."}, status: 400
+        return
+      end
+
+      bets_arr << {
+        user_id: @current_user.id,
+        bet_slip: bet_slip,
+        fixture_id: fixture_id,
+        market_identifier: market_identifier,
+        odds: current_odds,
+        outcome_desc: outcome_desc,
+        outcome: outcome_id,
+        specifier: specifier,
+        status: 'Active',
+        bet_type: bet_type
       }
-		end
+    end
 
 		odds_arr = bets_arr.map { |x| x[:odds].to_f }
 		total_odds = odds_arr.inject(:*).round(2)
@@ -104,19 +110,37 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 		tax = (bonus_win.to_f + win_amount) * 0.15
 
 		BetSlip.transaction do
-			@current_user.save!
-			transaction.save!
+			# balance management
+			previous_balance = @current_user.balance
+			balance_after = @current_user.balance = (@current_user.balance - stake.to_f)
+			@current_user.update!(balance: balance_after)
+
+			# create the transaction
+			@current_user.transactions.create!(
+        balance_before: previous_balance,
+        balance_after: balance_after,
+        phone_number: @current_user.phone_number,
+        status: 'SUCCESS',
+        currency: 'UGX',
+        amount: stake,
+        category: 'Bet Stake'
+      )
+
+			# BetSlip and Bets creation
+			bet_slip.assign_attributes(
+        bet_count: bets_arr.count,
+        stake: stake,
+        odds: total_odds,
+        status: 'Active',
+        win_amount: win_amount,
+        bonus: bonus_win,
+        tax: tax,
+        payout: payout
+      )
+      bet_slip.save!
+
 			Bet.create!(bets_arr)
-			bet_slip.update!(
-				bet_count: bets_arr.count,
-				stake: stake,
-				odds: total_odds,
-				status: 'Active',
-				win_amount: win_amount,
-				bonus: bonus_win,
-				tax: tax,
-				payout: payout
-			)
+
 		end
 
 		render json: {message: "Bet Slip created successfully", bet_slip_id: bet_slip.id}, status: 201
@@ -126,5 +150,61 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 
 	def betslip_params
 		params.require(:betslip).permit(:stake, bets_attributes: [:fixture_id, :market_identifier, :odd, :outcome, :outcome_id, :specifier, :bet_type])
+	end
+
+	def load_odds_data(bets_data)
+    pre_match_criteria = []
+    live_match_criteria = []
+
+    bets_data.each do |bet|
+      criteria = {
+        fixture_id: bet[:fixture_id],
+        market_identifier: bet[:market_identifier].to_s,
+        specifier: bet[:specifier]
+      }
+      
+      if bet[:bet_type] == 'PreMatch'
+        pre_match_criteria << criteria
+      else
+        live_match_criteria << criteria
+      end
+    end
+
+    # FIX: Safe querying without SQL injection
+    pre_markets = fetch_markets_safely(PreMarket, pre_match_criteria)
+    live_markets = fetch_markets_safely(LiveMarket, live_match_criteria)
+
+    pre_markets_data = {}
+    live_markets_data = {}
+
+    pre_markets.each do |market|
+      pre_markets_data[market.fixture_id] ||= {}
+      pre_markets_data[market.fixture_id][market.market_identifier] ||= {}
+      pre_markets_data[market.fixture_id][market.market_identifier][market.specifier] = market.odds
+    end
+
+    live_markets.each do |market|
+      live_markets_data[market.fixture_id] ||= {}
+      live_markets_data[market.fixture_id][market.market_identifier] ||= {}
+      live_markets_data[market.fixture_id][market.market_identifier][market.specifier] = market.odds
+    end
+
+    return pre_markets_data, live_markets_data
+	end
+
+	def fetch_markets_safely(model_class, criteria_list)
+    return [] if criteria_list.empty?
+
+    fixture_ids = criteria_list.map { |c| c[:fixture_id] }.uniq
+    candidates = model_class.where(fixture_id: fixture_ids)
+
+    # This avoids complex/unsafe SQL OR clauses
+    candidates.select do |market|
+      criteria_list.any? do |c|
+        market.fixture_id == c[:fixture_id].to_i &&
+        market.market_identifier.to_s == c[:market_identifier].to_s &&
+        market.specifier == c[:specifier]
+      end
+    end
 	end
 end
