@@ -28,7 +28,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
             AND pm.market_identifier = '1'
         )
 
-        SELECT DISTINCT ON (f.id)
+        SELECT
           f.id,
           f.event_id, 
           f.start_date,
@@ -63,12 +63,11 @@ class Api::V1::PreMatchController < Api::V1::BaseController
         WHERE f.match_status = 'not_started' 
           AND f.status IN ('0', 'active') 
           AND f.start_date > NOW()
-        ORDER BY f.id , f.start_date ASC
+        ORDER BY f.start_date ASC
       SQL
 
-      results = ActiveRecord::Base.connection.exec_query(query_sql).to_a
-      results.sort_by! { |r| r['start_date'] }
-      results
+      ActiveRecord::Base.connection.exec_query(query_sql).to_a
+      
     end
 
     @pagy, @records = pagy(:offset, raw_results)

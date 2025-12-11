@@ -22,35 +22,19 @@ class SyncTournamentsJob
           tournament_name =
             tournament.at_xpath("Texts/Text[@Language='en']/Value")&.content
           
-          next if tournament_id.nil? || tournament_name.nil?
+          next unless tournament_name.present? && tournament_id.to_i > 0
 
-          if Tournament.exists?(
-               ext_tournament_id: tournament_id,
-               category: category
-             )
-            existing_tournament =
-              Tournament.find_by(
-                ext_tournament_id: tournament_id,
-                category: category
-              )
-            if existing_tournament.name != tournament_name
-              unless existing_tournament.update(name: tournament_name)
-                Rails.logger.error(
-                  "Failed to update tournament ##{existing_tournament.id}: #{existing_tournament.errors.full_messages.join(", ")}"
-                )
-              end
-            end
-          else
-            new_tournament =
-              Tournament.create(
-                ext_tournament_id: tournament_id,
-                name: tournament_name,
-                category: category
-              )
+          tournament_record = Tournament.find_or_initialize_by(
+            ext_tournament_id: tournament_id,
+            category: category
+          )
 
-            unless new_tournament.persisted?
+          if tournament_record.new_record? || tournament_record.name != tournament_name
+            tournament_record.name = tournament_name
+
+            unless tournament_record.save
               Rails.logger.error(
-                "Failed to create tournament: #{new_tournament.errors.full_messages.join(", ")}"
+                "Failed to save tournament #{tournament_id}: #{tournament_record.errors.full_messages.join(", ")}"
               )
             end
           end

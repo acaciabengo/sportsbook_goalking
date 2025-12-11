@@ -23,35 +23,19 @@ class SyncCategoriesJob
           category_name =
             category.at_xpath("Texts/Text[@Language='en']/Value")&.text
 
-          next unless category_name.present?
+          next unless category_name.present? && ext_category_id > 0
 
-          existing_category =
-            Category.find_by(
-              ext_category_id: ext_category_id,
-              sport_id: sport_id
-            )
+          category_record = Category.find_or_initialize_by(
+            ext_category_id: ext_category_id,
+            sport_id: sport_id
+          )
 
-          if existing_category
-            # Only update if name has changed
-            if existing_category.name != category_name
-              unless existing_category.update(name: category_name)
-                Rails.logger.error(
-                  "Failed to update category #{existing_category.id}: #{existing_category.errors.full_messages.join(", ")}"
-                )
-              end
-            end
-          else
-            # Use sport: to set the association, not sport_id:
-            new_category =
-              Category.create(
-                ext_category_id: ext_category_id,
-                name: category_name,
-                sport: Sport.find(sport_id)
-              )
+          if category_record.new_record? || category_record.name != category_name
+            category_record.name = category_name
 
-            unless new_category.persisted?
+            unless category_record.save
               Rails.logger.error(
-                "Failed to create category with external ID #{ext_category_id}: #{new_category.errors.full_messages.join(", ")}"
+                "Failed to save category #{ext_category_id}: #{category_record.errors.full_messages.join(", ")}"
               )
             end
           end
