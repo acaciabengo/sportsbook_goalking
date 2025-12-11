@@ -19,29 +19,21 @@ class SyncMarketsJob
         .each do |market|
           market_id = market["OddsType"].to_i
           market_name =
-            market.at_xpath("Texts/Text[@Language='en']/Value").content
+            market.at_xpath("Texts/Text[@Language='en']/Value")&.content
 
-          if Market.exists?(ext_market_id: market_id, sport_id: sport.id)
-            existing_market =
-              Market.find_by(ext_market_id: market_id, sport_id: sport.id)
-            if existing_market.name != market_name
-              unless existing_market.update(name: market_name)
-                Rails.logger.error(
-                  "Failed to update market: #{existing_market.errors.full_messages.join(", ")}"
-                )
-              end
-            end
-          else
-            new_market =
-              Market.create(
-                ext_market_id: market_id,
-                name: market_name,
-                sport_id: sport.id
-              )
+          next unless market_name.present? && market_id > 0
 
-            unless new_market.persisted?
+          market_record = Market.find_or_initialize_by(
+            ext_market_id: market_id,
+            sport_id: sport.id
+          )
+
+          if market_record.new_record? || market_record.name != market_name
+            market_record.name = market_name
+
+            unless market_record.save
               Rails.logger.error(
-                "Failed to create market: #{new_market.errors.full_messages.join(", ")}"
+                "Failed to save market #{market_id}: #{market_record.errors.full_messages.join(", ")}"
               )
             end
           end
