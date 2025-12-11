@@ -20,7 +20,7 @@ class BetslipsJob
                   #if all wins, mark as win and payup
                   user = User.find_by(id: slip.user_id)
                   #mark as a win and payout winning and top up balance all under a transaction
-                  total_odds = slip.bets.pluck(:odds).map(&:to_f).inject(:*).round(2)
+                  total_odds = slip.bets.pluck(:odds)&.map(&:to_f)&.inject(:*)&.round(2)
                   win_amount = (slip.stake * total_odds)
                   slip_bonus = SlipBonus.where('min_accumulator <= ? AND max_accumulator >= ?', slip.bet_count, slip.bet_count)
 
