@@ -6,7 +6,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
     # Find all fixtures that are in play and have a "Match Result" market (ID '1').
     # Show only that single market for each fixture.
     query_sql = <<-SQL
-      SELECT
+      SELECT DISTINCT ON (f.id)
         f.id, 
         f.event_id, 
         f.start_date,
@@ -41,7 +41,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
       LEFT JOIN markets m ON m.ext_market_id = CAST(lm.market_identifier AS INTEGER) 
       WHERE f.match_status = 'in_play' 
         AND f.status = '0'
-      ORDER BY f.start_date ASC
+      ORDER BY f.id, f.start_date ASC
     SQL
 
     raw_results = ActiveRecord::Base.connection.exec_query(query_sql).to_a
@@ -148,11 +148,15 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
     SQL
 
     raw_results = ActiveRecord::Base.connection.exec_query(query_sql).to_a
+    
+    
 
     if raw_results.empty?
       render json: { error: "Fixture with event_id #{fixture_id} not found or not available." }, status: :not_found
       return
     end
+
+    raw_results = raw_results.sort_by { |r| r['start_date'] }
 
     response = raw_results.map do |record|
       {

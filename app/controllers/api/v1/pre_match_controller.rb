@@ -10,7 +10,25 @@ class Api::V1::PreMatchController < Api::V1::BaseController
     # ===============================
     raw_results = Rails.cache.fetch("pre_match_fixtures_all", expires_in: 2.minutes) do
       query_sql = <<-SQL
-        SELECT
+        -- aggregate markets into a json array per fixture
+        WITH aggregated_markets AS (
+          SELECT 
+            pm.fixture_id,
+            pm.market_identifier,
+            pm.id AS pre_market_id,
+            m.name,
+            m.ext_market_id,
+            pm.odds,
+            pm.specifier,
+            m.id AS market_id
+          FROM pre_markets pm
+          LEFT JOIN markets m on m.ext_market_id = pm.market_identifier::integer
+          WHERE 
+            pm.status IN  ('active', '0')
+            AND pm.market_identifier = '1'
+        )
+
+        SELECT DISTINCT ON (f.id)
           f.id,
           f.event_id, 
           f.start_date,
@@ -31,25 +49,26 @@ class Api::V1::PreMatchController < Api::V1::BaseController
           c.id AS category_id,
           c.name AS category_name,
           -- Markets Fields --
-          pm.id AS pre_market_id,
-          pm.market_identifier,
-          m.name AS market_name,
-          m.id AS market_id,
-          pm.odds,
-          pm.specifier
+          am.pre_market_id,
+          am.market_identifier,
+          am.name AS market_name,
+          am.market_id,
+          am.odds,
+          am.specifier
         FROM fixtures f    
-        INNER JOIN pre_markets pm ON pm.fixture_id = f.id AND pm.market_identifier = '1' AND pm.status IN ('active', '0') 
+        INNER JOIN aggregated_markets am ON am.fixture_id = f.id
         LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
         LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
         LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
-        LEFT JOIN markets m ON m.ext_market_id = CAST(pm.market_identifier AS INTEGER)
         WHERE f.match_status = 'not_started' 
           AND f.status IN ('0', 'active') 
           AND f.start_date > NOW()
-        ORDER BY f.start_date ASC
+        ORDER BY f.id , f.start_date ASC
       SQL
 
-      ActiveRecord::Base.connection.exec_query(query_sql).to_a
+      results = ActiveRecord::Base.connection.exec_query(query_sql).to_a
+      results.sort_by! { |r| r['start_date'] }
+      results
     end
 
     @pagy, @records = pagy(:offset, raw_results)
