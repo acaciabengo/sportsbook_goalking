@@ -38,7 +38,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
       LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
       LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
       LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
-      LEFT JOIN markets m ON m.ext_market_id = CAST(lm.market_identifier AS INTEGER) 
+      LEFT JOIN markets m ON m.ext_market_id = CAST(lm.market_identifier AS INTEGER) AND m.sport_id = 1
       WHERE f.match_status = 'in_play' 
         AND f.status = '0'
       ORDER f.start_date ASC

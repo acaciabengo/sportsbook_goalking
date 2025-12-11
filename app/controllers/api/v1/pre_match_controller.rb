@@ -22,7 +22,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
             pm.specifier,
             m.id AS market_id
           FROM pre_markets pm
-          LEFT JOIN markets m on m.ext_market_id = pm.market_identifier::integer
+          LEFT JOIN markets m on m.ext_market_id = pm.market_identifier::integer AND m.sport_id = 1
           WHERE 
             pm.status IN  ('active', '0')
             AND pm.market_identifier = '1'
