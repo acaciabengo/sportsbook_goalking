@@ -92,7 +92,7 @@ class PreMatch::PullSettlementsJob
         market_identifier = bet_result['OddsType'].to_i
         status = bet_result.name # e.g., "W" or "L"
         specifier = bet_result["SpecialBetValue"]
-        outcome_id = bet_result["OutComeId"]
+        outcome_id = bet_result["OutComeId"]&.to_i
         outcome = bet_result["OutCome"]
         void_factor = bet_result["VoidFactor"]&.to_f || 0.0
 

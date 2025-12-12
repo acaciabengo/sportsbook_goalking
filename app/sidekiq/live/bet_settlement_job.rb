@@ -45,7 +45,8 @@ class Live::BetSettlementJob
           outcome = odds_field['type']
           outcome_status = odds_field['outcome'] == '1' ? 'W' : 'L'
           void_factor = odds_field['voidfactor']&.to_f || 0.0
-          results[outcome] = { status: outcome_status, void_factor: void_factor }
+          outcome_id = odds_field['typeid']&.to_i
+          results[outcome] = { status: outcome_status, void_factor: void_factor, outcome_id: outcome_id }
         end
 
         # Find the specific market by market_identifier AND specifier

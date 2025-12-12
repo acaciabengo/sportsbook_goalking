@@ -74,7 +74,7 @@ class Api::V1::BetslipsController < Api::V1::BaseController
       odd_entry = odds.values.find { |v| v["outcome_id"]&.to_i == outcome_id&.to_i }
       current_odds = odd_entry ? odd_entry["odd"] : nil
 
-      if current_odds.nil?
+      if current_odds.nil? || current_odds == 0.0
         render json: {message: "One of the bets has changed odds or is no longer available. Please review your bet and try again."}, status: 400
         return
       end

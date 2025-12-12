@@ -39,12 +39,12 @@ class CloseSettledBetsJob
     return if bets.empty?
 
     # Categorize outcomes - void takes precedence
-    cancelled_bets = results.select { |k, v| v["status"] == "C" }.keys
-    voided_bets = results.select { |k, v| v["void_factor"].to_f > 0 }.keys
+    cancelled_bets = results.select { |k, v| v["status"] == "C" }.map { |_k, v| v["outcome_id"].to_s }
+    voided_bets = results.select { |k, v| v["void_factor"].to_f > 0 }.map { |_k, v| v["outcome_id"].to_s }
     void_outcomes = (cancelled_bets + voided_bets).uniq
     
     # Winning bets (only if not void)
-    winning_bets = results.select { |k, v| v["status"] == "W" && !void_outcomes.include?(k) }.keys
+    winning_bets = results.select { |k, v| v["status"] == "W" && !void_outcomes.include?(k) }.map { |_k, v| v["outcome_id"].to_s }
 
     # Bulk update void bets first (cancelled + voided) with void_factor
     if void_outcomes.any?
