@@ -170,7 +170,7 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
   end
 
   describe "GET /api/v1/live_match" do
-    let!(:live_sport) { Fabricate(:sport, name: "Football", ext_sport_id: 1) }
+    let!(:live_sport) { Fabricate(:sport, id: 1, name: "Football", ext_sport_id: 1) }
     let!(:live_category) { Fabricate(:category, name: "England", ext_category_id: 100) }
     let!(:live_tournament) { Fabricate(:tournament, name: "Premier League", category: live_category, ext_tournament_id: 200) }
     let!(:live_market) { Fabricate(:market, ext_market_id: 1, name: "1X2") }

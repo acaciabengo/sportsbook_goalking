@@ -352,7 +352,7 @@ paths:
           description: bet slip not found
         '401':
           description: unauthorized
-  "/api/v1/descriptions/sports":
+  "/api/v1sports":
     get:
       summary: list sports
       tags:
@@ -389,7 +389,7 @@ paths:
                           type: integer
                         name:
                           type: string
-  "/api/v1/descriptions/categories":
+  "/api/v1categories":
     get:
       summary: list categories
       tags:
@@ -428,7 +428,7 @@ paths:
                           type: string
                         sport_id:
                           type: integer
-  "/api/v1/descriptions/tournaments":
+  "/api/v1tournaments":
     get:
       summary: list tournaments
       tags:
@@ -467,7 +467,7 @@ paths:
                           type: string
                         category_id:
                           type: integer
-  "/api/v1/descriptions/markets":
+  "/api/v1markets":
     get:
       summary: list markets
       tags:
@@ -1014,4 +1014,4 @@ servers:
 - url: https://{defaultHost}
   variables:
     defaultHost:
-      default: www.example.com
+      default: 138.68.152.140

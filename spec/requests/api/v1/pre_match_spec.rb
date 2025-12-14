@@ -178,7 +178,7 @@ RSpec.describe "Api::V1::PreMatch", type: :request do
   end
 
   describe "GET /api/v1/pre_match" do
-    let!(:sport) { Fabricate(:sport, name: "Football", ext_sport_id: 1) }
+    let!(:sport) { Fabricate(:sport, id: 1, name: "Football", ext_sport_id: 1) }
     let!(:category) { Fabricate(:category, name: "England") }
     let!(:tournament) { Fabricate(:tournament, name: "Premier League", category: category) }
     let!(:market) { Fabricate(:market, ext_market_id: 1, name: "1X2") }
