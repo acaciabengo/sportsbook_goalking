@@ -253,12 +253,12 @@ RSpec.describe SyncTournamentsJob, type: :worker do
 
     context "when tournament creation fails" do
       before do
-        # Create a failed tournament with real errors
-        failed_tournament = Tournament.new
+        # Mock find_or_initialize_by to return a new record that fails to save
+        failed_tournament = Tournament.new(ext_tournament_id: 100, name: "Premier League")
         failed_tournament.errors.add(:base, "Validation error")
-
-        allow(failed_tournament).to receive(:persisted?).and_return(false)
-        allow(Tournament).to receive(:create).and_return(failed_tournament)
+        
+        allow(Tournament).to receive(:find_or_initialize_by).and_return(failed_tournament)
+        allow(failed_tournament).to receive(:save).and_return(false)
       end
 
       it "logs the error and continues" do
@@ -279,14 +279,15 @@ RSpec.describe SyncTournamentsJob, type: :worker do
       end
 
       before do
-        # Create a tournament with real errors
-        tournament_with_errors = Tournament.new
-        tournament_with_errors.errors.add(:base, "Update validation error")
+        # Allow other calls to work normally
+        allow(Tournament).to receive(:find_or_initialize_by).and_call_original
 
-        allow_any_instance_of(Tournament).to receive(:update).and_return(false)
-        allow_any_instance_of(Tournament).to receive(:errors).and_return(
-          tournament_with_errors.errors
-        )
+        # Mock find_or_initialize_by to return the existing record
+        allow(Tournament).to receive(:find_or_initialize_by).with(ext_tournament_id: 100, category: category).and_return(existing_tournament)
+        
+        # Mock save to fail
+        allow(existing_tournament).to receive(:save).and_return(false)
+        existing_tournament.errors.add(:base, "Update validation error")
       end
 
       it "logs the error and continues" do

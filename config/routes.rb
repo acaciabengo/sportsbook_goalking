@@ -21,6 +21,10 @@ Rails.application.routes.draw do
       match "/live_match/:id" => "live_match#show", :via => [:get]
       match "/login" => "auth#login", :via => [:post, :get]
       match "/signup" => "auth#signup", :via => [:post]
+      match '/sports' => 'descriptions#sports', :via => [:get]
+      match '/categories' => 'descriptions#categories', :via => [:get]
+      match '/tournaments' => 'descriptions#tournaments', :via => [:get]
+      match '/markets' => 'descriptions#markets', :via => [:get]
 
       match "check_user" => "current_user#check_current_user", :via => [:get]
       match "verification" => "current_user#user_verification", :via => [:get]
@@ -31,36 +35,7 @@ Rails.application.routes.draw do
       match "bets" => "bets#index", :via => [:get]
       match "deposit" => "deposits#create", :via => [:post]
       match "withdraw" => "withdraws#create", :via => [:post]
-      namespace :fixtures do
-        namespace :soccer do
-          match "live" => "live_match#index", :via => [:get]
-          match "pre" => "pre_match#index", :via => [:get]
-          match "pre_fixture" => "pre_match#show", :via => [:get]
-          match "live_fixture" => "live_match#show", :via => [:get]
-        end
-        namespace :virtual_soccer do
-          match "virtual_live" => "live_match#index", :via => [:get]
-          match "virtual_pre" => "pre_match#index", :via => [:get]
-          match "pre_fixture" => "pre_match#show", :via => [:get]
-          match "live_fixture" => "live_match#show", :via => [:get]
-        end
-
-        match "search" => "search#index", :via => [:get]
-
-        namespace :basketball do
-          match "pre" => "pre_match#index", :via => [:get]
-          match "pre_fixture" => "pre_match#show", :via => [:get]
-          match "live" => "live_match#index", :via => [:get]
-          match "live_fixture" => "live_match#show", :via => [:get]
-        end
-
-        namespace :tennis do
-          match "pre" => "pre_match#index", :via => [:get]
-          match "pre_fixture" => "pre_match#show", :via => [:get]
-          match "live" => "live_match#index", :via => [:get]
-          match "live_fixture" => "live_match#show", :via => [:get]
-        end
-      end
+      
     end
   end
 

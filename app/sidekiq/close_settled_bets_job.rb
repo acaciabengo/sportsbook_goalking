@@ -38,7 +38,7 @@ class CloseSettledBetsJob
 
     return if bets.empty?
 
-    # Categorize outcomes - void takes precedence
+        # Categorize outcomes - void takes precedence
     cancelled_bets = results.select { |k, v| v["status"] == "C" }.map { |_k, v| v["outcome_id"].to_s }
     voided_bets = results.select { |k, v| v["void_factor"].to_f > 0 }.map { |_k, v| v["outcome_id"].to_s }
     void_outcomes = (cancelled_bets + voided_bets).uniq

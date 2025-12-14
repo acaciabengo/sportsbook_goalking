@@ -17,6 +17,10 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
       tags 'Live Matches'
       produces 'application/json'
       security [Bearer: {}]
+      parameter name: :page, in: :query, type: :integer, description: 'Page number', required: false
+      parameter name: :sport_id, in: :query, type: :integer, description: 'Filter by Sport ID', required: false
+      parameter name: :category_id, in: :query, type: :integer, description: 'Filter by Category ID', required: false
+      parameter name: :tournament_id, in: :query, type: :integer, description: 'Filter by Tournament ID', required: false
 
       response '200', 'successful' do
         schema type: :object,
@@ -60,16 +64,13 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
                     }
                   },
                   markets: {
-                    type: :array,
-                    items: {
-                      type: :object,
-                      properties: {
-                        id: { type: :integer },
-                        name: { type: :string },
-                        market_identifier: { type: :string },
-                        odds: { type: :object },
-                        specifier: { type: :string, nullable: true }
-                      }
+                    type: :object,
+                    properties: {
+                      id: { type: :integer },
+                      name: { type: :string },
+                      market_identifier: { type: :string },
+                      odds: { type: :object },
+                      specifier: { type: :string, nullable: true }
                     }
                   }
                 }
@@ -271,9 +272,9 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
           fixture = json['fixtures'].first
 
           expect(fixture['markets']).to be_present
-          expect(fixture['markets']).to be_an(Array)
+          expect(fixture['markets']).to be_a(Hash)
           
-          market = fixture['markets'].first
+          market = fixture['markets']
           expect(market['name']).to eq("1X2")
           expect(market['market_identifier']).to eq("1")
           expect(market['odds']).to be_a(Hash)
@@ -380,6 +381,88 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
           fixture_ids = json['fixtures'].map { |f| f['id'] }
           
           expect(fixture_ids).not_to include(finished_fixture.id)
+        end
+      end
+
+      context "filters by parameters" do
+        let(:sport1) { Fabricate(:sport, name: "Soccer", ext_sport_id: 10) }
+        let(:sport2) { Fabricate(:sport, name: "Tennis", ext_sport_id: 20) }
+        
+        let(:cat1) { Fabricate(:category, name: "England", ext_category_id: 100, sport: sport1) }
+        let(:cat2) { Fabricate(:category, name: "Spain", ext_category_id: 200, sport: sport1) }
+        
+        let(:tourn1) { Fabricate(:tournament, name: "PL", category: cat1, ext_tournament_id: 1000) }
+        let(:tourn2) { Fabricate(:tournament, name: "La Liga", category: cat2, ext_tournament_id: 2000) }
+
+        let!(:fixture1) do
+          Fabricate(:fixture,
+            event_id: "f1",
+            sport: sport1,
+            sport_id: sport1.ext_sport_id,
+            ext_category_id: cat1.ext_category_id,
+            ext_tournament_id: tourn1.ext_tournament_id,
+            match_status: 'in_play',
+            status: '0',
+            start_date: 1.hour.ago
+          )
+        end
+        let!(:market1) { Fabricate(:live_market, fixture: fixture1, market_identifier: "1", status: 'active') }
+
+        let!(:fixture2) do
+          Fabricate(:fixture,
+            event_id: "f2",
+            sport: sport2,
+            sport_id: sport2.ext_sport_id,
+            ext_category_id: 999,
+            match_status: 'in_play',
+            status: '0',
+            start_date: 1.hour.ago
+          )
+        end
+        let!(:market2) { Fabricate(:live_market, fixture: fixture2, market_identifier: "1", status: 'active') }
+
+        let!(:fixture3) do
+          Fabricate(:fixture,
+            event_id: "f3",
+            sport: sport1,
+            sport_id: sport1.ext_sport_id,
+            ext_category_id: cat2.ext_category_id,
+            ext_tournament_id: tourn2.ext_tournament_id,
+            match_status: 'in_play',
+            status: '0',
+            start_date: 1.hour.ago
+          )
+        end
+        let!(:market3) { Fabricate(:live_market, fixture: fixture3, market_identifier: "1", status: 'active') }
+
+        it "filters by sport_id" do
+          get "/api/v1/live_match", params: { sport_id: sport1.id }, headers: auth_headers
+          json = JSON.parse(response.body)
+          ids = json['fixtures'].map { |f| f['id'] }
+          
+          expect(ids).to include(fixture1.id)
+          expect(ids).to include(fixture3.id)
+          expect(ids).not_to include(fixture2.id)
+        end
+
+        it "filters by category_id" do
+          get "/api/v1/live_match", params: { category_id: cat1.id }, headers: auth_headers
+          json = JSON.parse(response.body)
+          ids = json['fixtures'].map { |f| f['id'] }
+          
+          expect(ids).to include(fixture1.id)
+          expect(ids).not_to include(fixture2.id)
+          expect(ids).not_to include(fixture3.id)
+        end
+
+        it "filters by tournament_id" do
+          get "/api/v1/live_match", params: { tournament_id: tourn2.id }, headers: auth_headers
+          json = JSON.parse(response.body)
+          ids = json['fixtures'].map { |f| f['id'] }
+          
+          expect(ids).to include(fixture3.id)
+          expect(ids).not_to include(fixture1.id)
+          expect(ids).not_to include(fixture2.id)
         end
       end
 
@@ -643,13 +726,13 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
           expect(response).to have_http_status(:ok)
         end
 
-        it "returns empty markets array" do
+        it "returns empty markets object" do
           json = JSON.parse(response.body)
           fixtures = json['fixtures']
           fixture_data = fixtures.find { |f| f['id'] == fixture_no_markets.id }
           
           expect(fixture_data).to be_present
-          expect(fixture_data['markets']).to eq([])
+          expect(fixture_data['markets']).to eq({})
         end
       end
 

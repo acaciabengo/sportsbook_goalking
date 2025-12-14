@@ -15,7 +15,7 @@ class Api::V1::AuthController < Api::V1::BaseController
       
       render json: { 
         token: token, 
-        user: user.as_json(only: [:id, :phone_number, :balance, :created_at]) 
+        user: user.as_json(only: [:id, :first_name, :last_name, :phone_number, :balance, :created_at]) 
       }, status: :ok
     else
       render json: { error: 'Invalid credentials' }, status: :unauthorized
@@ -37,7 +37,7 @@ class Api::V1::AuthController < Api::V1::BaseController
       
       render json: { 
         token: token, 
-        user: user.as_json(only: [:id, :phone_number, :balance, :created_at]) 
+        user: user.as_json(only: [:id,:first_name, :last_name, :phone_number, :balance, :created_at]) 
       }, status: :created
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_entity

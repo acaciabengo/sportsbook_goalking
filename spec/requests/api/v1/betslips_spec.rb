@@ -75,6 +75,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
 
       let(:Authorization) { auth_headers['Authorization'] }
       let(:fixture) { Fabricate(:fixture) }
+      let!(:market) { Fabricate(:pre_market, fixture: fixture, market_identifier: '1', specifier: nil, odds: { '1' => {odd: 2.5, outcome_id: '1'}, 'X' => {odd: 3.0, outcome_id: 'X'}, '2' => {odd: 2.8, outcome_id: '2'} }) }
       let(:betslip_params) do
         {
           stake: 1000,
@@ -252,7 +253,8 @@ RSpec.describe "Api::V1::Betslips", type: :request do
   end
 
   describe "POST /create" do
-    let(:fixture) { Fabricate(:fixture) }
+    let!(:fixture) { Fabricate(:fixture) }
+    let!(:market) { Fabricate(:pre_market, fixture: fixture, market_identifier: '1', specifier: nil, odds: { '1' => {odd: 2.5, outcome_id: '1'}, 'X' => {odd: 3.0, outcome_id: 'X'}, '2' => {odd: 2.8, outcome_id: '2'} }) }  
     let(:valid_params) do
       {
         stake: 1000,
@@ -330,7 +332,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
                   market_identifier: '1',
                   outcome: 'Home Win',
                   outcome_id: '1',
-                  odd: 2.0,
+                  odd: 2.50,
                   specifier: nil,
                   bet_type: 'PreMatch'
                 },
@@ -347,12 +349,18 @@ RSpec.describe "Api::V1::Betslips", type: :request do
             }
           end
 
+        #  create the supporting pre_market for the second bet
+          before do
+            second_fixture = Fixture.find(multi_bet_params[:bets][1][:fixture_id])
+            Fabricate(:pre_market, fixture: second_fixture, market_identifier: '1', specifier: nil, odds: { '1' => {odd: 1.5, outcome_id: '1'}, 'X' => {odd: 2.5, outcome_id: 'X'}, '2' => {odd: 3.0, outcome_id: '2'} })
+          end
+
           it "multiplies odds correctly" do
             post "/api/v1/betslips", params: multi_bet_params, headers: auth_headers
             bet_slip = BetSlip.last
 
-            expect(bet_slip.odds).to eq(3.0) # 2.0 * 1.5
-            expect(bet_slip.win_amount).to eq(3000.0) # 1000 * 3.0
+            expect(bet_slip.odds).to eq(3.75)
+            expect(bet_slip.win_amount).to eq(3750.0) # 1000 * 2.5 * 1.5
           end
 
           it "creates multiple bets" do
@@ -388,6 +396,18 @@ RSpec.describe "Api::V1::Betslips", type: :request do
                 { fixture_id: Fabricate(:fixture).id, market_identifier: '1', outcome: 'Win', outcome_id: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' }
               ]
             }
+          end
+
+          before do
+            # Update the first market to match the expected odd of 2.0
+            market.update(odds: { '1' => {odd: 2.0, outcome_id: '1'}, 'X' => {odd: 3.0, outcome_id: 'X'}, '2' => {odd: 2.8, outcome_id: '2'} })
+
+            # Create markets for the 2nd and 3rd bets
+            [1, 2].each do |index|
+              fixture_id = bonus_params[:bets][index][:fixture_id]
+              fixture = Fixture.find(fixture_id)
+              Fabricate(:pre_market, fixture: fixture, market_identifier: '1', specifier: nil, odds: { '1' => {odd: 2.0, outcome_id: '1'}, 'X' => {odd: 3.0, outcome_id: 'X'}, '2' => {odd: 4.0, outcome_id: '2'} })
+            end
           end
 
           it "applies bonus when bet count matches" do

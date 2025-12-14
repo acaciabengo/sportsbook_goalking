@@ -18,6 +18,10 @@ RSpec.describe "Api::V1::PreMatch", type: :request do
       produces 'application/json'
       security [Bearer: {}]
       parameter name: :Authorization, in: :header, type: :string, description: 'Bearer token'
+      parameter name: :page, in: :query, type: :integer, description: 'Page number', required: false
+      parameter name: :sport_id, in: :query, type: :integer, description: 'Filter by Sport ID', required: false
+      parameter name: :category_id, in: :query, type: :integer, description: 'Filter by Category ID', required: false
+      parameter name: :tournament_id, in: :query, type: :integer, description: 'Filter by Tournament ID', required: false
 
       let(:Authorization) { auth_headers['Authorization'] }
 
@@ -371,6 +375,89 @@ RSpec.describe "Api::V1::PreMatch", type: :request do
           fixture_ids = json['fixtures'].map { |f| f['fixture_id'] }
           
           expect(fixture_ids).not_to include(past_fixture.id)
+        end
+      end
+
+      context "filters by parameters" do
+        let(:sport1) { Fabricate(:sport, name: "Soccer", ext_sport_id: 10) }
+        let(:sport2) { Fabricate(:sport, name: "Tennis", ext_sport_id: 20) }
+        
+        let(:cat1) { Fabricate(:category, name: "England", ext_category_id: 100, sport: sport1) }
+        let(:cat2) { Fabricate(:category, name: "Spain", ext_category_id: 200, sport: sport1) }
+        
+        let(:tourn1) { Fabricate(:tournament, name: "PL", category: cat1, ext_tournament_id: 1000) }
+        let(:tourn2) { Fabricate(:tournament, name: "La Liga", category: cat2, ext_tournament_id: 2000) }
+
+        let!(:fixture1) do
+          Fabricate(:fixture,
+            event_id: "f1",
+            sport: sport1,
+            sport_id: sport1.ext_sport_id,
+            ext_category_id: cat1.ext_category_id,
+            ext_tournament_id: tourn1.ext_tournament_id,
+            match_status: 'not_started',
+            status: 'active',
+            start_date: 1.day.from_now
+          )
+        end
+        let!(:market1) { Fabricate(:pre_market, fixture: fixture1, market_identifier: "1", status: 'active') }
+
+        let!(:fixture2) do
+          Fabricate(:fixture,
+            event_id: "f2",
+            sport: sport2,
+            sport_id: sport2.ext_sport_id,
+            match_status: 'not_started',
+            status: 'active',
+            start_date: 1.day.from_now,
+            ext_category_id: cat2.ext_category_id,
+            ext_tournament_id: tourn1.ext_tournament_id
+          )
+        end
+        let!(:market2) { Fabricate(:pre_market, fixture: fixture2, market_identifier: "1", status: 'active') }
+
+        let!(:fixture3) do
+          Fabricate(:fixture,
+            event_id: "f3",
+            sport: sport1,
+            sport_id: sport1.ext_sport_id,
+            ext_category_id: cat2.ext_category_id,
+            ext_tournament_id: tourn2.ext_tournament_id,
+            match_status: 'not_started',
+            status: 'active',
+            start_date: 1.day.from_now
+          )
+        end
+        let!(:market3) { Fabricate(:pre_market, fixture: fixture3, market_identifier: "1", status: 'active') }
+
+        it "filters by sport_id" do
+          get "/api/v1/pre_match", params: { sport_id: sport1.id }, headers: auth_headers
+          json = JSON.parse(response.body)
+          ids = json['fixtures'].map { |f| f['id'] }
+          
+          expect(ids).to include(fixture1.id)
+          expect(ids).to include(fixture3.id)
+          expect(ids).not_to include(fixture2.id)
+        end
+
+        it "filters by category_id" do
+          get "/api/v1/pre_match", params: { category_id: cat1.id }, headers: auth_headers
+          json = JSON.parse(response.body)
+          ids = json['fixtures'].map { |f| f['id'] }
+          
+          expect(ids).to include(fixture1.id)
+          expect(ids).not_to include(fixture2.id)
+          expect(ids).not_to include(fixture3.id)
+        end
+
+        it "filters by tournament_id" do
+          get "/api/v1/pre_match", params: { tournament_id: tourn2.id }, headers: auth_headers
+          json = JSON.parse(response.body)
+          ids = json['fixtures'].map { |f| f['id'] }
+          
+          expect(ids).to include(fixture3.id)
+          expect(ids).not_to include(fixture1.id)
+          expect(ids).not_to include(fixture2.id)
         end
       end
 

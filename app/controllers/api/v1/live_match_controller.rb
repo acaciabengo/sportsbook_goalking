@@ -5,46 +5,107 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
   def index
     # Find all fixtures that are in play and have a "Match Result" market (ID '1').
     # Show only that single market for each fixture.
-    query_sql = <<-SQL
-      SELECT
-        f.id, 
-        f.event_id, 
-        f.start_date,
-        f.part_one_name AS home_team,
-        f.part_two_name AS away_team, 
-        f.match_status, 
-        f.status AS fixture_status,
-        -- Sport Fields
-        s.id AS sport_id,
-        s.ext_sport_id,
-        s.name AS sports_name, 
-        -- Tournament Fields
-        t.name AS tournament_name,
-        f.ext_tournament_id,
-        t.id AS tournament_id,
-        -- Category Fields 
-        f.ext_category_id,
-        c.id AS category_id,
-        c.name AS category_name,
-        -- Markets Fields (Only for Market ID '1')
-        lm.id AS live_market_id,
-        lm.market_identifier,
-        m.name AS market_name,
-        m.id AS market_id,
-        lm.odds,
-        lm.specifier
-      FROM fixtures f      
-      LEFT JOIN live_markets lm ON lm.fixture_id = f.id AND lm.market_identifier = '1' AND lm.status = 'active'
-      LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
-      LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
-      LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
-      LEFT JOIN markets m ON m.ext_market_id = CAST(lm.market_identifier AS INTEGER) AND m.sport_id = 1
-      WHERE f.match_status = 'in_play' 
-        AND f.status = '0'
-      ORDER f.start_date ASC
-    SQL
+    
+    #extract filter params if any
+    sport_id = params[:sport_id]&.to_i
+    category_id = params[:category_id]&.to_i
+    tournament_id = params[:tournament_id]&.to_i
 
-    raw_results = ActiveRecord::Base.connection.exec_query(query_sql).to_a
+    dynamic_conditions = []
+    binds = []
+
+    if sport_id.present?
+      dynamic_conditions << "s.id = ?"
+      binds << sport_id
+    end
+
+    if category_id.present?
+      dynamic_conditions << "c.id = ?"
+      binds << category_id
+    end
+
+    if tournament_id.present?
+      dynamic_conditions << "t.id = ?"
+      binds << tournament_id
+    end
+
+    if dynamic_conditions.any?
+      dynamic_sql = "AND " + dynamic_conditions.join(" AND ")
+    else
+      dynamic_sql = ""
+    end
+    
+    sanitized_binds = binds
+
+    # ===============================
+    # Add Caching to speed up response time and set it to 2 minutes
+    # ===============================
+    
+    cache_key = "live_match_fixtures_#{sport_id || 'all'}_#{category_id || 'all'}_#{tournament_id || 'all'}_#{params[:page] || 1}"
+
+    raw_results = Rails.cache.fetch(cache_key, expires_in: 2.minutes) do
+      query_sql = <<-SQL
+        -- aggregate markets into a json array per fixture
+        WITH aggregated_markets AS (
+          SELECT 
+            lm.fixture_id,
+            lm.market_identifier,
+            lm.id AS live_market_id,
+            m.name,
+            m.ext_market_id,
+            lm.odds,
+            lm.specifier,
+            m.id AS market_id
+          FROM live_markets lm
+          JOIN fixtures f ON f.id = lm.fixture_id
+          LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
+          LEFT JOIN markets m on m.ext_market_id = lm.market_identifier::integer AND m.sport_id = s.id
+          WHERE 
+            lm.status = 'active'
+            AND lm.market_identifier = '1'
+        )
+
+        SELECT
+          f.id, 
+          f.event_id, 
+          f.start_date,
+          f.part_one_name AS home_team,
+          f.part_two_name AS away_team, 
+          f.match_status, 
+          f.status AS fixture_status,
+          -- Sport Fields
+          s.id AS sport_id,
+          s.ext_sport_id,
+          s.name AS sports_name, 
+          -- Tournament Fields
+          t.name AS tournament_name,
+          f.ext_tournament_id,
+          t.id AS tournament_id,
+          -- Category Fields 
+          f.ext_category_id,
+          c.id AS category_id,
+          c.name AS category_name,
+          -- Markets Fields (Only for Market ID '1')
+          am.live_market_id,
+          am.market_identifier,
+          am.name AS market_name,
+          am.market_id,
+          am.odds,
+          am.specifier
+        FROM fixtures f      
+        LEFT JOIN aggregated_markets am ON am.fixture_id = f.id
+        LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
+        LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
+        LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
+        WHERE f.match_status = 'in_play' 
+          AND f.status = '0'
+          #{dynamic_sql}
+        ORDER BY f.start_date ASC
+      SQL
+
+      final_sql = ActiveRecord::Base.sanitize_sql_array([query_sql] + sanitized_binds)
+      ActiveRecord::Base.connection.exec_query(final_sql).to_a
+    end
 
     @pagy, @records = pagy(:offset, raw_results)
 
@@ -77,13 +138,13 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
             ext_category_id: record["ext_category_id"],
             name: record["category_name"]
           },
-          markets: record["live_market_id"] ? [{
+          markets: record["live_market_id"] ? {
             id: record["live_market_id"],
             name: record["market_name"],
             market_identifier: record["market_identifier"],
             odds: record["odds"] ? JSON.parse(record["odds"]) : {}, 
             specifier: record["specifier"]
-          }] : []
+          } : {}
         }
       end
     }
@@ -95,59 +156,67 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
     fixture_id = params[:id]
     
     # show details for a specific live match and all markets/odds
-    query_sql = <<-SQL
-      WITH aggregated_markets AS (
-        SELECT
-          lm.fixture_id,
-          JSON_AGG(
-            DISTINCT jsonb_build_object(
-              'id', lm.id,
-              'name', m.name,
-              'market_identifier', lm.market_identifier,
-              'odds', lm.odds::jsonb,
-              'specifier', lm.specifier
-            )
-          ) AS markets
-        FROM live_markets lm
-        LEFT JOIN markets m on m.ext_market_id = lm.market_identifier::integer
-        WHERE lm.status = 'active'
-        GROUP BY lm.fixture_id
-      )  
     
-      SELECT 
-        f.id, 
-        f.event_id, 
-        f.start_date,
-        f.part_one_name AS home_team,
-        f.part_two_name AS away_team, 
-        f.match_status, 
-        f.status AS fixture_status,
-        -- Sport Fields
-        s.id AS sport_id,
-        s.name AS sports_name, 
-        s.ext_sport_id,
-        -- Tournament Fields
-        t.name AS tournament_name,
-        t.ext_tournament_id,
-        t.id AS tournament_id,
-        -- Category Fields 
-        c.id AS category_id,
-        c.name AS category_name,
-        c.ext_category_id,
-        am.markets AS markets
-      FROM fixtures f      
-      LEFT JOIN sports s ON f.sport_id::integer = s.ext_sport_id
-      LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
-      LEFT JOIN categories c ON c.ext_category_id = f.ext_category_id
-      LEFT JOIN aggregated_markets am ON am.fixture_id = f.id
-      WHERE f.match_status = 'in_play' 
-        AND f.status = '0' 
-        AND f.id = #{fixture_id}
-      ORDER BY f.start_date DESC
-      LIMIT 1
-    SQL
+    # ===============================
+    # Add Caching to speed up response time and set it to 2 minutes
+    # ===============================
+    cache_key = "live_match_fixture_#{fixture_id}"
+    
+    raw_results = Rails.cache.fetch(cache_key, expires_in: 2.minutes) do
+      query_sql = <<-SQL
+        WITH aggregated_markets AS (
+          SELECT
+            lm.fixture_id,
+            JSON_AGG(
+              DISTINCT jsonb_build_object(
+                'id', lm.id,
+                'name', m.name,
+                'market_identifier', lm.market_identifier,
+                'odds', lm.odds::jsonb,
+                'specifier', lm.specifier
+              )
+            ) AS markets
+          FROM live_markets lm
+          LEFT JOIN markets m on m.ext_market_id = lm.market_identifier::integer
+          WHERE lm.status = 'active'
+          GROUP BY lm.fixture_id
+        )  
+      
+        SELECT 
+          f.id, 
+          f.event_id, 
+          f.start_date,
+          f.part_one_name AS home_team,
+          f.part_two_name AS away_team, 
+          f.match_status, 
+          f.status AS fixture_status,
+          -- Sport Fields
+          s.id AS sport_id,
+          s.name AS sports_name, 
+          s.ext_sport_id,
+          -- Tournament Fields
+          t.name AS tournament_name,
+          t.ext_tournament_id,
+          t.id AS tournament_id,
+          -- Category Fields 
+          c.id AS category_id,
+          c.name AS category_name,
+          c.ext_category_id,
+          am.markets AS markets
+        FROM fixtures f      
+        LEFT JOIN sports s ON f.sport_id::integer = s.ext_sport_id
+        LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
+        LEFT JOIN categories c ON c.ext_category_id = f.ext_category_id
+        LEFT JOIN aggregated_markets am ON am.fixture_id = f.id
+        WHERE f.match_status = 'in_play' 
+          AND f.status = '0' 
+          AND f.id = $1
+        ORDER BY f.start_date DESC
+        LIMIT 1
+      SQL
 
-    raw_results = ActiveRecord::Base.connection.exec_query(query_sql).to_a
+      ActiveRecord::Base.connection.exec_query(query_sql, "SQL", [fixture_id]).to_a
+    end
     
     
 

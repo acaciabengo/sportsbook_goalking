@@ -250,12 +250,12 @@ RSpec.describe SyncMarketsJob, type: :worker do
 
     context "when market creation fails" do
       before do
-        # Create a failed market with real errors
-        failed_market = Market.new
+        # Mock find_or_initialize_by to return a new record that fails to save
+        failed_market = Market.new(ext_market_id: 10, name: "1X2")
         failed_market.errors.add(:base, "Validation error")
-
-        allow(failed_market).to receive(:persisted?).and_return(false)
-        allow(Market).to receive(:create).and_return(failed_market)
+        
+        allow(Market).to receive(:find_or_initialize_by).and_return(failed_market)
+        allow(failed_market).to receive(:save).and_return(false)
       end
 
       it "logs the error and continues" do
@@ -276,14 +276,15 @@ RSpec.describe SyncMarketsJob, type: :worker do
       end
 
       before do
-        # Create a market with real errors
-        market_with_errors = Market.new
-        market_with_errors.errors.add(:base, "Update validation error")
+        # Allow other calls to work normally
+        allow(Market).to receive(:find_or_initialize_by).and_call_original
 
-        allow_any_instance_of(Market).to receive(:update).and_return(false)
-        allow_any_instance_of(Market).to receive(:errors).and_return(
-          market_with_errors.errors
-        )
+        # Mock find_or_initialize_by to return the existing record
+        allow(Market).to receive(:find_or_initialize_by).with(ext_market_id: 10, sport_id: sport.id).and_return(existing_market)
+        
+        # Mock save to fail
+        allow(existing_market).to receive(:save).and_return(false)
+        existing_market.errors.add(:base, "Update validation error")
       end
 
       it "logs the error and continues" do

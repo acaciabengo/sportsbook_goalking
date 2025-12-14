@@ -43,14 +43,17 @@ RSpec.describe CloseSettledBetsJob, type: :worker do
   let(:results) do
     {
       "1" => {
+        "outcome_id" => "1",
         "status" => "W",
         "void_factor" => 0.0
       },
       "2" => {
+        "outcome_id" => "2",
         "status" => "L",
         "void_factor" => 0.0
       },
       "3" => {
+        "outcome_id" => "3",
         "status" => "C",
         "void_factor" => 1.0
       }
@@ -106,7 +109,7 @@ RSpec.describe CloseSettledBetsJob, type: :worker do
 
     context "when bet has cancelled status" do
       before do
-        market.update!(results: { "1" => { "status" => "C", "void_factor" => 0.0 } })
+        market.update!(results: { "1" => { "outcome_id" => "1", "status" => "C", "void_factor" => 0.0 } })
       end
 
       it "marks bet as void" do
@@ -118,7 +121,7 @@ RSpec.describe CloseSettledBetsJob, type: :worker do
 
     context "when bet has void_factor greater than 0" do
       before do
-        market.update!(results: { "1" => { "status" => "W", "void_factor" => 0.5 } })
+        market.update!(results: { "1" => { "outcome_id" => "1", "status" => "W", "void_factor" => 0.5 } })
       end
 
       it "marks bet as void and stores void_factor" do

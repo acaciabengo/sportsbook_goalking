@@ -25,7 +25,7 @@ Fabricator(:championship, from: :tournament) do
       :category,
       ext_category_id: 10,
       name: "England",
-      sport: Fabricate(:football)
+      sport: Sport.find_by(ext_sport_id: 1) || Fabricate(:football)
     )
   end
 end
@@ -51,7 +51,7 @@ Fabricator(:bundesliga, from: :tournament) do
       :category,
       ext_category_id: 30,
       name: "Germany",
-      sport: Fabricate(:football)
+      sport: Sport.find_by(ext_sport_id: 1) || Fabricate(:football)
     )
   end
 end
@@ -64,7 +64,7 @@ Fabricator(:serie_a, from: :tournament) do
       :category,
       ext_category_id: 40,
       name: "Italy",
-      sport: Fabricate(:football)
+      sport: Sport.find_by(ext_sport_id: 1) || Fabricate(:football)
     )
   end
 end
@@ -77,7 +77,7 @@ Fabricator(:ligue_1, from: :tournament) do
       :category,
       ext_category_id: 50,
       name: "France",
-      sport: Fabricate(:football)
+      sport: Sport.find_by(ext_sport_id: 1) || Fabricate(:football)
     )
   end
 end
@@ -90,7 +90,7 @@ Fabricator(:champions_league, from: :tournament) do
       :category,
       ext_category_id: 100,
       name: "Europe",
-      sport: Fabricate(:football)
+      sport: Sport.find_by(ext_sport_id: 1) || Fabricate(:football)
     )
   end
 end
@@ -103,7 +103,7 @@ Fabricator(:europa_league, from: :tournament) do
       :category,
       ext_category_id: 100,
       name: "Europe",
-      sport: Fabricate(:football)
+      sport: Sport.find_by(ext_sport_id: 1) || Fabricate(:football)
     )
   end
 end
@@ -117,7 +117,7 @@ Fabricator(:nba_tournament, from: :tournament) do
       :category,
       ext_category_id: 200,
       name: "USA",
-      sport: Fabricate(:basketball)
+      sport: Sport.find_by(ext_sport_id: 2) || Fabricate(:basketball)
     )
   end
 end
@@ -130,7 +130,7 @@ Fabricator(:euroleague, from: :tournament) do
       :category,
       ext_category_id: 100,
       name: "Europe",
-      sport: Fabricate(:basketball)
+      sport: Sport.find_by(ext_sport_id: 2) || Fabricate(:basketball)
     )
   end
 end

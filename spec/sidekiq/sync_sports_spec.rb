@@ -139,12 +139,12 @@ RSpec.describe SyncSportsJob, type: :worker do
 
     context "when sport creation fails" do
       before do
-        # Create a failed sport with real errors
-        failed_sport = Sport.new
+        # Mock find_or_initialize_by to return a new record that fails to save
+        failed_sport = Sport.new(ext_sport_id: 1, name: "Football")
         failed_sport.errors.add(:base, "Validation error")
-
-        allow(failed_sport).to receive(:persisted?).and_return(false)
-        allow(Sport).to receive(:create).and_return(failed_sport)
+        
+        allow(Sport).to receive(:find_or_initialize_by).and_return(failed_sport)
+        allow(failed_sport).to receive(:save).and_return(false)
       end
 
       it "logs the error and continues" do
@@ -164,14 +164,15 @@ RSpec.describe SyncSportsJob, type: :worker do
       end
 
       before do
-        # Create a sport with real errors
-        sport_with_errors = Sport.new
-        sport_with_errors.errors.add(:base, "Update validation error")
+        # Allow other calls to work normally
+        allow(Sport).to receive(:find_or_initialize_by).and_call_original
 
-        allow_any_instance_of(Sport).to receive(:update).and_return(false)
-        allow_any_instance_of(Sport).to receive(:errors).and_return(
-          sport_with_errors.errors
-        )
+        # Mock find_or_initialize_by to return the existing record
+        allow(Sport).to receive(:find_or_initialize_by).with(ext_sport_id: 1).and_return(existing_sport)
+        
+        # Mock save to fail
+        allow(existing_sport).to receive(:save).and_return(false)
+        existing_sport.errors.add(:base, "Update validation error")
       end
 
       it "logs the error and continues" do

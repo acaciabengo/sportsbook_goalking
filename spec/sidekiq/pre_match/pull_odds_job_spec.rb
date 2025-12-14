@@ -147,7 +147,7 @@ RSpec.describe PreMatch::PullOddsJob, type: :worker do
         expect(odds["1"]["odd"]).to eq(2.15)
         expect(odds["X"]["odd"]).to eq(3.20)
         expect(odds["2"]["odd"]).to eq(3.50)
-        expect(fixture.reload.match_status).to eq("finished")
+        expect(fixture.reload.match_status).to eq("ended")
       end
 
       it "keeps the same outcome IDs" do

@@ -5,10 +5,46 @@ class Api::V1::PreMatchController < Api::V1::BaseController
   def index
     # find all fixtures that are not started yet
     # show league, tournament, home and away teams, scores, match time, odds for main markets
+    
+    #extract filter params if any
+    sport_id = params[:sport_id]&.to_i
+    category_id = params[:category_id]&.to_i
+    tournament_id = params[:tournament_id]&.to_i
+
+    dynamic_conditions = []
+
+    binds = []
+
+    if sport_id.present?
+      dynamic_conditions << "s.id = ?"
+      binds << sport_id
+    end
+
+    if category_id.present?
+      dynamic_conditions << "c.id = ?"
+      binds << category_id
+    end
+
+    if tournament_id.present?
+      dynamic_conditions << "t.id = ?"
+      binds << tournament_id
+    end
+
+    if dynamic_conditions.any?
+      dynamic_sql = "AND " + dynamic_conditions.join(" AND ")
+    else
+      dynamic_sql = ""
+    end
+    
+    sanitized_binds = binds
+
     # ===============================
     # Add Caching to speed up response time and set it to 5 minutes
     # ===============================
-    raw_results = Rails.cache.fetch("pre_match_fixtures_all", expires_in: 2.minutes) do
+    
+    cache_key = "pre_match_fixtures_#{sport_id || 'all'}_#{category_id || 'all'}_#{tournament_id || 'all'}_#{params[:page] || 1}"
+    
+    raw_results = Rails.cache.fetch(cache_key, expires_in: 2.minutes) do
       query_sql = <<-SQL
         -- aggregate markets into a json array per fixture
         WITH aggregated_markets AS (
@@ -22,7 +58,9 @@ class Api::V1::PreMatchController < Api::V1::BaseController
             pm.specifier,
             m.id AS market_id
           FROM pre_markets pm
-          LEFT JOIN markets m on m.ext_market_id = pm.market_identifier::integer AND m.sport_id = 1
+          JOIN fixtures f ON f.id = pm.fixture_id
+          LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
+          LEFT JOIN markets m on m.ext_market_id = pm.market_identifier::integer AND m.sport_id = s.id
           WHERE 
             pm.status IN  ('active', '0')
             AND pm.market_identifier = '1'
@@ -63,11 +101,12 @@ class Api::V1::PreMatchController < Api::V1::BaseController
         WHERE f.match_status = 'not_started' 
           AND f.status IN ('0', 'active') 
           AND f.start_date > NOW()
+          #{dynamic_sql}
         ORDER BY f.start_date ASC
       SQL
 
-      ActiveRecord::Base.connection.exec_query(query_sql).to_a
-      
+      final_sql = ActiveRecord::Base.sanitize_sql_array([query_sql] + sanitized_binds)
+      ActiveRecord::Base.connection.exec_query(final_sql).to_a
     end
 
     @pagy, @records = pagy(:offset, raw_results)
@@ -122,7 +161,10 @@ class Api::V1::PreMatchController < Api::V1::BaseController
     # ===============================
     # Add Caching to speed up response time and set it to 5 minutes
     # ===============================
-    raw_results = Rails.cache.fetch("pre_match_fixtures_all", expires_in: 2.minutes) do
+    
+    cache_key = "pre_match_fixture_#{fixture_id}"
+    
+    raw_results = Rails.cache.fetch(cache_key, expires_in: 2.minutes) do
       query_sql = <<-SQL
         WITH aggregated_markets AS (
           SELECT
@@ -171,12 +213,12 @@ class Api::V1::PreMatchController < Api::V1::BaseController
         WHERE f.match_status = 'not_started' 
           AND f.status IN ('0', 'active') 
           AND f.start_date > NOW()
-          AND f.id = #{fixture_id}
+          AND f.id = $1
         ORDER BY f.start_date DESC
         LIMIT 1
       SQL
 
-      ActiveRecord::Base.connection.exec_query(query_sql).to_a
+      ActiveRecord::Base.connection.exec_query(query_sql, "SQL", [fixture_id]).to_a
     end
 
     if raw_results.empty?
