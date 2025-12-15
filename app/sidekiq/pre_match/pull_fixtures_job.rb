@@ -2,7 +2,7 @@ class PreMatch::PullFixturesJob
   include Sidekiq::Job
   sidekiq_options queue: :high, retry: 3
 
-  ACCEPTED_SPORTS = [1, 5, 10].freeze
+  ACCEPTED_SPORTS = [1, 2, 5, 10].freeze
 
   def perform()
     bet_balancer = BetBalancer.new
