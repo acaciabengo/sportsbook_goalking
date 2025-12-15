@@ -23,12 +23,19 @@ class Api::V1::DescriptionsController < Api::V1::BaseController
   end
 
   def tournaments
-    @pagy, @records = pagy(:offset, Tournament.all, limit: 100)
+    @pagy, @records = pagy(:offset, Tournament.includes(:category), limit: 100)
     render json: {
       current_page: @pagy.page,
       total_pages: @pagy.pages,
       total_count: @pagy.count,
-      data: @records.as_json(only: [:id, :ext_tournament_id, :name, :category_id])
+      data: @records.as_json(
+        only: [:id, :ext_tournament_id, :name],
+        include: { 
+          category: { only: [:id, :name], 
+            include: { sport: { only: [:id, :name] } } 
+          }
+        }
+      )
     }, status: :ok
 
   end

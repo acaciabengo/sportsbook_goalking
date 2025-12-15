@@ -352,7 +352,7 @@ paths:
           description: bet slip not found
         '401':
           description: unauthorized
-  "/api/v1sports":
+  "/api/v1/sports":
     get:
       summary: list sports
       tags:
@@ -389,7 +389,7 @@ paths:
                           type: integer
                         name:
                           type: string
-  "/api/v1categories":
+  "/api/v1/categories":
     get:
       summary: list categories
       tags:
@@ -428,7 +428,7 @@ paths:
                           type: string
                         sport_id:
                           type: integer
-  "/api/v1tournaments":
+  "/api/v1/tournaments":
     get:
       summary: list tournaments
       tags:

@@ -144,7 +144,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
             id: record["pre_market_id"],
             name: record["market_name"],
             market_identifier: record["market_identifier"],
-            odds: record["odds"] ? JSON.parse(record["odds"]) : {}, 
+            odds: record["odds"] ? format_odds(record["home_team"], record["away_team"], JSON.parse(record["odds"]), record["specifier"]) : {}, 
             specifier: record["specifier"]
           }
         }
@@ -250,9 +250,43 @@ class Api::V1::PreMatchController < Api::V1::BaseController
           ext_category_id: record["ext_category_id"],
           name: record["category_name"]
         },
-        markets: record["markets"] ? JSON.parse(record["markets"]) : []
+        markets: record["markets"] ? JSON.parse(record["markets"]).map do |market|
+          market["odds"] = format_odds(record["home_team"], record["away_team"], market["odds"], market["specifier"])
+          market
+        end : []
       }
     end
     render json: response
+  end
+
+  private
+
+  def format_odds(competitor1, competitor2, odds_data, specifier)
+    return {} if odds_data.blank?
+
+    odds = odds_data.is_a?(String) ? JSON.parse(odds_data) : odds_data
+
+    # extract all odds keys and return if no placeholders found
+    odds_keys = odds.keys.map(&:to_s)
+
+    return odds if odds_keys.none? { |key| key.include?('{$competitor1}') || key.include?('{$competitor2}') || key.include?('{+hcp}') || key.include?('{-hcp}') || key.include?('{hcp}') }
+    
+    formatted_odds = {}
+
+    odds.each do |key, value|
+      #  if keys include {$competitor1} or {$competitor2}, replace them with string versions
+      #  if includes {+hcp} or {-hcp}, replace them with string versions 
+      
+      new_key = key.to_s
+      new_key = new_key.gsub('{$competitor1}', competitor1) if competitor1.present?
+      new_key = new_key.gsub('{$competitor2}', competitor2) if competitor2.present?
+      new_key = new_key.gsub('{+hcp}', "+#{specifier}") if specifier.present?
+      new_key = new_key.gsub('{-hcp}', "-#{specifier}") if specifier.present?
+      new_key = new_key.gsub('{hcp}', specifier.to_s) if specifier.present?
+      
+      formatted_odds[new_key] = value
+    end
+
+    formatted_odds
   end
 end
