@@ -23,7 +23,17 @@ class Api::V1::DescriptionsController < Api::V1::BaseController
   end
 
   def tournaments
-    @pagy, @records = pagy(:offset, Tournament.includes(:category), limit: 100)
+    category_id = description_params[:category_id]
+    sport_id = description_params[:sport_id]
+
+    if category_id.present?
+      @pagy, @records = pagy(:offset, Tournament.joins(:category).where(categories: { id: category_id }), limit: 100)
+    elsif sport_id.present?
+      @pagy, @records = pagy(:offset, Tournament.joins(category: :sport).where(sports: { id: sport_id }), limit: 100)
+    else
+      @pagy, @records = pagy(:offset, Tournament.includes(:category), limit: 100)
+    end
+    
     render json: {
       current_page: @pagy.page,
       total_pages: @pagy.pages,
@@ -48,5 +58,11 @@ class Api::V1::DescriptionsController < Api::V1::BaseController
       total_count: @pagy.count,
       data: @records.as_json(only: [:id, :ext_market_id, :name, :sport_id])
     }, status: :ok
+  end
+
+  private
+
+  def description_params
+    params.permit(:page, :category_id, :sport_id)
   end
 end

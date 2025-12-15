@@ -467,7 +467,7 @@ paths:
                           type: string
                         category_id:
                           type: integer
-  "/api/v1markets":
+  "/api/v1/markets":
     get:
       summary: list markets
       tags:
@@ -1014,4 +1014,4 @@ servers:
 - url: https://{defaultHost}
   variables:
     defaultHost:
-      default: 138.68.152.140
+      default: www.example.com
