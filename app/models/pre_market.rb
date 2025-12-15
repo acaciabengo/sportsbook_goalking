@@ -7,7 +7,7 @@ class PreMarket < ApplicationRecord
   #   validates :fixture_id, uniqueness: true
   validates :fixture_id, uniqueness: { scope: %i[market_identifier specifier] }
 
-  before_save :adjust_odds_and_results
+  # before_save :adjust_odds_and_results
 
   
   def self.ransackable_associations(auth_object = nil)

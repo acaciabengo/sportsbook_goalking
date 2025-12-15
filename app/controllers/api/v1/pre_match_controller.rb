@@ -174,7 +174,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
                 'id', pm.id,
                 'name', m.name,
                 'market_identifier', pm.market_identifier,
-                'odds', pm.odds, 
+                'odds', pm.odds::jsonb
                 'specifier', pm.specifier
               )
             ) AS markets
@@ -268,8 +268,18 @@ class Api::V1::PreMatchController < Api::V1::BaseController
 
     # extract all odds keys and return if no placeholders found
     odds_keys = odds.keys.map(&:to_s)
+    
+    # Check for any placeholder presence
+    has_placeholders = odds_keys.any? do |key| 
+      key.include?('{$competitor1}') || 
+      key.include?('{$competitor2}') || 
+      key.include?('{+hcp}') || 
+      key.include?('{-hcp}') || 
+      key.include?('{hcp}') ||
+      key.include?('{total}')
+    end
 
-    return odds if odds_keys.none? { |key| key.include?('{$competitor1}') || key.include?('{$competitor2}') || key.include?('{+hcp}') || key.include?('{-hcp}') || key.include?('{hcp}') }
+    return odds unless has_placeholders
     
     formatted_odds = {}
 
