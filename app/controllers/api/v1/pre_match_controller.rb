@@ -252,7 +252,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
         },
         markets: record["markets"] ? JSON.parse(record["markets"]).map do |market|
           market["odds"] = format_odds(record["home_team"], record["away_team"], market["odds"], market["specifier"])
-          market["name"] = format_market_names(record["home_team"], record["away_team"], market["name"], market["specifier"])
+          market["name"] = format_market_names(record["home_team"], record["away_team"], market["name"], market["specifier"], market["odds"])
           market
         end : []
       }
@@ -267,6 +267,14 @@ class Api::V1::PreMatchController < Api::V1::BaseController
 
     # Handle both JSON string and Hash
     odds = odds_data.is_a?(String) ? JSON.parse(odds_data) : odds_data
+
+    # If specifier is missing, try to find it inside the odds values
+    if specifier.blank?
+      first_val = odds.values.first
+      if first_val.is_a?(Hash) && first_val['specifier'].present?
+        specifier = first_val['specifier']
+      end
+    end
 
     # extract all odds keys and return if no placeholders found
     # Use safe navigation & check for string keys
@@ -307,8 +315,17 @@ class Api::V1::PreMatchController < Api::V1::BaseController
     formatted_odds
   end
 
-  def format_market_names(competitor1, competitor2, market_name, specifier)
+  def format_market_names(competitor1, competitor2, market_name, specifier, odds_data = nil)
     return market_name if market_name.blank?
+
+    # If specifier is missing, try to find it inside the odds values
+    if specifier.blank? && odds_data.present?
+      odds = odds_data.is_a?(String) ? JSON.parse(odds_data) : odds_data
+      first_val = odds.values.first
+      if first_val.is_a?(Hash) && first_val['specifier'].present?
+        specifier = first_val['specifier']
+      end
+    end
 
     # check if there are any placeholders using regex
     has_placeholders = market_name.match?(/\{.*?\}/)

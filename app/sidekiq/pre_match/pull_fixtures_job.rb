@@ -114,11 +114,11 @@ class PreMatch::PullFixturesJob
   end
 
   def process_odds(fixture_id:, odds:)
-    odds_data = {}
-
     # Now 'odds' is the Bet element, so we can get OddsType directly
     ext_market_id = odds["OddsType"].to_i
-    # specifier = odds["SpecialBetValue"] # For markets like Over/Under 2.5
+    
+    # Group odds by specifier
+    odds_by_specifier = {}
 
     odds
       .xpath("Odds")
@@ -127,24 +127,31 @@ class PreMatch::PullFixturesJob
         outcome_id = odd["OutcomeId"]&.to_i || nil
         value = odd.text.to_f
         specifier = odd["SpecialBetValue"] || nil
-        odds_data[outcome] = {
-          odd: value,
-          outcome_id: outcome_id,
-          specifier: specifier
-        }
+        
+        # Initialize hash for this specifier if not exists
+        odds_by_specifier[specifier] ||= {}
+        
+        # Store odds without specifier in the hash 
+        odds_by_specifier[specifier][outcome] = {
+          "odd" => value,
+          "outcome_id" => outcome_id
+        }.compact
       end
 
-    # Create pre-market for the fixture
-    pre_market =
-      PreMarket.new(
-        fixture_id: fixture_id,
-        market_identifier: ext_market_id,
-        odds: odds_data&.transform_keys(&:to_s),
-        status: "active"
-      )
+    # Create pre-market for each specifier
+    odds_by_specifier.each do |specifier, odds_hash|
+      pre_market =
+        PreMarket.new(
+          fixture_id: fixture_id,
+          market_identifier: ext_market_id,
+          specifier: specifier,
+          odds: odds_hash&.transform_keys(&:to_s),
+          status: "active"
+        )
 
-    unless pre_market.save
-      Rails.logger.error "Failed to save pre-market for fixture #{fixture_id}, market #{ext_market_id}: #{pre_market.errors.full_messages.join(", ")}"
+      unless pre_market.save
+        Rails.logger.error "Failed to save pre-market for fixture #{fixture_id}, market #{ext_market_id}, specifier #{specifier}: #{pre_market.errors.full_messages.join(", ")}"
+      end
     end
   end
 end
