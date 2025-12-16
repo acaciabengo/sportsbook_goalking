@@ -174,7 +174,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
                 'id', pm.id,
                 'name', m.name,
                 'market_identifier', pm.market_identifier,
-                'odds', pm.odds::jsonb
+                'odds', pm.odds::jsonb,
                 'specifier', pm.specifier
               )
             ) AS markets
