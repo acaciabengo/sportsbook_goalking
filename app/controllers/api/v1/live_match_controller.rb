@@ -253,6 +253,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
         },
         markets: record["markets"] ? JSON.parse(record["markets"]).map do |market|
           market["odds"] = format_odds(record["home_team"], record["away_team"], market["odds"], market["specifier"])
+          market["name"] = format_market_names(record["home_team"], record["away_team"], market["name"], market["specifier"])
           market
         end : []
       }
@@ -266,29 +267,77 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
   def format_odds(competitor1, competitor2, odds_data, specifier)
     return {} if odds_data.blank?
 
+    # Handle both JSON string and Hash
     odds = odds_data.is_a?(String) ? JSON.parse(odds_data) : odds_data
 
     # extract all odds keys and return if no placeholders found
+    # Use safe navigation & check for string keys
     odds_keys = odds.keys.map(&:to_s)
 
-    return odds if odds_keys.none? { |key| key.include?('{$competitor1}') || key.include?('{$competitor2}') || key.include?('{+hcp}') || key.include?('{-hcp}') || key.include?('{hcp}') }
+    # Check for any placeholder presence using regex
+    has_placeholders = odds_keys.any? { |key| key.match?(/\{.*?\}/) }
+
+    return odds unless has_placeholders
     
     formatted_odds = {}
 
     odds.each do |key, value|
-      #  if keys include {$competitor1} or {$competitor2}, replace them with string versions
-      #  if includes {+hcp} or {-hcp}, replace them with string versions 
-      
-      new_key = key.to_s
-      new_key = new_key.gsub('{$competitor1}', competitor1) if competitor1.present?
-      new_key = new_key.gsub('{$competitor2}', competitor2) if competitor2.present?
-      new_key = new_key.gsub('{+hcp}', "+#{specifier}") if specifier.present?
-      new_key = new_key.gsub('{-hcp}', "-#{specifier}") if specifier.present?
-      new_key = new_key.gsub('{hcp}', specifier.to_s) if specifier.present?
+      new_key = key.to_s.gsub(/\{.*?\}/) do |match|
+        case match
+        when '{$competitor1}'
+          competitor1.to_s
+        when '{$competitor2}'
+          competitor2.to_s
+        else
+          if specifier.present?
+            if match.include?('+')
+              "+#{specifier}"
+            elsif match.include?('-')
+              "-#{specifier}"
+            else
+              specifier.to_s
+            end
+          else
+            match
+          end
+        end
+      end
       
       formatted_odds[new_key] = value
     end
 
     formatted_odds
+  end
+
+  def format_market_names(competitor1, competitor2, market_name, specifier)
+    return market_name if market_name.blank?
+
+    # check if there are any placeholders using regex
+    has_placeholders = market_name.match?(/\{.*?\}/)
+
+    return market_name unless has_placeholders
+
+    new_market_name = market_name.gsub(/\{.*?\}/) do |match|
+      case match
+      when '{$competitor1}'
+        competitor1.to_s
+      when '{$competitor2}'
+        competitor2.to_s
+      else
+        if specifier.present?
+          if match.include?('+')
+            "+#{specifier}"
+          elsif match.include?('-')
+            "-#{specifier}"
+          else
+            specifier.to_s
+          end
+        else
+          match
+        end
+      end
+    end
+
+    new_market_name
   end
 end
