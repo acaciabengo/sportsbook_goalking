@@ -32,6 +32,8 @@ class Fixture < ApplicationRecord
   has_many :live_markets
   has_many :bets
 
+  after_commit :broadcast_updates, if: :persisted?
+
   paginates_per 100
 
   def self.ransackable_attributes(auth_object = nil)
@@ -40,5 +42,23 @@ class Fixture < ApplicationRecord
   
   def self.ransackable_associations(auth_object = nil)
     %w[bets live_markets pre_markets]
+  end
+
+  def broadcast_updates
+    ActionCable.server.broadcast(
+      "fixture_#{self.id}_channel",
+      self.as_json(
+        only: %i[
+          id
+          event_id
+          home_score
+          away_score
+          match_status
+          start_date
+          status
+          match_time
+        ]
+      )
+    )
   end
 end

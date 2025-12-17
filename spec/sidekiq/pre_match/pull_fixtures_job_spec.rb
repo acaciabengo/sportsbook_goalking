@@ -377,15 +377,14 @@ RSpec.describe PreMatch::PullFixturesJob, type: :worker do
         worker.perform
 
         # Find by integer if that's how it's stored
-        market = PreMarket.find_by(market_identifier: 11)
+        market = PreMarket.find_by(market_identifier: 11, specifier: "2.5")
         expect(market).not_to be_nil
-        # expect(market.specifier).to eq("2.5")
+        expect(market.specifier).to eq("2.5")
 
         odds = market.odds
         expect(odds["Over"]).to be_present
         expect(odds["Over"]["odd"]).to eq(1.85)
         expect(odds["Over"]["outcome_id"]).to eq(2)
-        expect(odds["Over"]["specifier"]).to eq("2.5")
       end
     end
 

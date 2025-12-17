@@ -9,6 +9,7 @@ Rails.application.routes.draw do
   match "check_bonus" => "line_bets#check_bonus", :via => [:get]
   namespace :api do
     namespace :v1 do
+      
       match "/transactions" => "transactions#index", :via => [:get]
       match '/transactions/deposit' => 'transactions#deposit', :via => [:post]
       match '/transactions/withdraw' => 'transactions#withdraw', :via => [:post]
@@ -25,6 +26,8 @@ Rails.application.routes.draw do
       match '/categories' => 'descriptions#categories', :via => [:get]
       match '/tournaments' => 'descriptions#tournaments', :via => [:get]
       match '/markets' => 'descriptions#markets', :via => [:get]
+      match '/users/:id' => 'users#show', :via => [:get]
+      match '/users/:id' => 'users#update', :via => [:put, :patch]
 
       match "check_user" => "current_user#check_current_user", :via => [:get]
       match "verification" => "current_user#user_verification", :via => [:get]
