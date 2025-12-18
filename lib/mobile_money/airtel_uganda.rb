@@ -11,14 +11,14 @@ module MobileMoney
 		@@logger.level = Logger::ERROR
 
 		##Deposit Account Credentials (Disbursements/Payouts)
-		@@deposit_msisdn = ENV['MSISDN_DEPOSIT']
-		@@deposit_pin 	 = ENV['PIN_DEPOSIT']
+		@@deposit_msisdn = ENV['AIRTEL_DEPOSIT_MSISDN']
+		@@deposit_pin 	 = ENV['AIRTEL_DEPOSIT_PIN']
 
 		##Withdraw Account Credentials (Collections)
-		@@withdraw_username = ENV['USERNAME_WITHDRAW']
-		@@withdraw_password = ENV['PASSWORD_WITHDRAW']
-		@@withdraw_msisdn 	= ENV['MSISDN_WITHDRAW']
-		@@withdraw_billerID = ENV['BILLERID_WITHDRAW']
+		@@withdraw_username = ENV['AIRTEL_WITHDRAW_USERNAME']
+		@@withdraw_password = ENV['AIRTEL_WITHDRAW_PASSWORD']
+		@@withdraw_msisdn 	= ENV['AIRTEL_WITHDRAW_MSISDN']
+		@@withdraw_billerID = ENV['AIRTEL_WITHDRAW_BILLERID']
 
 
 		##Method to deposit money on user mobile phone / withdraw from user SB account / Disbursement
