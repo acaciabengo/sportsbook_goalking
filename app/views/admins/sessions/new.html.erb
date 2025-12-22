@@ -3,7 +3,7 @@
    <div class="card card-flat">
       <div class="card-body">
          <p class="text-center py-2">SIGN IN TO CONTINUE.</p>
-         <%= form_for(resource, :as => resource_name, :url => session_path(resource_name), html: {"data-parsley-validate" => '' , class: "mb-lg"}) do |f| %>
+         <%= form_for(resource, :as => resource_name, :url => session_path(resource_name), html: {"data-parsley-validate" => '' , class: "mb-lg"}, data: { turbo: false }) do |f| %>
          <!-- Email -->
          <div class="form-group has-feedback">
            <%= f.label :email,"Email", class: "text-muted" %>
