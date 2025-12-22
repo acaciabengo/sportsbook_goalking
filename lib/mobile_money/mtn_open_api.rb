@@ -1,22 +1,24 @@
 module MobileMoney
 	class MtnOpenApi
 
-	require 'openssl'
-	require 'json'
-	require 'uri'
-	require 'net/http'
-	require 'logger'
+		require 'openssl'
+		require 'json'
+		require 'uri'
+		require 'net/http'
+		require 'logger'
 
 
-	@@collection_sub_key  	=  ENV['MTN_COLLECTION_SUB_KEY']
-	@@transfer_sub_key		=  ENV['MTN_TRANSFER_SUB_KEY']
-	@@collection_api_id 	=  ENV['MTN_COLLECTION_API_ID']
-	@@collection_api_key 	=  ENV['MTN_COLLECTION_API_KEY']
-	@@transfer_api_id 		=  ENV['MTN_TRANSFER_API_ID']
-	@@transfer_api_key 		=  ENV['MTN_TRANSFER_API_KEY']
+		@@collection_sub_key  	=  ENV['MTN_COLLECTION_SUB_KEY']
+		@@transfer_sub_key		=  ENV['MTN_TRANSFER_SUB_KEY']
+		@@collection_api_id 	=  ENV['MTN_COLLECTION_API_ID']
+		@@collection_api_key 	=  ENV['MTN_COLLECTION_API_KEY']
+		@@transfer_api_id 		=  ENV['MTN_TRANSFER_API_ID']
+		@@transfer_api_key 		=  ENV['MTN_TRANSFER_API_KEY']
 
-	# @@base_url = "https://sandbox.momodeveloper.mtn.com/"
-	@@base_url = "https://proxy.momoapi.mtn.com/"		def self.request_payments(amount, ext_reference, phone_number)
+		# @@base_url = "https://sandbox.momodeveloper.mtn.com/"
+		@@base_url = ENV['MTN_BASE_URL']	
+
+		def self.request_payments(amount, ext_reference, phone_number)
 			token = get_collections_auth_token()
 			if token
 				url = @@base_url + "collection/v1_0/requesttopay"
@@ -428,8 +430,6 @@ module MobileMoney
 			end
 
 		end
-
-
 	end
 
 end
