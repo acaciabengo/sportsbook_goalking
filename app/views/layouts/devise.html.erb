@@ -40,7 +40,9 @@
    </div>
 
    <!-- =============== APP SCRIPTS ===============-->
-   <%= javascript_importmap_tags 'application' %>
+   <div data-turbo-permanent id="importmap-scripts">
+      <%= javascript_importmap_tags %>
+   </div>
    <%= yield :vendor_js_area %>
 
    <%= yield :body_area %>

@@ -4,53 +4,32 @@ class Backend::AdminLandingController < ApplicationController
   layout "admin_application"
 
   def index
-    ##Dates
-    dates = []
+    # write queries to extract bet stats for 30 days
+    
+    amounts_sql = <<-SQL
+      SELECT
+        DATE(created_at) AS date,
+        SUM(stake) AS total_stake,
+        SUM(payout) AS total_amount_won,
+        COUNT(*) AS total_bets
+      FROM bet_slips
+      WHERE created_at >= NOW() - INTERVAL '30 days'
+      GROUP BY DATE(created_at)
+      ORDER BY DATE(created_at);
+    SQL
 
-    ##Values for bet values
-    stake = []
-    amount_won = []
+    counts_sql = <<-SQL
+      SELECT
+        DATE(created_at) AS date,
+        COUNT(*) AS total_bets
+      FROM bet_slips
+      WHERE created_at >= NOW() - INTERVAL '30 days'
+      GROUP BY DATE(created_at)
+      ORDER BY DATE(created_at);
+    SQL
+    
 
-    ##values for bet counts
-    bets = []
-
-    ((Date.today - 21)..Date.today).each do |date|
-      ##Push dates to the dates Array
-      dates.push(date.to_s)
-
-      ##Get stake totals per day
-      stake_totals =
-        BetSlip.where(
-          "created_at >= ? and created_at <= ?",
-          date.beginning_of_day,
-          date.end_of_day
-        ).sum(:stake)
-
-      ##Get amounts won totals per day
-      amount_won_totals =
-        BetSlip.where(
-          "created_at >= ? and created_at <= ?",
-          date.beginning_of_day,
-          date.end_of_day
-        ).sum(:payout)
-
-      ##Get total bets placed per day
-      bets_totals =
-        BetSlip.where(
-          "created_at >= ? and created_at <= ?",
-          date.beginning_of_day,
-          date.end_of_day
-        ).count
-
-      ##Push all values in the respective arrays
-      stake.push(stake_totals)
-      amount_won.push(amount_won_totals)
-      bets.push(bets_totals)
-    end
-
-    gon.stake = stake
-    gon.amount_won = amount_won
-    gon.bets = bets
-    gon.dates = dates
+    @amounts = ActiveRecord::Base.connection.execute(amounts_sql).to_a
+    @counts = ActiveRecord::Base.connection.execute(counts_sql).to_a
   end
 end

@@ -24,6 +24,6 @@ require("@rails/ujs").start();
 import LocalTime from "local-time";
 LocalTime.start();
 
-require("@rails/activestorage").start();
-import "@fortawesome/fontawesome-free/js/all";
+// require("@rails/activestorage").start();
+// import "@fortawesome/fontawesome-free/js/all";
 require("src/App");

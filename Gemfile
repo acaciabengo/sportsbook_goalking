@@ -155,3 +155,6 @@ gem 'rdoc', '~> 6.16', '>= 6.16.1'
 gem 'rswag-api'
 gem 'rswag-ui'
 
+# charts
+gem "chartkick"
+

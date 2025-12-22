@@ -35,8 +35,7 @@
         s0.parentNode.insertBefore(s1,s0);
         })();
     </script>
-    <!--End of Tawk.to Script-->
-    <%= javascript_importmap_tags %>
+    
 </head>
 
 <body onunload="">
@@ -44,7 +43,9 @@
     
     </div>
     
-    <!-- JavaScript via importmap (ONLY ONCE at the end) -->
-    <%= javascript_importmap_tags "application" %>
+    <!-- JavaScript via importmap  -->
+    <div data-turbo-permanent id="importmap-scripts">
+      <%= javascript_importmap_tags %>
+   </div>
 </body>
 </html>

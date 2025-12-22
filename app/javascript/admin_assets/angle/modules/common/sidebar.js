@@ -2,6 +2,7 @@
 // -----------------------------------
 
 // import $ from "jquery";
+import { APP_MEDIAQUERY } from "./constants";
 
 var $html;
 var $body;
@@ -19,7 +20,12 @@ function initSidebar() {
   sidebarCollapse.on("show.bs.collapse", function (event) {
     event.stopPropagation();
     if ($(this).parents(".collapse").length === 0)
-      sidebarCollapse.filter(".show").collapse("hide");
+      sidebarCollapse.filter(".show").each(function() {
+        var collapseInstance = bootstrap.Collapse.getInstance(this);
+        if (collapseInstance) {
+          collapseInstance.hide();
+        }
+      });
   });
 
   // SIDEBAR ACTIVE STATE
@@ -33,7 +39,11 @@ function initSidebar() {
     currentItem
       .addClass("active") // activate the parent
       .children(".collapse") // find the collapse
-      .collapse("show"); // and show it
+      .each(function() {
+        var collapseInstance = new bootstrap.Collapse(this, {
+          show: true
+        });
+      });
 
   // remove this if you use only collapsible sidebar items
   $sidebar.find("li > a + ul").on("show.bs.collapse", function (e) {

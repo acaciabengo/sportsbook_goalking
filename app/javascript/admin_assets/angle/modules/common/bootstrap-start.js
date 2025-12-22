@@ -4,20 +4,16 @@
 // import $ from "jquery";
 
 function initBootstrap() {
-  // necessary check at least til BS doesn't require jQuery
-  if (!$.fn || !$.fn.tooltip || !$.fn.popover) return;
+  // Bootstrap 5 doesn't require jQuery
+  // Initialize tooltips using Bootstrap 5 API
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+  const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, {
+    container: 'body'
+  }));
 
-  // POPOVER
-  // -----------------------------------
-
-  $('[data-toggle="popover"]').popover();
-
-  // TOOLTIP
-  // -----------------------------------
-
-  $('[data-toggle="tooltip"]').tooltip({
-    container: "body",
-  });
+  // Initialize popovers using Bootstrap 5 API
+  const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
+  const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
 
   // DROPDOWN INPUTS
   // -----------------------------------

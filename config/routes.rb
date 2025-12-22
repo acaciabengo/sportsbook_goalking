@@ -120,28 +120,30 @@ Rails.application.routes.draw do
   match "verify" => "verify#update", :via => [:post]
 
   namespace :backend do
-    namespace :fixtures do
-      match "soccer_fixtures" => "soccer_fixtures#index", :via => [:get]
-      match "soccer_fixtures" => "soccer_fixtures#update", :via => [:put]
-      match "fixture_recovery" => "recover_messages#index", :via => [:get]
-      match "fixture_recovery" => "recover_messages#update", :via => [:put]
-      match "soccer_fixtures_feature" => "soccer_fixtures#feature_update",
-            :via => [:put]
-      match "virtual_soccer_fixtures" => "virtual_soccer_fixtures#index",
-            :via => [:get]
-      patch "virtual_soccer_fixtures" => "virtual_soccer_fixtures#update",
-            :via => [:update]
-      match "basketball_fixtures" => "basketball_fixtures#index", :via => [:get]
-      match "basketball_fixtures" => "basketball_fixtures#update",
-            :via => [:put]
-      match "basketball_fixtures_feature" =>
-              "basketball_fixtures#feature_update",
-            :via => [:put]
-      match "tennis_fixtures" => "tennis_fixtures#index", :via => [:get]
-      match "tennis_fixtures" => "tennis_fixtures#update", :via => [:put]
-      match "tennis_fixtures_feature" => "tennis_fixtures#feature_update",
-            :via => [:put]
-    end
+    # namespace :fixtures do
+    #   match "soccer_fixtures" => "soccer_fixtures#index", :via => [:get]
+    #   match "soccer_fixtures" => "soccer_fixtures#update", :via => [:put]
+    #   match "fixture_recovery" => "recover_messages#index", :via => [:get]
+    #   match "fixture_recovery" => "recover_messages#update", :via => [:put]
+    #   match "soccer_fixtures_feature" => "soccer_fixtures#feature_update",
+    #         :via => [:put]
+    #   match "virtual_soccer_fixtures" => "virtual_soccer_fixtures#index",
+    #         :via => [:get]
+    #   patch "virtual_soccer_fixtures" => "virtual_soccer_fixtures#update",
+    #         :via => [:update]
+    #   match "basketball_fixtures" => "basketball_fixtures#index", :via => [:get]
+    #   match "basketball_fixtures" => "basketball_fixtures#update",
+    #         :via => [:put]
+    #   match "basketball_fixtures_feature" =>
+    #           "basketball_fixtures#feature_update",
+    #         :via => [:put]
+    #   match "tennis_fixtures" => "tennis_fixtures#index", :via => [:get]
+    #   match "tennis_fixtures" => "tennis_fixtures#update", :via => [:put]
+    #   match "tennis_fixtures_feature" => "tennis_fixtures#feature_update",
+    #         :via => [:put]
+    # end
+    match "/fixtures" => "fixtures#index", :via => [:get]
+    match "/fixtures" => "fixtures#update", :via => [:put]
     resources :deposits, only: [:index]
     resources :withdraws, only: [:index]
     get "/api_user_keys/:id", to: "api_users#generate_api_keys", as: "user_keys"

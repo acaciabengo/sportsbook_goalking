@@ -5,7 +5,7 @@
       <ul class="sidebar-nav">
          <!-- Iterates over all sidebar items-->
          <li class="">
-            <a href="#analytics" title="Dashboard">
+            <a href="#analytics" title="Dashboard" data-bs-toggle="collapse">
                <em class="icon-graph"></em>
                <span data-localize="sidebar.nav.DASHBOARD">Analytics</span>
             </a>
@@ -27,7 +27,7 @@
 
          <% if can? :manage, Transaction %>
             <li class="">
-               <a href="#finances" title="Finances" data-toggle="collapse">
+               <a href="#finances" title="Finances" data-bs-toggle="collapse">
                   <em class="far fa-money-bill-alt"></em>
                   <span data-localize="sidebar.nav.DASHBOARD">Finances</span>
                </a>
@@ -46,9 +46,29 @@
             </li>
          <% end %>
 
+         <li class="">
+            <a href="#Bettings" title="Bettings" data-bs-toggle="collapse">
+               <em class="fas fa-receipt"></em>
+               <span data-localize="sidebar.nav.DASHBOARD">Betting</span>
+            </a>
+            <ul id="Bettings" class="sidebar-nav sidebar-subnav collapse">
+               <li class="<%= 'active' if controller.controller_name == 'bet_slips' %>">
+                  <a href="<%= backend_bet_slips_path %>" title="BetSlips">
+                     <span>BetSlips</span>
+                  </a>
+               </li>
+               <li class="<%= 'active' if controller.controller_name == 'bets' %>">
+                  <a href="<%= backend_bets_path %>" title="Bets">
+                     <span>Bets</span>
+                  </a>
+               </li>
+            </ul>
+         </li>
+
+         <!--
          <% if can? :manage, SignUpBonus %>
             <li>
-               <a href="#bonuses" title="Finances" data-toggle="collapse">
+               <a href="#bonuses" title="Finances" data-bs-toggle="collapse">
                   <em class="fas fa-coins"></em>
                   <span data-localize="sidebar.nav.DASHBOARD">Bonus</span>
                </a>
@@ -86,8 +106,9 @@
                </ul>
             </li>
          <% end %>
+         -->
          <li class="">
-            <a href="#users" title="Users" data-toggle="collapse">
+            <a href="#users" title="Users" data-bs-toggle="collapse">
                <em class="fas fa-users"></em>
                <span data-localize="sidebar.nav.DASHBOARD">Users</span>
             </a>
@@ -108,61 +129,18 @@
             </ul>
          </li>
 
-         <li class="">
-             <a href="#fixtures" title="Fixtures">
+         <li class="<%= 'active' if controller.controller_name == 'fixtures' %>">
+             <a href="<%= backend_fixtures_path %>" title="Fixtures">
                <em class="fas fa-futbol"></em>
                <span data-localize="sidebar.nav.DASHBOARD">Fixtures</span>
             </a>
-            <ul id="fixtures" class="sidebar-nav sidebar-subnav collapse">
-               <li class="<%= 'active' if controller.controller_name == 'Fixtures::basketball_fixtures' %>">
-                  <a href="<%= backend_fixtures_basketball_fixtures_path %>" title="Basketball">
-                     <span>Basketball</span>
-                  </a>
-               </li>
-               <li class="<%= 'active' if controller.controller_name == 'Fixtures::soccer_fixtures' %>">
-                  <a href="<%= backend_fixtures_soccer_fixtures_path %>" title="Soccer">
-                     <span>Soccer</span>
-                  </a>
-               </li>
-               <li class="<%= 'active' if controller.controller_name == 'Fixtures::tennis_fixtures' %>">
-                  <a href="<%= backend_fixtures_tennis_fixtures_path %>" title="Tennis">
-                     <span>Tennis</span>
-                  </a>
-               </li>
-               <li class="<%= 'active' if controller.controller_name == 'Fixtures::virtual_soccer_fixtures' %>">
-                  <a href="<%= backend_fixtures_virtual_soccer_fixtures_path %>" title="Tennis">
-                     <span>Virtual Soccer</span>
-                  </a>
-               </li>
-               <li class="<%= 'active' if controller.controller_name == 'Fixtures::recover_messages' %>">
-                  <a href="<%= backend_fixtures_fixture_recovery_path %>" title="Soccer">
-                     <span>Fixture Recovery</span>
-                  </a>
-               </li>
-            </ul>
          </li>
 
-         <li class="">
-            <a href="#Bettings" title="Bettings" data-toggle="collapse">
-               <em class="fas fa-receipt"></em>
-               <span data-localize="sidebar.nav.DASHBOARD">Bettings</span>
-            </a>
-            <ul id="Bettings" class="sidebar-nav sidebar-subnav collapse">
-               <li class="<%= 'active' if controller.controller_name == 'bet_slips' %>">
-                  <a href="<%= backend_bet_slips_path %>" title="BetSlips">
-                     <span>BetSlips</span>
-                  </a>
-               </li>
-               <li class="<%= 'active' if controller.controller_name == 'bets' %>">
-                  <a href="<%= backend_bets_path %>" title="Bets">
-                     <span>Bets</span>
-                  </a>
-               </li>
-            </ul>
-         </li>
+         
 
+         <!--
          <li class="">
-            <a href="#Broadcast" title="Broadcasts" data-toggle="collapse">
+            <a href="#Broadcast" title="Broadcasts" data-bs-toggle="collapse">
             <em class="icon-envelope-open" ></em>
                <span data-localize="sidebar.nav.DASHBOARD">Broadcasts</span>
             </a>
@@ -179,9 +157,11 @@
                </li>
             </ul>
          </li>
+         -->
 
-         <!--<li class="">
-            <a href="#descriptions" title="Descriptions" data-toggle="collapse">
+         <!--
+         <li class="">
+            <a href="#descriptions" title="Descriptions" data-bs-toggle="collapse">
                <em class="fas fa-info-circle"></em>
                <span data-localize="sidebar.nav.DASHBOARD">Descriptions</span>
             </a>
@@ -208,10 +188,11 @@
                </li>
             </ul>
          </li>-->
-
+         
+         <!--
          <% if can? :manage, ApiUser %>
             <li class="<%= 'active' if controller.controller_name == 'api_users' %>">
-               <a href="#ai_developer" title="ApiUsers" data-toggle="collapse" id="Developers">
+               <a href="#ai_developer" title="ApiUsers" data-bs-toggle="collapse" id="Developers">
                   <em class="fa fa-code"></em>
                   <span>Developer</span>
                </a>
@@ -230,6 +211,7 @@
                </ul>
             </li>
          <% end %>
+         -->
       </ul>
       <!-- END sidebar nav-->
    </nav>

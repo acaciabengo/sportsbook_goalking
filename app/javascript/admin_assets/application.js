@@ -1,57 +1,59 @@
-// console.log('Admin JavaScript loaded');
-// import "@hotwired/turbo-rails"
-// import "controllers"
+// Import jQuery FIRST and make it globally available
+import jquery from "jquery"
+window.jQuery = jquery
+window.$ = jquery
 
-// Import Rails helpers
-import Rails from "@rails/ujs"
-import * as ActiveStorage from "@rails/activestorage"
-
-// Import Bootstrap
+// Import and setup Bootstrap (needs jQuery to be available first)
 import * as bootstrap from "bootstrap"
-
-// Make Bootstrap available globally
 window.bootstrap = bootstrap
 
-// Start Rails UJS and ActiveStorage
-Rails.start()
-ActiveStorage.start()
+// Import Turbo Rails
+import "@hotwired/turbo-rails"
 
-// console.log('Rails UJS started');
+// Import Popper (Bootstrap dependency)
+import "@popperjs/core"
 
-// Import admin modules
-import "./time_picker.js"
-import "./analytics.js"
-import "./bets_analytics.js"
+// Import Chartkick and Chart.js
+import "chartkick"
+import "Chart.bundle"
+
+// Import app.init (doesn't use jQuery at import time)
 import appInit from "./angle/app.init.js"
 
-// console.log('Modules imported');
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  // console.log('DOMContentLoaded fired');
-  
   // Check if jQuery is loaded
   if (typeof $ === 'undefined') {
-    console.error('jQuery is not loaded! Add jQuery CDN to your layout.');
+    console.error('jQuery is not loaded!');
     return;
   }
   
-  // console.log('jQuery version:', $.fn.jquery);
-  
+  console.log('jQuery version:', $.fn.jquery);
+
   // Initialize app
-  // console.log('Calling appInit...');
+  console.log('Calling appInit...');
   appInit();
   
-  // Initialize date/time pickers
-  initializeDateTimePickers();
-  
-  // Initialize booking handlers
-  initializeBookingHandlers();
-  
-  // Initialize broadcast counter
-  initializeBroadcastCounter();
-  
-  // console.log('All initializations complete');
+  // Now import modules that use jQuery at import time, then initialize
+  Promise.all([
+    import("./time_picker.js"),
+    import("./analytics.js"),
+    import("./bets_analytics.js")
+  ]).then(() => {
+    console.log('All jQuery-dependent modules loaded');
+    
+    // Initialize date/time pickers AFTER time_picker.js is loaded
+    initializeDateTimePickers();
+    
+    // Initialize booking handlers
+    initializeBookingHandlers();
+    
+    // Initialize broadcast counter
+    initializeBroadcastCounter();
+  }).catch(err => {
+    console.error('Failed to load modules:', err);
+  });
 });
 
 // Date/Time pickers

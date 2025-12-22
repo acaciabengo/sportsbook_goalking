@@ -16,7 +16,25 @@
             </div>
             <div collapse="panelChart3" class="panel-wrapper">
                <div class="card-body" >
-                  <div id="transactions_graph" style=" min-height: 400px; width: 100%; "></div>
+                  <div id="transactions_graph" style=" min-height: 400px; width: 100%; ">
+                     <%= column_chart [
+                        {name: "Withdrawals", data: @withdraws.map { |row| [row["date"].to_s, row["total_withdraw"].to_f] }.to_h },
+                        {name: "Deposits", data: @deposits.map { |row| [row["date"].to_s, row["total_deposit"].to_f] }.to_h }
+                     ],
+                     height: "400px",
+                     library: {
+                        title: { text: "Withdrawals and Deposits Over Time", x: -20 },
+                        yAxis: { title: { text: "Amount ($)" } },
+                        xAxis: { title: { text: "Date" }, type: 'datetime' },
+                        legend: { layout: 'vertical', align: 'right', verticalAlign: 'middle', borderWidth: 0 },
+                        plotOptions: {
+                           series: {
+                              pointStart: (@withdraws&.first&.[]("date") || @deposits&.first&.[]("date") || Date.today).to_time.to_i * 1000,
+                              pointInterval: 24 * 3600 * 1000 # one day
+                           }
+                        }
+                     } %>
+                  </div>
                </div>
             </div>
          </div>

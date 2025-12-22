@@ -16,7 +16,23 @@
             </div>
             <div collapse="panelChart3" class="panel-wrapper">
                <div class="card-body" >
-                  <div id="stake_bets_graph" style=" min-height: 400px; width: 100%; "></div>
+                  <%= column_chart [
+                     {name: "Total Bets", data: @amounts.map { |row| [row["date"].to_s, row["total_stake"].to_i] }.to_h },
+                     {name: "Winning Bets", data: @amounts.map { |row| [row["date"].to_s, row["total_amount_won"].to_i] }.to_h }
+                  ],
+                  height: "400px",
+                  library: {
+                     title: { text: "Total Bets and Winning Bets Over Time", x: -20 },
+                     yAxis: { title: { text: "Number of Bets" } },
+                     xAxis: { title: { text: "Date" }, type: 'datetime' },
+                     legend: { layout: 'vertical', align: 'right', verticalAlign: 'middle', borderWidth: 0 },
+                     plotOptions: {
+                        series: {
+                           pointStart: (@amounts&.first&.[]("date") || Date.today).to_time.to_i * 1000,
+                           pointInterval: 24 * 3600 * 1000 # one day
+                        }
+                     }
+                  } %>
                </div>
             </div>
          </div>
@@ -35,7 +51,24 @@
             </div>
             <div collapse="panelChart3" class="panel-wrapper">
                <div class="card-body" >
-                  <div id="bets_graph" style=" min-height: 400px; width: 100%; "></div>
+                  <div id="bet_counts_graph" style=" min-height: 400px; width: 100%; ">
+                     <%= column_chart [
+                        {name: "Bets", data: @counts.map { |row| [row["date"].to_s, row["total_bets"].to_i] }.to_h }
+                     ],
+                     height: "400px",
+                     library: {
+                        title: { text: "Settled and Unsettled Bets Over Time", x: -20 },
+                        yAxis: { title: { text: "Number of Bets" } },
+                        xAxis: { title: { text: "Date" }, type: 'datetime' },
+                        legend: { layout: 'vertical', align: 'right', verticalAlign: 'middle', borderWidth: 0 },
+                        plotOptions: {
+                           series: {
+                              pointStart: (@counts&.first&.[]("date") || Date.today).to_time.to_i * 1000,
+                              pointInterval: 24 * 3600 * 1000 # one day
+                           }
+                        }
+                     } %>
+                  </div>
                </div>
             </div>
          </div>

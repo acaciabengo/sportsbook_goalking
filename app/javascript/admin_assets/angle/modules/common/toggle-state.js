@@ -1,32 +1,53 @@
 // TOGGLE STATE
 // -----------------------------------
 
+// import $ from "jquery";
 
 function initToggleState() {
+  console.log('initToggleState called, jQuery available:', typeof $ !== 'undefined');
+  
+  if (typeof $ === 'undefined') {
+    console.error('jQuery not available in toggle-state.js');
+    return;
+  }
+  
   var $body = $("body");
   var toggle = new StateToggler();
 
+  console.log('Found toggle-state elements:', $("[data-toggle-state]").length);
+
   $("[data-toggle-state]").on("click", function (e) {
-    // e.preventDefault();
+    console.log('Toggle state clicked!');
+    e.preventDefault();
     e.stopPropagation();
     var element = $(this),
       classname = element.data("toggleState"),
       target = element.data("target"),
       noPersist = !!element.attr("data-no-persist");
 
+    console.log('Classname to toggle:', classname);
+    console.log('Target:', target);
+
     // Specify a target selector to toggle classname
     // use body by default
     var $target = target ? $(target) : $body;
 
+    console.log('Target element:', $target[0]);
+    console.log('Has class before:', $target.hasClass(classname));
+
     if (classname) {
       if ($target.hasClass(classname)) {
+        console.log('Removing class:', classname);
         $target.removeClass(classname);
         if (!noPersist) toggle.removeState(classname);
       } else {
+        console.log('Adding class:', classname);
         $target.addClass(classname);
         if (!noPersist) toggle.addState(classname);
       }
     }
+
+    console.log('Has class after:', $target.hasClass(classname));
 
     // some elements may need this when toggled class change the content size
     if (typeof Event === "function") {

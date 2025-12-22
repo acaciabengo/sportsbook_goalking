@@ -5,11 +5,11 @@
         <a class="navbar-brand" href="#/">
             <div class="brand-logo">
                 <!-- <img class="img-fluid" src="" alt="App Logo"> -->
-                SportsBook
+                GoalKing
             </div>
             <div class="brand-logo-collapsed">
                 <!-- <img class="img-fluid" src="" alt="App Logo"> -->
-                SB
+                GK
             </div>
         </a>
     </div>
@@ -29,44 +29,40 @@
     </ul>
     <!-- END Left navbar-->
     <!-- START Right Navbar-->
-    <ul class="navbar-nav flex-row">
+    <ul class="navbar-nav flex-row mr-5">
         <!-- START Alert menu-->
-        <li class="nav-item dropdown dropdown-list">
-            <a class="nav-link dropdown-toggle dropdown-toggle-nocaret" href="#" data-toggle="dropdown">
-            <em class="icon-user"></em>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <em class="icon-user"></em>
             </a>
             <!-- START Dropdown menu-->
-            <div class="dropdown-menu dropdown-menu-right animated flipInX">
+            <div class="dropdown-menu dropdown-menu-end animated flipInX" aria-labelledby="userDropdown">
+                <!-- User profile item-->
                 <div class="dropdown-item">
-                    <!-- START list group-->
-                    <div class="list-group">
-                        <!-- list item-->
-                        <div class="list-group-item list-group-item-action">
-                            <div class="media">
-                                <div class="align-self-start mr-2">
-                                    <em class="icon-user"></em>
-                                </div>
-                                <div class="media-body">
-                                    <p class="m-0"><%= current_admin.first_name %></p>
-                                </div>
-                            </div>
+                    <div class="d-flex">
+                        <div class="mr-2">
+                            <em class="icon-user"></em>
                         </div>
-                        <!-- list item-->
-                          <%= link_to destroy_admin_session_path, :method => :get, class:"list-group-item list-group-item-action" do %>
-                            <div class="media">
-                                <div class="align-self-start mr-2">
-                                    <em class="icon-power"></em>
-                                </div>
-                                <div class="media-body">
-                                    <p class="m-0">Logout</p>
-                                </div>
-                            </div>
-                          <% end %>
-                    <!-- END list group-->
+                        <div class="flex-grow-1">
+                            <p class="m-0"><%= current_admin.first_name %></p>
+                        </div>
+                    </div>
                 </div>
+                <!-- Logout item-->
+                <%= link_to destroy_admin_session_path, method: :delete, class: "dropdown-item" do %>
+                    <div class="d-flex">
+                        <div class="mr-2">
+                            <em class="icon-power"></em>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="m-0">Logout</p>
+                        </div>
+                    </div>
+                <% end %>
             </div>
             <!-- END Dropdown menu-->
         </li>
+    
         <!-- END Alert menu-->
     </ul>
     <!-- END Right Navbar-->
