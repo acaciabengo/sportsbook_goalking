@@ -1,7 +1,7 @@
 class Fixture < ApplicationRecord
   include PgSearch::Model
 
-  before_create :set_sports, :set_category, :set_tournament
+  before_save :set_sports, :set_category, :set_tournament
 
   pg_search_scope :global_search,
                   against: %i[part_one_name part_two_name league_name location],
@@ -79,9 +79,7 @@ class Fixture < ApplicationRecord
     %w[bets live_markets pre_markets]
   end
 
-  def tournament_name
-    Tournament.find_by(id: self.ext_tournament_id)&.name
-  end
+
 
   def broadcast_updates
     ActionCable.server.broadcast(
@@ -103,7 +101,7 @@ class Fixture < ApplicationRecord
 
   def set_sports
     if self.sport_id.present?
-      sport = Sport.find_by(id: self.sport_id)
+      sport = Sport.find_by(ext_sport_id: self.sport_id)
       if sport
         self.sport = sport.name
       end
@@ -112,7 +110,7 @@ class Fixture < ApplicationRecord
 
   def set_category
     if self.ext_category_id.present?
-      category = Category.find_by(id: self.ext_category_id)
+      category = Category.find_by(ext_category_id: self.ext_category_id&.to_i)
       if category
         self.category_name = category.name
       end
@@ -121,7 +119,7 @@ class Fixture < ApplicationRecord
 
   def set_tournament
     if self.ext_tournament_id.present?
-      tournament = Tournament.find_by(id: self.ext_tournament_id)
+      tournament = Tournament.find_by(ext_tournament_id: self.ext_tournament_id&.to_i)
       if tournament
         self.tournament_name = tournament.name
       end
