@@ -3,6 +3,9 @@ class BetSlip < ApplicationRecord
   belongs_to :user
   has_many :bets
 
+  # set the tax rate
+  TAX_RATE = ENV['TAX_RATE'].to_f || 0.11
+
   after_update :activate_bonuses, if: :saved_change_to_status?
 
   enum :bet_slip_status, { active: "Active", closed: "Closed" }

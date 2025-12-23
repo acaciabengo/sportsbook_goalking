@@ -4,7 +4,7 @@ class Backend::BetsController < ApplicationController
   layout "admin_application"
 
   def index
-    @q = Bet.all.ransack(params[:q])
+    @q = Bet.includes(:fixture).ransack(params[:q])
     @bets = @q.result.order("created_at DESC").page params[:page]
   end
 end

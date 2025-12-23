@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_03_141842) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_23_065446) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -247,6 +247,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_03_141842) do
     t.boolean "featured", default: false
     t.integer "ext_category_id", default: 0, null: false
     t.integer "ext_tournament_id", default: 0, null: false
+    t.string "tournament_name"
+    t.string "category_name"
     t.index ["booked"], name: "index_fixtures_on_booked"
     t.index ["event_id"], name: "index_fixtures_on_event_id", unique: true
     t.index ["location"], name: "index_fixtures_on_location"

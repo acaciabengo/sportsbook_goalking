@@ -13,13 +13,13 @@
               <div class="col-lg-6">
                 <%= f.label :result, "Result", class:"col-md-4 col-form-label" %>
                 <div class="col-lg-8">
-                  <%= f.select :result_eq, BetSlip.bet_slip_results.values, {}, {:class=>"form-control", id: "result"}%>
+                  <%= f.select :result_eq, BetSlip.pluck(:result).uniq, {include_blank: true}, {:class=>"form-control", id: "result"}%>
                 </div>
               </div>
               <div class="col-lg-6">
                 <%= f.label :status, "Status", class:"col-md-4 col-form-label" %>
                 <div class="col-lg-8">
-                  <%= f.select :status_eq, BetSlip.bet_slip_statuses.values, {}, {:class=>"form-control", id: "status"}%>
+                  <%= f.select :status_eq, BetSlip.pluck(:status).uniq, {include_blank: true}, {:class=>"form-control", id: "status"}%>
                 </div>
               </div>
           </div>
@@ -62,7 +62,7 @@
         <th>Status</th>
         <th>Result</th>
         <th>BetSlip ID</th>
-        <th>Product</th>
+        <th>Tournament</th>
         <th>Market</th>
         <th>Outcome</th>
         <th>Description</th>
@@ -76,8 +76,7 @@
 				<tr>
 					<td><%= (i+1)%></td>
 					<td>
-            <% fixture = Fixture.find(bet.fixture_id)%>
-            <%= fixture.part_one_name %> - <%= fixture.part_two_name %>
+            <%= bet.fixture.part_one_name %> - <%= bet.fixture.part_two_name %>
           </td>
 					<td><%= bet.odds %></td>
 					<td><%= bet.status %></td>
@@ -89,11 +88,11 @@
             <% end %>
           </td>
 					<td><%= bet.bet_slip_id %></td>
-					<td><%= bet.product %></td>
+					<td><%= bet.fixture.tournament_name %></td>
 					<td><%= bet.market_identifier %></td>
           <td><%= bet.outcome %></td>
 					<td><%= bet.outcome_desc %></td>
-          <td><%= bet.sport %></td>
+          <td><%= bet.fixture.sport %></td>
           <td><%= link_to bet.user_id, backend_user_path(id:bet.user) %></td> 
 					<td><%= local_time(bet.created_at, format: "%d/%m/%y, %l:%M%P") %></td>
 				</tr>

@@ -37,13 +37,15 @@ class BetslipsJob
 
                   payout = (bonus_win.to_f + win_amount)
 
+                  net_payout = payout - (payout * BetSlip::TAX_RATE)
+
                   ActiveRecord::Base.transaction do
                      slip.update(status: "Closed" ,result: "Win", payout: payout, paid: true)
                      #update the account balances through transactions under an active record transaction
                      previous_balance = user.balance
-                     user.balance = (user.balance + win_amount)
+                     user.balance = (user.balance + net_payout)
                      user.save!
-                     transaction = user.transactions.create!(balance_before: previous_balance, balance_after: user.balance, phone_number: user.phone_number, status: "SUCCESS", currency: "UGX", amount: payout, category: "Win - #{slip.id}" )
+                     transaction = user.transactions.create!(balance_before: previous_balance, balance_after: user.balance, phone_number: user.phone_number, status: "SUCCESS", currency: "UGX", amount: net_payout, category: "Win - #{slip.id}" )
                   end
                   
                elsif bet_results.all? {|res| res == "Void"}

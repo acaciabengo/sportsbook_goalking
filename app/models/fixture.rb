@@ -1,6 +1,8 @@
 class Fixture < ApplicationRecord
   include PgSearch::Model
 
+  before_create :set_sports, :set_category, :set_tournament
+
   pg_search_scope :global_search,
                   against: %i[part_one_name part_two_name league_name location],
                   using: {
@@ -37,11 +39,48 @@ class Fixture < ApplicationRecord
   paginates_per 100
 
   def self.ransackable_attributes(auth_object = nil)
-    ["away_score", "booked", "created_at", "event_id", "ext_category_id", "ext_provider_id", "ext_tournament_id", "featured", "home_score", "id", "league_id", "league_name", "live_odds", "location", "location_id", "match_status", "match_time", "part_one_id", "part_one_name", "part_two_id", "part_two_name", "priority", "season_id", "season_name", "sport", "sport_id", "start_date", "status", "tournament_round", "updated_at"]
+    %w[
+      away_score
+      booked
+      category_name
+      created_at
+      event_id
+      ext_category_id
+      ext_provider_id
+      ext_tournament_id
+      featured
+      home_score
+      id
+      league_id
+      league_name
+      live_odds
+      location
+      location_id
+      match_status
+      match_time
+      part_one_id
+      part_one_name
+      part_two_id
+      part_two_name
+      priority
+      season_id
+      season_name
+      sport
+      sport_id
+      start_date
+      status
+      tournament_round
+      tournament_name
+      updated_at
+    ]
   end
   
   def self.ransackable_associations(auth_object = nil)
     %w[bets live_markets pre_markets]
+  end
+
+  def tournament_name
+    Tournament.find_by(id: self.ext_tournament_id)&.name
   end
 
   def broadcast_updates
@@ -60,5 +99,32 @@ class Fixture < ApplicationRecord
         ]
       )
     )
+  end
+
+  def set_sports
+    if self.sport_id.present?
+      sport = Sport.find_by(id: self.sport_id)
+      if sport
+        self.sport = sport.name
+      end
+    end
+  end
+
+  def set_category
+    if self.ext_category_id.present?
+      category = Category.find_by(id: self.ext_category_id)
+      if category
+        self.category_name = category.name
+      end
+    end
+  end
+
+  def set_tournament
+    if self.ext_tournament_id.present?
+      tournament = Tournament.find_by(id: self.ext_tournament_id)
+      if tournament
+        self.tournament_name = tournament.name
+      end
+    end
   end
 end

@@ -27,7 +27,7 @@ class Backend::TransactionsAnalyticsController < ApplicationController
         DATE(created_at) AS date,
         SUM(amount) AS total_deposit
       FROM transactions
-      WHERE category = 'Deposit'
+      WHERE category ~ '^(Dep|Win)'
         AND status = 'SUCCESS'
         AND created_at >= NOW() - INTERVAL '30 days'
       GROUP BY DATE(created_at)

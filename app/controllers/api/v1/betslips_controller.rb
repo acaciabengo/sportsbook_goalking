@@ -107,7 +107,7 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 		end
 
 		payout = (bonus_win.to_f + win_amount).round(2)
-		tax = (bonus_win.to_f + win_amount) * 0.15
+		tax = (bonus_win.to_f + win_amount) * BetSlip::TAX_RATE
 
 		BetSlip.transaction do
 			# balance management

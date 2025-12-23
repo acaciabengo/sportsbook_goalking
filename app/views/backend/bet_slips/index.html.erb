@@ -13,13 +13,13 @@
               <div class="col-lg-6">
                 <%= f.label :result, "Result", class:"col-md-4 col-form-label" %>
                 <div class="col-lg-8">
-                  <%= f.select :result_eq, BetSlip.bet_slip_results.values, {}, {:class=>"form-control", id: "result"}%>
+                  <%= f.select :result_eq, BetSlip.bet_slip_results.values, {include_blank: true}, {:class=>"form-control", id: "result"}%>
                 </div>
               </div>
               <div class="col-lg-6">
                 <%= f.label :status, "Status", class:"col-md-4 col-form-label" %>
                 <div class="col-lg-8">
-                  <%= f.select :status_eq, BetSlip.bet_slip_statuses.values, {}, {:class=>"form-control", id: "status"}%>
+                  <%= f.select :status_eq, BetSlip.bet_slip_statuses.values, {include_blank: true}, {:class=>"form-control", id: "status"}%>
                 </div>
               </div>
           </div>

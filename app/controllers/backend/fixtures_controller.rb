@@ -1,4 +1,4 @@
-class Backend::Fixtures::BasketballFixturesController < ApplicationController
+class Backend::FixturesController < ApplicationController
   
   before_action :authenticate_admin!
 
@@ -6,17 +6,13 @@ class Backend::Fixtures::BasketballFixturesController < ApplicationController
 
   def index
     @q =
-      Fixture.where(
-        "sport_id = ? AND league_id NOT IN (?)",
-        "48242",
-        %w[37364 37386 38301 37814]
-      ).ransack(params[:q])
+      Fixture.all.ransack(params[:q])
     @fixtures = @q.result.order("start_date DESC").page params[:page]
   end
 
   def update
     @fixture = Fixture.find(params[:id])
-    response = order_live_event(@fixture.event_id, @fixture.sport_id)
+    response = BetBalancer.new.order_live_event(@fixture.event_id, @fixture.sport_id)
     if response == 200
       @fixture.update(booked: true)
       respond_to do |format|

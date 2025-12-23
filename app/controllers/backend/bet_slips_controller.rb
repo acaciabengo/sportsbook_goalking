@@ -4,7 +4,7 @@ class Backend::BetSlipsController < ApplicationController
   layout "admin_application"
 
   def index
-    @q = BetSlip.all.ransack(params[:q])
+    @q = BetSlip.includes(:bets).ransack(params[:q])
     @bet_slips = @q.result.order("created_at DESC").page params[:page]
 
     respond_to do |format|
@@ -16,7 +16,7 @@ class Backend::BetSlipsController < ApplicationController
   end
 
   def show
-    @bet_slip = BetSlip.find(params[:id])
+    @bet_slip = BetSlip.includes(:bets, :bets => :fixture).find(params[:id])
   end
 
   # def cancel

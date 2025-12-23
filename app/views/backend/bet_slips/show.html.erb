@@ -20,13 +20,12 @@
                 <div class="container" id="">
                     <% @bets = @bet_slip.bets %>
                     <% @bets.each do |bet| %>
-                      <% fixture = Fixture.find(bet.fixture_id)%>
-                      <% line_bet = LineBet.where(fixture_id: bet.fixture_id) %>
+                      
                       <fieldset>
                         <div>
                           <div>
                             <span><strong>Fixture:</strong></span>
-                            <span class="float-right"> <%= fixture.part_one_name %> - <%= fixture.part_two_name %></span>
+                            <span class="float-right"> <%= bet.fixture.part_one_name %> - <%= fixture.part_two_name %></span>
                             <br>
                           </div>
                           <div>
@@ -35,7 +34,7 @@
                           </div>
                           <div>
                             <span><strong>Tournament:</strong></span>
-                            <span class="float-right"><%= fixture.league_name %></span>
+                            <span class="float-right"><%= bet.fixture.tournament_name %></span>
                           </div>
                           <div>
                             <span><strong>Outcome:</strong></span>
@@ -43,7 +42,7 @@
                           </div>
                           <div>
                             <span><strong>Start Time:</strong></span>
-                            <span class="float-right"><%= local_time(fixture.start_date, format: "%d/%m/%Y %l:%M%P") %></span>
+                            <span class="float-right"><%= local_time(bet.fixture.start_date, format: "%d/%m/%Y %l:%M%P") %></span>
                           </div>
                           <div>
                             <span><strong>Status:</strong></span>

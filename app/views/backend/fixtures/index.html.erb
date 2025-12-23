@@ -1,0 +1,134 @@
+<div class="content-heading">
+    <div>
+        <span>Fixtures</span>
+        <small>Soccer Fixtures</small>
+    </div>
+</div>
+
+<div class="card card-default">
+   <div class="card-body">
+		 <%= search_form_for @q, url: backend_fixtures_path, html: { method: :get } do |f| %>
+      <fieldset>
+          <div class="form-row">
+              <div class="col-sm-6 col-md-4">
+                    <%= f.label :status, "Status", class:"col-md-4 col-form-label" %>
+                    <div class="col-lg-8">
+                      <%= f.select :status_eq, Fixture.pluck(:match_status).uniq, {include_blank: true}, { class: "form-control", id: "status"} %>
+                    </div>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                    <%= f.label :event_id, "Event", class:"col-md-4 col-form-label" %>
+                    <div class="col-lg-8">
+                      <%= f.search_field :event_id_eq, {:class=>"form-control", id: "fixture_id"}%>
+                    </div>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                    <%= f.label :booked, "Booking Status", class:"col-md-4 col-form-label" %>
+                    <div class="col-lg-8">
+                      <%= f.select :booked_eq, Fixture.pluck(:booked).uniq, {include_blank: true} ,{ class: "form-control", id: "status"} %>
+                    </div>
+              </div>
+          </div>
+          <div class="form-row">
+              <div class="col-sm-6 col-md-4">
+                    <%= f.label :location, "Location", class:"col-md-4 col-form-label" %>
+                    <div class="col-lg-8">
+                      <%= f.search_field :location_i_cont, {class: "form-control", id: "category"} %>
+                    </div>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                    <%= f.label :tournament_name, "League", class:"col-md-4 col-form-label" %>
+                    <div class="col-lg-8">
+                      <%= f.search_field :tournament_name_i_cont, {:class=>"form-control", id: "tournament_name"}%>
+                    </div>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                    <%= f.label :booked, "Team", class:"col-md-4 col-form-label" %>
+                    <div class="col-lg-8">
+                      <%= f.search_field :part_one_name_or_part_two_name_i_cont, {:class=>"form-control", id: "team"}%>
+                    </div>
+              </div>
+          </div>
+          <div class="form-row">
+              <div class="col-sm-6 col-md-4">
+                    <%= f.label :start_date, "Kick-Off After", class:"col-md-4 col-form-label" %>
+                    <div class="col-lg-8">
+                      <%= f.search_field :start_date_gteq, {class: "form-control", id: "kick_off_after"} %>
+                    </div>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                    <%= f.label :start_date, "Kick-Off Before", class:"col-md-4 col-form-label" %>
+                    <div class="col-lg-8">
+                      <%= f.search_field :start_date_lteq, {:class=>"form-control", id: "kick_off_before"}%>
+                    </div>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                <%= f.label :featured, "Featured Status", class:"col-md-4 col-form-label" %>
+                <div class="col-lg-8">
+                  <%= f.select :featured_eq, Fixture.pluck(:featured).uniq, {include_blank: true}, { class: "form-control", id: "featured"} %>
+                </div>
+              </div>
+          </div>
+      </fieldset>
+
+      <!-- <div class="card-footer"> -->
+         <div class="clearfix">
+            <div class="float-right">
+               <%= f.submit 'Search', :class=>'btn btn-danger mb-2' %>
+            </div>
+         </div>
+      <!-- </div> -->
+			<% end %>
+   </div>
+</div>
+
+<div class="table-responsive container-fluid">
+  <!-- table table-striped table-bordered table-hover -->
+  <table class="fixture table table-striped table-bordered table-hoverlarge-12 columns large-centered">
+    <thead>
+      <tr>
+        <th >No</th>
+        <th >Time</th>
+        <th >Game</th>
+        <th >Tournament Name</th>
+        <th >Sport</th>
+        <th >Event ID</th>
+        <th >Status</th>
+        <th >Booked</th>
+        <th >Featured</th>
+        <th >Book</th>
+        <th >Feature</th>
+        <th >Score</th>
+      </tr>
+    </thead>
+    <tbody>
+			<% @fixtures.each_with_index do |fixture, i| %>
+				<tr>
+          <td><%= (i+1)%></td>
+          <td><%= local_time(fixture.start_date, format: "%d/%m/%y %l:%M%P") %></td>
+          <td><%= fixture.part_one_name %>  - <%= fixture.part_two_name%> </td>
+          <td><%= fixture.tournament_name %></td>
+           <td><%= fixture.sport %></td>
+          <td><%= fixture.event_id %></td>
+          <td><%= fixture.status %></td>
+          <td><%= fixture.booked.to_s.capitalize %></td>
+          <td><%= fixture.featured.to_s.capitalize %></td>
+          <td>
+            <% if  fixture.booked == false %>
+              <%= link_to "Book", backend_fixtures_path(id: fixture.id), method: :put, :class => 'btn btn-xs btn-success booking', remote: true %>
+            <% end %>
+          </td>
+          <td>
+            <% if fixture.featured == false %>
+              <%= link_to "Add", backend_fixtures_feature_path(id: fixture.id, data: "Add"), method: :put, :class => 'btn btn-xs btn-success booking', remote: true %>
+            <% elsif fixture.featured == true %>
+              <%= link_to "Remove", backend_fixtures_feature_path(id: fixture.id, data: "Remove"), method: :put, :class => 'btn btn-xs btn-danger booking', remote: true %>
+            <% end %>
+          </td>
+          <td><%= "#{fixture.home_score} - #{fixture.away_score} " %></td>
+				</tr>
+			<% end %>
+    </tbody>
+  </table>
+	<%= paginate @fixtures %>
+</div>
