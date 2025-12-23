@@ -118,15 +118,6 @@
               <%= link_to "Book", backend_fixtures_path(id: fixture.id), method: :put, :class => 'btn btn-xs btn-success booking', remote: true %>
             <% end %>
           </td>
-          <!--
-          <td>
-            <% if fixture.featured == false %>
-              <%= link_to "Add", backend_fixtures_feature_path(id: fixture.id, data: "Add"), method: :put, :class => 'btn btn-xs btn-success booking', remote: true %>
-            <% elsif fixture.featured == true %>
-              <%= link_to "Remove", backend_fixtures_feature_path(id: fixture.id, data: "Remove"), method: :put, :class => 'btn btn-xs btn-danger booking', remote: true %>
-            <% end %>
-          </td>
-          -->
           <td><%= "#{fixture.home_score} - #{fixture.away_score} " %></td>
 				</tr>
 			<% end %>
