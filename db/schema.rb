@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_23_065446) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_27_100055) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -190,6 +190,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_23_065446) do
     t.datetime "updated_at", null: false
     t.index ["ext_category_id"], name: "index_categories_on_ext_category_id"
     t.index ["sport_id"], name: "index_categories_on_sport_id"
+  end
+
+  create_table "crown_point_transactions", force: :cascade do |t|
+    t.bigint "bet_slip_id", null: false
+    t.bigint "user_id", null: false
+    t.integer "points"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bet_slip_id"], name: "index_crown_point_transactions_on_bet_slip_id"
+    t.index ["user_id"], name: "index_crown_point_transactions_on_user_id"
   end
 
   create_table "deposits", force: :cascade do |t|
@@ -411,6 +421,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_23_065446) do
     t.string "status"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "expires_at"
     t.index ["user_id"], name: "index_user_bonuses_on_user_id"
   end
 
@@ -452,6 +463,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_23_065446) do
     t.boolean "activated_first_deposit_bonus", default: false
     t.decimal "first_deposit_bonus_amount", precision: 10, scale: 2, default: "0.0"
     t.decimal "bonus", precision: 10, scale: 2, default: "0.0"
+    t.integer "points"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["phone_number"], name: "index_users_on_phone_number", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
@@ -498,6 +510,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_23_065446) do
   add_foreign_key "bets", "users"
   add_foreign_key "broadcasts", "users", column: "admin_id"
   add_foreign_key "categories", "sports"
+  add_foreign_key "crown_point_transactions", "bet_slips"
+  add_foreign_key "crown_point_transactions", "users"
   add_foreign_key "deposits", "users"
   add_foreign_key "line_bets", "carts"
   add_foreign_key "line_bets", "fixtures"

@@ -96,9 +96,42 @@ class BetslipsJob
                   end
                   
                end
+
+               # Award points for the betslip if the feature is enabled
+               process_crown_points(slip)
             end
          end
       end
       
+   end
+
+   def process_crown_points(slip)
+      # Award points for the betslip if the feature is enabled
+      crown_points_feature = ENV['CROWN_POINTS_FEATURE']
+      if crown_points_feature == true
+         crown_points_per_slip = ENV['CROWN_POINTS_PER_BETSLIP'].to_i || 5
+         total_crown_points = calculate_crown_points(slip.stake, crown_points_per_slip)
+         user = slip&.user
+         if user.present? && total_crown_points > 0
+            user.increment!(:crown_points, total_crown_points)
+            # Optionally, log the points awarding
+            transaction = CrownPointTransaction.new(
+               user_id: user.id,
+               betslip_id: slip.id,
+               points: total_crown_points
+            )
+
+            unless transaction.save
+               # Handle save failure (e.g., log an error)
+               Rails.logger.error("Failed to save CrownPointTransaction for User #{user.id} and BetSlip #{slip.id}")
+            end
+         end
+      end
+   end
+
+   def calculate_crown_points(stake, crown_points_per_slip)
+      # Example calculation: 1 point for every 1000 units staked
+      total_points = (stake / 1000).to_i * crown_points_per_slip
+      total_points
    end
 end

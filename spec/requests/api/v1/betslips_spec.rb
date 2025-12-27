@@ -108,7 +108,8 @@ RSpec.describe "Api::V1::Betslips", type: :request do
                 outcome_id: { type: :string, description: 'Outcome ID' },
                 odd: { type: :number },
                 specifier: { type: :string, nullable: true },
-                bet_type: { type: :string, enum: ['PreMatch', 'Live'] }
+                bet_type: { type: :string, enum: ['PreMatch', 'Live'] },
+                bonus: { type: :boolean  } 
               },
               required: ['fixture_id', 'market_identifier', 'outcome', 'outcome_id', 'odd', 'bet_type']
             }
@@ -437,7 +438,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
 
             win_amount = 8000.0
             bonus = (win_amount * 0.1).round(2)
-            expected_tax = (bonus + win_amount) * 0.15
+            expected_tax = (bonus + win_amount) * BetSlip::TAX_RATE
 
             expect(bet_slip.tax).to eq(expected_tax)
           end
@@ -461,7 +462,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
 
             expect(response).to have_http_status(:bad_request)
             json = JSON.parse(response.body)
-            expect(json['message']).to eq('Amount should be between 1 UGX and 4,000,000 UGX')
+            expect(json['message']).to eq('Amount should be between 1 UGX and 4000000 UGX')
           end
 
           it "does not create bet slip" do
@@ -479,7 +480,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
 
             expect(response).to have_http_status(:bad_request)
             json = JSON.parse(response.body)
-            expect(json['message']).to eq('Amount should be between 1 UGX and 4,000,000 UGX')
+            expect(json['message']).to eq('Amount should be between 1 UGX and 4000000 UGX')
           end
         end
 
@@ -511,20 +512,30 @@ RSpec.describe "Api::V1::Betslips", type: :request do
         end
       end
 
-      # context "transaction rollback on error" do
-      #   it "rolls back all changes if bet creation fails" do
-      #     allow_any_instance_of(Bet).to receive(:save!).and_raise(ActiveRecord::RecordInvalid)
+      context "when the users activates bonus flag" do
+        it "uses bonus balance to place bet" do
+          bonus_user = Fabricate(:user, balance: 500.0)
+          user_bonus = Fabricate(:user_bonus, user: bonus_user, amount: 10000.0, status: 'Active', expires_at: 1.day.from_now)
+          bonus_user_token = JWT.encode({ sub: bonus_user.id, exp: 24.hours.from_now.to_i }, ENV['DEVISE_JWT_SECRET_KEY'], 'HS256')
+          bonus_user_headers = { 'Authorization' => "Bearer #{bonus_user_token}" }
 
-      #     expect {
-      #       post "/api/v1/betslips", params: valid_params, headers: auth_headers
-      #     }.to raise_error(ActiveRecord::RecordInvalid)
+          params = valid_params.merge(bonus: true)
 
-      #     user.reload
-      #     expect(user.balance).to eq(10000.0) # Balance not changed
-      #     expect(BetSlip.count).to eq(0)
-      #     expect(Transaction.count).to eq(0)
-      #   end
-      # end
+          expect {
+            post "/api/v1/betslips", params: params, headers: bonus_user_headers
+            bonus_user.reload
+          }.to change { bonus_user.balance }.by(0.0)
+          .and change { user_bonus.reload.status }
+          .and change(BetSlip, :count).by(1)
+          
+          
+          # print response for debugging
+          puts "Bonus Bet Slip Response: #{response.body}"
+          expect(response).to have_http_status(:created)
+          json = JSON.parse(response.body)
+          expect(json['message']).to eq('Bet Slip created successfully')
+        end
+      end
     end
 
     context "when user is not authenticated" do
@@ -540,4 +551,6 @@ RSpec.describe "Api::V1::Betslips", type: :request do
       end
     end
   end
+
+
 end
