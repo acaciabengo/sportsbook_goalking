@@ -267,6 +267,8 @@ paths:
                         enum:
                         - PreMatch
                         - Live
+                      bonus:
+                        type: boolean
                     required:
                     - fixture_id
                     - market_identifier
@@ -1086,6 +1088,54 @@ paths:
                   type: string
                 password_confirmation:
                   type: string
+  "/api/v1/users/{id}/bonuses":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      summary: list user bonuses
+      tags:
+      - Users
+      security:
+      - Bearer: []
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+        '401':
+          description: unauthorized
+  "/api/v1/users/{id}/redeem":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      summary: redeem points for bonus
+      tags:
+      - Users
+      security:
+      - Bearer: []
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+        '422':
+          description: insufficient points
+        '401':
+          description: unauthorized
 servers:
 - url: https://{defaultHost}
   variables:

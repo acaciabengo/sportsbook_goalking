@@ -96,5 +96,86 @@ RSpec.describe "Api::V1::Users", type: :request do
       end
     end
   end
+
+  path '/api/v1/users/{id}/bonuses' do
+    parameter name: :id, in: :path, type: :string
+
+    get('list user bonuses') do
+      tags 'Users'
+      produces 'application/json'
+      security [Bearer: []]
+      parameter name: :Authorization, in: :header, type: :string
+
+      response(200, 'successful') do
+        let(:id) { user.id }
+        let(:Authorization) { auth_headers['Authorization'] }
+        
+        before do
+          Fabricate(:user_bonus, user: user, amount: 10000, expires_at: 1.day.from_now)
+          Fabricate(:user_bonus, user: user, amount: 5000, expires_at: 2.days.from_now)
+        end
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          puts "user bonus data: #{data}"
+          expect(data['user_bonuses'].length).to eq(2)
+        end
+      end
+
+      response(401, 'unauthorized') do
+        let(:id) { user.id }
+        let(:Authorization) { 'Bearer invalid_token' }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/users/{id}/redeem' do
+    parameter name: :id, in: :path, type: :string
+
+    post('redeem points for bonus') do
+      tags 'Users'
+      produces 'application/json'
+      security [Bearer: []]
+      parameter name: :Authorization, in: :header, type: :string
+
+      response(200, 'successful') do
+        let(:id) { user.id }
+        let(:Authorization) { auth_headers['Authorization'] }
+        
+        before do
+          user.update(points: 120)
+        end
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['message']).to eq('Success')
+          expect(user.reload.points).to eq(0)
+          expect(user.user_bonuses.count).to eq(1)
+          expect(user.user_bonuses.last.amount).to eq(10000)
+        end
+      end
+
+      response(422, 'insufficient points') do
+        let(:id) { user.id }
+        let(:Authorization) { auth_headers['Authorization'] }
+        
+        before do
+          user.update(points: 50)
+        end
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['error']).to eq('Insufficient points to redeem')
+        end
+      end
+
+      response(401, 'unauthorized') do
+        let(:id) { user.id }
+        let(:Authorization) { 'Bearer invalid_token' }
+        run_test!
+      end
+    end
+  end
 end
 

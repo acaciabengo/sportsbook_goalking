@@ -28,7 +28,8 @@ Rails.application.routes.draw do
       match '/markets' => 'descriptions#markets', :via => [:get]
       match '/users/:id' => 'users#show', :via => [:get]
       match '/users/:id' => 'users#update', :via => [:put, :patch]
-
+      match '/users/:id/bonuses' => 'users#bonuses', :via => [:get]
+      match '/users/:id/redeem' => 'users#redeem', :via => [:post]
       match "check_user" => "current_user#check_current_user", :via => [:get]
       match "verification" => "current_user#user_verification", :via => [:get]
       match "home" => "home#index", :via => [:get]
