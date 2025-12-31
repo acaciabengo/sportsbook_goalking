@@ -49,6 +49,6 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 	private
 
 	def betslip_params
-		params.require(:betslip).permit(:stake, bets_attributes: [:fixture_id, :market_identifier, :odd, :outcome, :outcome_id, :specifier, :bet_type, :bonus])
+		params.require(:betslip).permit(:stake, bets_attributes: [:fixture_id, :market_identifier, :odd, :outcome, :outcome_desc, :specifier, :bet_type, :bonus])
 	end
 end

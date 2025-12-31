@@ -239,6 +239,8 @@ RSpec.describe "Api::V1::Betslips", type: :request do
         
         get "/api/v1/betslips", headers: auth_headers
         json = JSON.parse(response.body)
+
+        puts "Response JSON: #{json.inspect}"
         
         betslip_ids = json['betslips'].map { |b| b['id'] }
         expect(betslip_ids.first).to eq(new_slip.id)
@@ -263,8 +265,8 @@ RSpec.describe "Api::V1::Betslips", type: :request do
           {
             fixture_id: fixture.id,
             market_identifier: '1',
-            outcome: 'Home Win',
-            outcome_id: '1',
+            outcome_desc: 'Home Win',
+            outcome: '1',
             odd: 2.5,
             specifier: nil,
             bet_type: 'PreMatch'
@@ -322,6 +324,93 @@ RSpec.describe "Api::V1::Betslips", type: :request do
 
           expect(bet_slip.win_amount).to eq(2500.0)
         end
+        
+        context "with same game bets" do
+          let!(:same_game_fixture) { Fabricate(:fixture, event_id: SecureRandom.uuid, league_id: SecureRandom.uuid) }
+          let!(:market1) do
+            market = Fabricate.build(:pre_market, market_identifier: '1', specifier: nil, odds: { '1' => {'odd' => 2.0, 'outcome_id' => '1'} })
+            market.fixture_id = same_game_fixture.id
+            market.save!
+            market
+          end
+          let!(:market2) do
+            market = Fabricate.build(:pre_market, market_identifier: '2', specifier: nil, odds: { 'Over 2.5' => {'odd' => 3.0, 'outcome_id' => '1'} })
+            market.fixture_id = same_game_fixture.id
+            market.save!
+            market
+          end
+         
+
+          let(:same_game_params) do
+            {
+              stake: 5000,
+              bets: [
+                {
+                  fixture_id: same_game_fixture.id,
+                  market_identifier: '1',
+                  outcome_desc: 'Home Win',
+                  outcome: '1',
+                  odd: 2.0,
+                  specifier: nil,
+                  bet_type: 'PreMatch'
+                },
+                {
+                  fixture_id: same_game_fixture.id,
+                  market_identifier: '2',
+                  outcome_desc: 'Over 2.5',
+                  outcome: '1',
+                  odd: 3.0,
+                  specifier: nil,
+                  bet_type: 'PreMatch'
+                }
+              ]
+            }
+          end
+
+          it "reduces odds for same game bets" do
+            # puts "Fixture ID: #{fixture.id}"
+            # puts "Market1 - fixture_id: #{market1.fixture_id}, market_identifier: #{market1.market_identifier}, specifier: #{market1.specifier.inspect}"
+            # puts "Market2 - fixture_id: #{market2.fixture_id}, market_identifier: #{market2.market_identifier}, specifier: #{market2.specifier.inspect}"
+            # puts "market1 odds: #{market1.odds}, market2 odds: #{market2.odds}"
+            # # inspect the markets
+            # puts "Market1 Odds: #{market1.odds}"
+            # puts "Market2 Odds: #{market2.odds}"
+
+            # puts "market1 odds: #{market1.odds}, market2 odds: #{market2.odds}"
+            post "/api/v1/betslips", params: same_game_params, headers: auth_headers
+            # puts "Same game response: #{response.body}"
+            bet_slip = BetSlip.last
+            # Odds should be reduced by 10%
+            expect(bet_slip.odds).to eq((2.0 * 0.9 * 3.0 * 0.9).round(2))
+          end
+
+          it "rejects if stake is below same game minimum" do
+            params = same_game_params.merge(stake: 1000)
+            post "/api/v1/betslips", params: params, headers: auth_headers
+            expect(response).to have_http_status(:bad_request).or have_http_status(:bad_request)
+            json = JSON.parse(response.body)
+            expect(json['message']).to match(/Amount should be between/)
+          end
+
+          it "rejects if stake is above same game maximum" do
+            params = same_game_params.merge(stake: 200_000)
+            post "/api/v1/betslips", params: params, headers: auth_headers
+            expect(response).to have_http_status(:bad_request).or have_http_status(:bad_request)
+            json = JSON.parse(response.body)
+            expect(json['message']).to match(/Amount should be between/)
+          end
+
+          it "rejects if market is not accepted for same game" do
+            # Use a market_identifier not in SAME_GAME_ACCEPETED_MARKETS
+            bad_params = same_game_params.dup
+            bad_params[:bets][1][:market_identifier] = '99'
+            post "/api/v1/betslips", params: bad_params, headers: auth_headers
+            expect(response).to have_http_status(:bad_request).or have_http_status(:bad_request)
+            json = JSON.parse(response.body)
+            expect(json['message']).to match(/Same game bets are only allowed/)
+          end
+        end
+
 
         context "with multiple bets (accumulator)" do
           let(:multi_bet_params) do
@@ -331,8 +420,8 @@ RSpec.describe "Api::V1::Betslips", type: :request do
                 {
                   fixture_id: fixture.id,
                   market_identifier: '1',
-                  outcome: 'Home Win',
-                  outcome_id: '1',
+                  outcome_desc: 'Home Win',
+                  outcome: '1',
                   odd: 2.50,
                   specifier: nil,
                   bet_type: 'PreMatch'
@@ -340,8 +429,8 @@ RSpec.describe "Api::V1::Betslips", type: :request do
                 {
                   fixture_id: Fabricate(:fixture).id,
                   market_identifier: '1',
-                  outcome: 'Home Win',
-                  outcome_id: '1',
+                  outcome_desc: 'Home Win',
+                  outcome: '1',
                   odd: 1.5,
                   specifier: nil,
                   bet_type: 'PreMatch'
@@ -392,9 +481,9 @@ RSpec.describe "Api::V1::Betslips", type: :request do
             {
               stake: 1000,
               bets: [
-                { fixture_id: fixture.id, market_identifier: '1', outcome: 'Win', outcome_id: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' },
-                { fixture_id: Fabricate(:fixture).id, market_identifier: '1', outcome: 'Win', outcome_id: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' },
-                { fixture_id: Fabricate(:fixture).id, market_identifier: '1', outcome: 'Win', outcome_id: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' }
+                { fixture_id: fixture.id, market_identifier: '1', outcome_desc: 'Win', outcome: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' },
+                { fixture_id: Fabricate(:fixture).id, market_identifier: '1', outcome_desc: 'Win', outcome: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' },
+                { fixture_id: Fabricate(:fixture).id, market_identifier: '1', outcome_desc: 'Win', outcome: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' }
               ]
             }
           end
@@ -462,7 +551,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
 
             expect(response).to have_http_status(:bad_request)
             json = JSON.parse(response.body)
-            expect(json['message']).to eq('Amount should be between 1 UGX and 4000000 UGX')
+            expect(json['message']).to eq('Amount should be between 1 UGX and 3000000 UGX')
           end
 
           it "does not create bet slip" do
@@ -480,7 +569,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
 
             expect(response).to have_http_status(:bad_request)
             json = JSON.parse(response.body)
-            expect(json['message']).to eq('Amount should be between 1 UGX and 4000000 UGX')
+            expect(json['message']).to eq('Amount should be between 1 UGX and 3000000 UGX')
           end
         end
 
@@ -523,6 +612,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
 
           expect {
             post "/api/v1/betslips", params: params, headers: bonus_user_headers
+            puts "Bonus Bet Slip Response: #{response.body}"
             bonus_user.reload
           }.to change { bonus_user.balance }.by(0.0)
           .and change { user_bonus.reload.status }
@@ -530,7 +620,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
           
           
           # print response for debugging
-          puts "Bonus Bet Slip Response: #{response.body}"
+          # puts "Bonus Bet Slip Response: #{response.body}"
           expect(response).to have_http_status(:created)
           json = JSON.parse(response.body)
           expect(json['message']).to eq('Bet Slip created successfully')
