@@ -17,6 +17,13 @@ class Withdraw < ApplicationRecord
    #validates :ext_transaction_id, uniqueness: true
    validates :resource_id, uniqueness: true
 
+   # broadcast a withdraw creation event
+   after_create_commit do
+      ActionCable.server.broadcast "withdraws_#{self.user_id}", {
+         withdraw: self.as_json(only: [:id, :currency, :amount, :status, :balance_before, :balance_after, :transaction_id, :created_at])
+      }
+   end
+
    def self.ransackable_associations(auth_object = nil)
       ["audits", "user"]
    end

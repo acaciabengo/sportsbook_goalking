@@ -18,6 +18,13 @@ class Deposit < ApplicationRecord
    #validates :ext_transaction_id, uniqueness: true
    validates :resource_id, uniqueness: true
 
+   # broadcast a deposit creation event
+   after_create_commit do
+      ActionCable.server.broadcast "deposits_#{self.user_id}", {
+         deposit: self.as_json(only: [:id, :currency, :amount, :status, :balance_before, :balance_after, :transaction_id, :created_at])
+      }
+   end
+
    def self.to_csv
 
       CSV.generate(headers: true) do |csv|
