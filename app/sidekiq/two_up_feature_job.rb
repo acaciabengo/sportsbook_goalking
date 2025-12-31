@@ -14,7 +14,7 @@ class TwoUpFeatureJob
     
     outcome = home_score > away_score ? "1" : "2"
 
-    bets = Bet.where(fixture_id: fixture_id)
+    bets = Bet.where(fixture_id: fixture_id, bet_type: 'PreMatch')
             .where.not(status: 'Closed')
             .where(market_identifier: MARKET_1X2_EXT_MARKET_ID)
             .where(outcome: outcome)

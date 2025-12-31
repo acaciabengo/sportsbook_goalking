@@ -11,11 +11,13 @@ RSpec.describe TwoUpFeatureJob, type: :worker do
 
   let!(:worker) { described_class.new }
 
-  let!(:bet1) { Fabricate(:bet, fixture: soccer_fixture, market_identifier: "1", outcome: "1", status: "Active") } # should be won
-  let!(:bet2) { Fabricate(:bet, fixture: soccer_fixture, market_identifier: "1", outcome: "2", status: "Active") } # should be won
+  let!(:bet1) { Fabricate(:bet, fixture: soccer_fixture, market_identifier: "1", outcome: "1", status: "Active", bet_type: "PreMatch") } # should be won
+  let!(:bet2) { Fabricate(:bet, fixture: soccer_fixture, market_identifier: "1", outcome: "2", status: "Active", bet_type: "PreMatch") } # should be won
   let!(:other_bets) { Fabricate.times( 5, :bet, fixture: soccer_fixture, market_identifier: "1", outcome: "1", status: "closed") } # closed bets
-  let!(:bet3) { Fabricate(:bet, fixture: soccer_fixture, market_identifier: "2", outcome: "1", status: "Active") } # different market,
-  let!(:bet4) { Fabricate(:bet, fixture: other_fixture, market_identifier: "1", outcome: "1", status: "Active") } # different sport
+  let!(:bet3) { Fabricate(:bet, fixture: soccer_fixture, market_identifier: "2", outcome: "1", status: "Active", bet_type: "PreMatch") } # different market,
+  let!(:bet4) { Fabricate(:bet, fixture: other_fixture, market_identifier: "1", outcome: "1", status: "Active", bet_type: "PreMatch") } # different sport
+  let!(:bet5) { Fabricate(:bet, fixture: soccer_fixture, market_identifier: "1", outcome: "1", status: "Active", bet_type: "Live") } # should be won
+  
 
   context 'performing the job' do
     it 'updates the correct bets as won and settled' do
