@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_27_100055) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_31_093832) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -144,6 +144,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_27_100055) do
     t.string "market_identifier"
     t.string "sport"
     t.string "bet_type"
+    t.jsonb "meta_data", default: {}
     t.index ["bet_slip_id"], name: "index_bets_on_bet_slip_id"
     t.index ["fixture_id"], name: "index_bets_on_fixture_id"
     t.index ["user_id"], name: "index_bets_on_user_id"

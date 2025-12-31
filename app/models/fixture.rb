@@ -25,6 +25,8 @@ class Fixture < ApplicationRecord
        ].freeze
 
   # { select_one: "", true: true, false: false }
+  
+  SOCCER_EXT_SPORT_ID = "1"
 
   
   validates :event_id, presence: true
@@ -34,7 +36,10 @@ class Fixture < ApplicationRecord
   has_many :live_markets
   has_many :bets
 
-  after_commit :broadcast_updates, if: :persisted?
+  after_save :broadcast_updates, if: :persisted?
+
+  # after commit on update or create
+  after_save :check_scores, if: :persisted?
 
   paginates_per 100
 
@@ -123,6 +128,23 @@ class Fixture < ApplicationRecord
       if tournament
         self.tournament_name = tournament.name
       end
+    end
+  end
+
+  def check_scores
+    # return if the sport is not soccer
+     return unless self.sport_id == SOCCER_EXT_SPORT_ID
+    
+    if saved_change_to_home_score? || saved_change_to_away_score?
+      home_score = self.home_score&.to_i || 0
+      away_score = self.away_score&.to_i || 0
+      
+      score_difference = (home_score - away_score).abs
+
+      return unless score_difference == 2
+
+      TwoUpFeatureJob.perform_async(self.id, home_score, away_score)
+
     end
   end
 end
