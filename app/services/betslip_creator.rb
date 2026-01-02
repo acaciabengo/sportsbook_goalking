@@ -165,9 +165,9 @@ class BetslipCreator
       fixture_id = bet_data[:fixture_id]&.to_i
       market_identifier = bet_data[:market_identifier]&.to_s
       specifier = bet_data[:specifier].presence
-      outcome_id = bet_data[:outcome]&.to_i
+      outcome_id = bet_data[:outcome_id]&.to_i
       bet_type = bet_data[:bet_type]
-      outcome_desc = bet_data[:outcome_desc]&.to_s
+      outcome_desc = bet_data[:outcome]&.to_s
 
       if bet_type == 'PreMatch'
         odds = pre_markets_data.dig(fixture_id, market_identifier, specifier) || {}
