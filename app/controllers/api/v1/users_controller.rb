@@ -5,7 +5,7 @@ class Api::V1::UsersController < Api::V1::BaseController
   def show
     user = @current_user.as_json(only: [:id, :first_name, :last_name, :phone_number, :balance, :points, :created_at],
                                                       include: { user_bonuses: { only: [:id, :amount, :status, :expires_at, :created_at] } })
-    # user[:balance ] = user[:balance].to_f
+    user[:balance ] = user[:balance].to_f
     render json: { 
         user: user
       }, status: :ok
