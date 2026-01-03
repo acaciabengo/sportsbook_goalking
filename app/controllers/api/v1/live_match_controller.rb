@@ -105,14 +105,16 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
     final_sql = ActiveRecord::Base.sanitize_sql_array([query_sql] + sanitized_binds)
     raw_results = ActiveRecord::Base.connection.exec_query(final_sql).to_a
 
-    @pagy, @records = pagy(:offset, raw_results)
+    # Filter to only include fixtures with markets before pagination
+    filtered_results = raw_results.select { |record| record["live_market_id"].present? }
+    @pagy, @records = pagy(:offset, filtered_results)
 
     # make a nested json response
     response = {
       current_page: @pagy.page,
       total_pages: @pagy.pages,
       total_count: @pagy.count,
-      fixtures: @records.select { |record| record["live_market_id"].present? }.map do |record|
+      fixtures: @records.map do |record|
         {
           id: record["id"],
           event_id: record["event_id"],
