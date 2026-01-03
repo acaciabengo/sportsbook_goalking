@@ -37,14 +37,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
     
     sanitized_binds = binds
 
-    # ===============================
-    # Add Caching to speed up response time and set it to 2 minutes
-    # ===============================
-    
-    cache_key = "live_match_fixtures_#{sport_id || 'all'}_#{category_id || 'all'}_#{tournament_id || 'all'}_#{params[:page] || 1}"
-
-    raw_results = Rails.cache.fetch(cache_key, expires_in: 2.minutes) do
-      query_sql = <<-SQL
+    query_sql = <<-SQL
         -- aggregate markets into a json array per fixture
         WITH aggregated_markets AS (
           SELECT 
@@ -99,13 +92,14 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
         LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
         WHERE f.match_status = '1' 
           AND f.status = '1'
+          AND f.booked = true
+          AND f.start_date >= NOW() - INTERVAL '2 hours'
           #{dynamic_sql}
         ORDER BY f.start_date ASC
       SQL
 
-      final_sql = ActiveRecord::Base.sanitize_sql_array([query_sql] + sanitized_binds)
-      ActiveRecord::Base.connection.exec_query(final_sql).to_a
-    end
+    final_sql = ActiveRecord::Base.sanitize_sql_array([query_sql] + sanitized_binds)
+    raw_results = ActiveRecord::Base.connection.exec_query(final_sql).to_a
 
     @pagy, @records = pagy(:offset, raw_results)
 
@@ -157,13 +151,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
     
     # show details for a specific live match and all markets/odds
     
-    # ===============================
-    # Add Caching to speed up response time and set it to 2 minutes
-    # ===============================
-    cache_key = "live_match_fixture_#{fixture_id}"
-    
-    raw_results = Rails.cache.fetch(cache_key, expires_in: 2.minutes) do
-      query_sql = <<-SQL
+    query_sql = <<-SQL
         WITH aggregated_markets AS (
           SELECT
             lm.fixture_id,
@@ -215,9 +203,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
         LIMIT 1
       SQL
 
-      ActiveRecord::Base.connection.exec_query(query_sql, "SQL", [fixture_id]).to_a
-    end
-    
+    raw_results = ActiveRecord::Base.connection.exec_query(query_sql, "SQL", [fixture_id]).to_a
     
 
     if raw_results.empty?
