@@ -90,8 +90,8 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
         LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
         LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
         LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
-        WHERE f.match_status = '1' 
-          AND f.status = '1'
+        WHERE 
+          f.live_odds = '1'
           AND f.booked = true
           AND f.start_date >= NOW() - INTERVAL '2 hours'
           #{dynamic_sql}

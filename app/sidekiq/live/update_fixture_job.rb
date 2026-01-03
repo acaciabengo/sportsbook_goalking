@@ -12,17 +12,27 @@ class Live::UpdateFixtureJob
       match_id = match["matchid"].to_i
       match_status = match["status"]
       status = match["active"] 
+      match_time = match['matchtime_extended']
+      home_score = match['clearedscore']&.split(':')&.first&.to_i
+      away_score = match['clearedscore']&.split(':')&.last&.to_i
+
+
 
       # find the fixture
       fixture = Fixture.find_by(event_id: match_id)
       next unless fixture
 
+      fixture.home_score = home_score if home_score.present?
+      fixture.away_score = away_score if away_score.present?
+      fixture.match_time = match_time if match_time.present?
+
       if fixture.booked == false 
         fixture.booked = true
       end
 
-      fixture.status = status
-      fixture.match_status = match_status
+      fixture.live_odds = status if status.present?
+      fixture.match_status = match_status if match_status.present?
+      
 
       # update fixture details
       match_info = match.at_xpath("MatchInfo")

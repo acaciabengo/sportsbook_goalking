@@ -13,6 +13,7 @@ class Live::OddsUpdateJob
     doc.xpath("//Match").each do |match|
       match_id = match["matchid"]
       score = match["score"]
+      live_odds = match["active"]
 
       # find the fixture
       fixture = Fixture.find_by(event_id: match_id)
@@ -27,14 +28,19 @@ class Live::OddsUpdateJob
 
       update_attributes = {}
 
+      # add the live odds status
+      update_attributes[:live_odds] = live_odds if live_odds.present?
+
+      update_attributes[:match_time] = match['matchtime_extended'] if match['matchtime_extended'].present?
+
       if score.present?
         home_score, away_score = score.split(':').map(&:to_i)
         update_attributes[:home_score] = home_score
         update_attributes[:away_score] = away_score
       end
 
-      match_status = match["active"] #== "1" ? "live" : "finished"
-      update_attributes[:match_status] = match_status
+      # match_status = match["active"] #== "1" ? "live" : "finished"
+      # update_attributes[:match_status] = match_status
 
       betstatus = match["betstatus"] #== "started" ? "in_play" : "suspended"
     
