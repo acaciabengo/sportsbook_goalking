@@ -127,6 +127,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
           away_team: record["away_team"],
           match_status: record["match_status"],
           fixture_status: record["fixture_status"],
+          market_count: record["market_count"],
           sport: {
             id: record["sport_id"],
             ext_sport_id: record["ext_sport_id"],
