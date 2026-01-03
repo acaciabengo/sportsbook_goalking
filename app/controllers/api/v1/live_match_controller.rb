@@ -55,7 +55,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           LEFT JOIN markets m on m.ext_market_id = lm.market_identifier::integer AND m.sport_id = s.id
           WHERE 
             lm.status = 'started'
-            AND lm.market_identifier = '1'
+            AND lm.market_identifier = '2'
         )
 
         SELECT
