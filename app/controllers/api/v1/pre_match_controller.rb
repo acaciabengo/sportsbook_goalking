@@ -56,7 +56,8 @@ class Api::V1::PreMatchController < Api::V1::BaseController
             m.ext_market_id,
             pm.odds,
             pm.specifier,
-            m.id AS market_id
+            m.id AS market_id, 
+            COUNT(*) OVER (PARTITION BY pm.fixture_id) AS market_count
           FROM pre_markets pm
           JOIN fixtures f ON f.id = pm.fixture_id
           LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
@@ -92,7 +93,8 @@ class Api::V1::PreMatchController < Api::V1::BaseController
           am.name AS market_name,
           am.market_id,
           am.odds,
-          am.specifier
+          am.specifier, 
+          am.market_count
         FROM fixtures f    
         INNER JOIN aggregated_markets am ON am.fixture_id = f.id
         LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id

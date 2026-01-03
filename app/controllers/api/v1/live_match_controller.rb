@@ -108,7 +108,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
       current_page: @pagy.page,
       total_pages: @pagy.pages,
       total_count: @pagy.count,
-      fixtures: @records.map do |record|
+      fixtures: @records.select { |record| record["live_market_id"].present? }.map do |record|
         {
           id: record["id"],
           event_id: record["event_id"],
@@ -117,6 +117,8 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           away_team: record["away_team"],
           match_status: record["match_status"],
           fixture_status: record["fixture_status"],
+          match_time: record["match_time"],
+          score: "#{record["home_score"]}-#{record["away_score"]}",
           sport: {
             id: record["sport_id"],
             ext_sport_id: record["ext_sport_id"],
@@ -132,13 +134,13 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
             ext_category_id: record["ext_category_id"],
             name: record["category_name"]
           },
-          markets: record["live_market_id"] ? {
+          markets: {
             id: record["live_market_id"],
             name: record["market_name"],
             market_identifier: record["market_identifier"],
             odds: record["odds"] ? format_odds(record["home_team"], record["away_team"], JSON.parse(record["odds"]), record["specifier"]) : {}, 
             specifier: record["specifier"]
-          } : {}
+          }
         }
       end
     }
