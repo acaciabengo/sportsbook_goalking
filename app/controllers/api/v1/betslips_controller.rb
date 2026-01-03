@@ -28,7 +28,7 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 			if betslip
 					render json: betslip.as_json(only: [:id, :stake, :odds, :win_amount, :status, :created_at, :result, :payout],
 																			include: {
-																					bets: { only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type, :created_at]  } 
+																					bets: { only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type, :created_at, :status]  } 
 																			}
 																	)
 			else

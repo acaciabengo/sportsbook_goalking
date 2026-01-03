@@ -61,7 +61,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
           LEFT JOIN markets m on m.ext_market_id = lm.market_identifier::integer AND m.sport_id = s.id
           WHERE 
-            lm.status = 'active'
+            lm.status = 'started'
             AND lm.market_identifier = '1'
         )
 
@@ -97,8 +97,8 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
         LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
         LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
         LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
-        WHERE f.match_status = 'in_play' 
-          AND f.status = '0'
+        WHERE f.match_status = '1' 
+          AND f.status = '1'
           #{dynamic_sql}
         ORDER BY f.start_date ASC
       SQL
