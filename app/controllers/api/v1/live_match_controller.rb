@@ -66,6 +66,9 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           f.part_two_name AS away_team, 
           f.match_status, 
           f.status AS fixture_status,
+          f.match_time,
+          f.home_score,
+          f.away_score,
           -- Sport Fields
           s.id AS sport_id,
           s.ext_sport_id,
@@ -84,7 +87,8 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           am.name AS market_name,
           am.market_id,
           am.odds,
-          am.specifier
+          am.specifier,
+
         FROM fixtures f      
         LEFT JOIN aggregated_markets am ON am.fixture_id = f.id
         LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
