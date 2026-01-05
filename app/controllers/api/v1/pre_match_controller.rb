@@ -11,6 +11,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
     category_id = params[:category_id]&.to_i
     tournament_id = params[:tournament_id]&.to_i
     query = params[:query]&.strip
+    page = params[:page]&.to_i || 1
 
     dynamic_conditions = []
 
@@ -57,7 +58,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
       "page:#{page}"
     ].join(":")
     
-    raw_results = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+    raw_results = Rails.cache.fetch(cache_key, expires_in: 2.minutes) do
       query_sql = <<-SQL
         -- aggregate markets into a json array per fixture
         WITH aggregated_markets AS (

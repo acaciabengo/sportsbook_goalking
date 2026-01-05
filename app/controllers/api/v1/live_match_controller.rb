@@ -11,6 +11,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
     category_id = params[:category_id]&.to_i
     tournament_id = params[:tournament_id]&.to_i
     query = params[:query]&.strip
+    page = params[:page]&.to_i || 1
 
     dynamic_conditions = []
 
