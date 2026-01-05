@@ -43,7 +43,8 @@ class Api::V1::PreMatchController < Api::V1::BaseController
       dynamic_sql = ""
     end
     
-    sanitized_binds = binds
+    # Repeat binds for each CTE and main query (3 times total)
+    sanitized_binds = binds + binds + binds
 
     # ===============================
     # Add Caching to speed up response time and set it to 5 minutes

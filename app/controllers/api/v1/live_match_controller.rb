@@ -43,7 +43,8 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
       dynamic_sql = ""
     end
 
-    sanitized_binds = binds
+    # Repeat binds for each CTE and main query (3 times total)
+    sanitized_binds = binds + binds + binds
 
     query_sql = <<-SQL
         -- aggregate markets into a json array per fixture
