@@ -43,7 +43,13 @@ Rails.application.configure do
   # config.action_cable.url = "wss://example.com/cable"
   # config.action_cable.allowed_request_origins = [ "http://example.com", /http:\/\/example.*/ ]
   config.action_cable.url = "wss://dev.goalkingsug.com/cable"
-  config.action_cable.allowed_request_origins = [ /http:\/\/*/, /https:\/\/*/, nil ]
+  config.action_cable.allowed_request_origins = [/.*/]
+  # config.action_cable.allowed_request_origins = [
+  #   'https://dev.goalkingsug.com',
+  #   'http://dev.goalkingsug.com',
+  #   /https?:\/\/dev\.goalkingsug\.com/,
+  #   /https?:\/\/.*\.goalkingsug\.com/  
+  # ]
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   # Can be used together with config.force_ssl for Strict-Transport-Security and secure cookies.
@@ -108,6 +114,6 @@ Rails.application.configure do
   
   # Restrict source for sockets connections
   # config.action_cable.allowed_request_origins = [ /http:\/\/goalkingsug.*/ ]
-  config.action_cable.disable_request_forgery_protection = true
+  # config.action_cable.disable_request_forgery_protection = true
   
 end
