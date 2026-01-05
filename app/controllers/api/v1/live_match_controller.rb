@@ -238,8 +238,9 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
         LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
         LEFT JOIN categories c ON c.ext_category_id = f.ext_category_id
         LEFT JOIN aggregated_markets am ON am.fixture_id = f.id
-        WHERE f.match_status = 'in_play' 
-          AND f.status = '0' 
+        WHERE f.live_odds = '1'
+          AND f.booked = true
+          AND f.start_date >= NOW() - INTERVAL '2 hours'
           AND f.id = $1
         ORDER BY f.start_date DESC
         LIMIT 1
