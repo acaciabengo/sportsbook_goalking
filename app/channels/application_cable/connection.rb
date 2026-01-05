@@ -8,8 +8,10 @@ module ApplicationCable
       Rails.logger.info "ActionCable connected: #{current_user&.id || 'guest'}"
     end
 
-    def receive(data)
-      Rails.logger.info "RAW DATA RECEIVED: #{data.inspect}"
+    def receive(websocket_message)
+      Rails.logger.info "=" * 80
+      Rails.logger.info "RAW WEBSOCKET MESSAGE: #{websocket_message.inspect}"
+      Rails.logger.info "=" * 80
       super
     end
 
