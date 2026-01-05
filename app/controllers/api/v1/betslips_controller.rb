@@ -10,7 +10,7 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 
 		slips = @records.as_json(only: [:id, :stake, :win_amount, :status, :created_at , :result, :payout],
 												include: {
-													 bets: { only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type,:status, :created_at] } 
+													 bets: { only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type,:status, :created_at, :status] } 
 												}
 											)
 		
