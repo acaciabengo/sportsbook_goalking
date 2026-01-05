@@ -48,7 +48,12 @@ class Api::V1::PreMatchController < Api::V1::BaseController
     # Add Caching to speed up response time and set it to 5 minutes
     # ===============================
     
-    cache_key = "pre_match_fixtures_#{sport_id || 'all'}_#{category_id || 'all'}_#{tournament_id || 'all'}_#{query || 'all'}_#{params[:page] || 1}"
+    query_key = query.present? ? query.parameterize : 'all'
+    sport_id_key = sport_id.present? ? sport_id : 'all'
+    category_id_key = category_id.present? ? category_id : 'all'
+    tournament_id_key = tournament_id.present? ? tournament_id : 'all'
+
+    cache_key = "pre_match_fixtures_#{sport_id_key}_#{category_id_key}_#{tournament_id_key}_#{query_key}_#{params[:page] || 1}"
     
     raw_results = Rails.cache.fetch(cache_key, expires_in: 2.minutes) do
       query_sql = <<-SQL
