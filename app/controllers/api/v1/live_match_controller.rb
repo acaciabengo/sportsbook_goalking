@@ -3,15 +3,17 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
   # before_action :auth_user
 
   def index
-    # Find all fixtures that are in play and have a "Match Result" market (ID '1').
-    # Show only that single market for each fixture.
+    # find all fixtures that are not started yet
+    # show league, tournament, home and away teams, scores, match time, odds for main markets
     
     #extract filter params if any
     sport_id = params[:sport_id]&.to_i
     category_id = params[:category_id]&.to_i
     tournament_id = params[:tournament_id]&.to_i
+    query = params[:query]&.strip
 
     dynamic_conditions = []
+
     binds = []
 
     if sport_id.present?
@@ -27,6 +29,11 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
     if tournament_id.present?
       dynamic_conditions << "t.id = ?"
       binds << tournament_id
+    end
+
+    if query.present?
+      dynamic_conditions << "(f.part_one_name ILIKE ? OR f.part_two_name ILIKE ?)"
+      binds << "%#{query}%" << "%#{query}%"
     end
 
     if dynamic_conditions.any?

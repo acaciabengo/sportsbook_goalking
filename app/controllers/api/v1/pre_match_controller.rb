@@ -10,6 +10,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
     sport_id = params[:sport_id]&.to_i
     category_id = params[:category_id]&.to_i
     tournament_id = params[:tournament_id]&.to_i
+    query = params[:query]&.strip
 
     dynamic_conditions = []
 
@@ -28,6 +29,11 @@ class Api::V1::PreMatchController < Api::V1::BaseController
     if tournament_id.present?
       dynamic_conditions << "t.id = ?"
       binds << tournament_id
+    end
+
+    if query.present?
+      dynamic_conditions << "(f.part_one_name ILIKE ? OR f.part_two_name ILIKE ?)"
+      binds << "%#{query}%" << "%#{query}%"
     end
 
     if dynamic_conditions.any?
