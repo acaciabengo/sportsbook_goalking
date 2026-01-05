@@ -41,7 +41,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
     else
       dynamic_sql = ""
     end
-    
+
     sanitized_binds = binds
 
     query_sql = <<-SQL
@@ -59,10 +59,32 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           FROM live_markets lm
           JOIN fixtures f ON f.id = lm.fixture_id
           LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
+          LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
+          LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
           LEFT JOIN markets m on m.ext_market_id = lm.market_identifier::integer AND m.sport_id = s.id
           WHERE 
             lm.status = 'started'
             AND lm.market_identifier = '2'
+            AND f.live_odds = '1'
+            AND f.booked = true
+            AND f.start_date >= NOW() - INTERVAL '2 hours'
+            #{dynamic_sql}
+        ), 
+        market_counts AS (
+          SELECT 
+            lm.fixture_id, 
+            COUNT(*) AS total_markets
+          FROM live_markets lm
+          JOIN fixtures f ON f.id = lm.fixture_id
+          LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
+          LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
+          LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
+          WHERE lm.status = 'started'
+            AND f.live_odds = '1'
+            AND f.booked = true
+            AND f.start_date >= NOW() - INTERVAL '2 hours'
+            #{dynamic_sql}
+          GROUP BY lm.fixture_id
         )
 
         SELECT
@@ -94,10 +116,12 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           am.name AS market_name,
           am.market_id,
           am.odds,
-          am.specifier
+          am.specifier,
+          mc.total_markets AS market_count
 
         FROM fixtures f      
         LEFT JOIN aggregated_markets am ON am.fixture_id = f.id
+        LEFT JOIN market_counts mc ON mc.fixture_id = f.id
         LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
         LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
         LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
@@ -132,6 +156,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           fixture_status: record["fixture_status"],
           match_time: record["match_time"],
           score: "#{record["home_score"]}-#{record["away_score"]}",
+          market_count: record["market_count"],
           sport: {
             id: record["sport_id"],
             ext_sport_id: record["ext_sport_id"],

@@ -48,7 +48,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
     # Add Caching to speed up response time and set it to 5 minutes
     # ===============================
     
-    cache_key = "pre_match_fixtures_#{sport_id || 'all'}_#{category_id || 'all'}_#{tournament_id || 'all'}_#{params[:page] || 1}"
+    cache_key = "pre_match_fixtures_#{sport_id || 'all'}_#{category_id || 'all'}_#{tournament_id || 'all'}_#{query || 'all'}_#{params[:page] || 1}"
     
     raw_results = Rails.cache.fetch(cache_key, expires_in: 2.minutes) do
       query_sql = <<-SQL
@@ -66,18 +66,32 @@ class Api::V1::PreMatchController < Api::V1::BaseController
           FROM pre_markets pm
           JOIN fixtures f ON f.id = pm.fixture_id
           LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
+          LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
+          LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
           LEFT JOIN markets m on m.ext_market_id = pm.market_identifier::integer AND m.sport_id = s.id
           WHERE 
             pm.status IN  ('active', '0')
             AND pm.market_identifier = '1'
+            AND f.match_status = 'not_started' 
+            AND f.status IN ('0', 'active') 
+            AND f.start_date > NOW()
+            #{dynamic_sql}
         ), 
         market_counts AS (
           SELECT 
-            fixture_id, 
+            pm.fixture_id, 
             COUNT(*) AS total_markets
-          FROM pre_markets
-          WHERE status IN ('active', '0')
-          GROUP BY fixture_id
+          FROM pre_markets pm
+          JOIN fixtures f ON f.id = pm.fixture_id
+          LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
+          LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
+          LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
+          WHERE pm.status IN ('active', '0')
+            AND f.match_status = 'not_started' 
+            AND f.status IN ('0', 'active') 
+            AND f.start_date > NOW()
+            #{dynamic_sql}
+          GROUP BY pm.fixture_id
         )
 
         SELECT
