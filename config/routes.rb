@@ -16,6 +16,8 @@ Rails.application.routes.draw do
       match "/betslips" => "betslips#index", :via => [:get]
       match "/betslips" => "betslips#create", :via => [:post]
       match "/betslips/:id" => "betslips#show", :via => [:get]
+      match "/betslips/:id/cashout_offer" => "betslips#cashout_offer", :via => [:get]
+      match "/betslips/:id/cashout" => "betslips#cashout", :via => [:post]
       match "/pre_match" => "pre_match#index", :via => [:get]
       match "/pre_match/:id" => "pre_match#show", :via => [:get]
       match "/live_match" => "live_match#index", :via => [:get]

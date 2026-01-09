@@ -35,12 +35,15 @@ class BetslipsJob
                      bonus_win = 0
                   end
 
-                  payout = (bonus_win.to_f + win_amount)
+                  gross_payout = (bonus_win.to_f + win_amount)
 
-                  net_payout = payout - (payout * BetSlip::TAX_RATE)
+                  # Calculate tax on NET WINNINGS only (gross payout - stake)
+                  net_winnings = gross_payout - slip.stake
+                  tax = net_winnings > 0 ? (net_winnings * BetSlip::TAX_RATE) : 0
+                  net_payout = gross_payout - tax
 
                   ActiveRecord::Base.transaction do
-                     slip.update(status: "Closed" ,result: "Win", payout: payout, paid: true)
+                     slip.update(status: "Closed", result: "Win", payout: net_payout, tax: tax, paid: true)
                      #update the account balances through transactions under an active record transaction
                      previous_balance = user.balance
                      user.balance = (user.balance + net_payout)
@@ -84,14 +87,20 @@ class BetslipsJob
                         bonus_win = 0
                      end
 
-                     payout = (bonus_win.to_f + win_amount)
+                     gross_payout = (bonus_win.to_f + win_amount)
+
+                     # Calculate tax on NET WINNINGS only (gross payout - stake)
+                     net_winnings = gross_payout - slip.stake
+                     tax = net_winnings > 0 ? (net_winnings * BetSlip::TAX_RATE) : 0
+                     net_payout = gross_payout - tax
+
                      ActiveRecord::Base.transaction do
-                        slip.update(status: "Closed" ,result: "Win", payout: payout, paid: true)
+                        slip.update(status: "Closed", result: "Win", payout: net_payout, tax: tax, paid: true)
                         #update the account balances through transactions under an active record transaction
                         previous_balance = user.balance
-                        user.balance = (user.balance + payout)
+                        user.balance = (user.balance + net_payout)
                         user.save!
-                        transaction = user.transactions.create!(balance_before: previous_balance, balance_after: user.balance, phone_number: user.phone_number, status: "SUCCESS", currency: "UGX", amount: payout, category: "Win - #{slip.id}" )
+                        transaction = user.transactions.create!(balance_before: previous_balance, balance_after: user.balance, phone_number: user.phone_number, status: "SUCCESS", currency: "UGX", amount: net_payout, category: "Win - #{slip.id}" )
                      end
                   end
                   
@@ -109,22 +118,22 @@ class BetslipsJob
       # Award points for the betslip if the feature is enabled
       crown_points_feature = ENV['CROWN_POINTS_FEATURE']&.to_s&.downcase == 'true'
       if crown_points_feature
-         crown_points_per_slip = ENV['CROWN_POINTS_PER_BETSLIP'].to_i || 5
+         crown_points_per_slip = (ENV['CROWN_POINTS_PER_BETSLIP'].presence || '5').to_i
          total_crown_points = calculate_crown_points(slip.stake, crown_points_per_slip)
          user = slip&.user
          if user.present? && total_crown_points > 0
             user.points += total_crown_points
             user.save!
-            # Optionally, log the points awarding
+            # Create crown point transaction record
             transaction = CrownPointTransaction.new(
-               user_id: user,
+               user: user,
                bet_slip: slip,
                points: total_crown_points
             )
 
             unless transaction.save
                # Handle save failure (e.g., log an error)
-               Rails.logger.error("Failed to save CrownPointTransaction for User #{user.id} and BetSlip #{slip.id}")
+               Rails.logger.error("Failed to save CrownPointTransaction for User #{user.id} and BetSlip #{slip.id}: #{transaction.errors.full_messages.join(', ')}")
             end
          end
       end

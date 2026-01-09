@@ -197,6 +197,112 @@ RSpec.describe "Api::V1::Betslips", type: :request do
     end
   end
 
+  path '/api/v1/betslips/{id}/cashout_offer' do
+    parameter name: :id, in: :path, type: :integer, description: 'Betslip ID'
+
+    get 'Gets cashout offer for a betslip' do
+      tags 'Betslips'
+      produces 'application/json'
+      security [Bearer: {}]
+      parameter name: :Authorization, in: :header, type: :string, description: 'Bearer token'
+
+      let(:Authorization) { auth_headers['Authorization'] }
+      let(:fixture) { Fabricate(:fixture) }
+      let(:betslip) { Fabricate(:bet_slip, user: user, status: 'Active', stake: 1000, payout: 5000) }
+      let!(:bet) { Fabricate(:bet, bet_slip: betslip, user: user, fixture: fixture, status: 'Active', odds: 2.5, market_identifier: '1', outcome: '1', specifier: nil, bet_type: 'Live') }
+      let!(:live_market) { Fabricate(:live_market, fixture: fixture, market_identifier: '1', specifier: nil, status: 'active', odds: { '1' => { 'odd' => 2.5, 'outcome_id' => '1' } }) }
+      let(:id) { betslip.id }
+
+      response '200', 'cashout offer available' do
+        schema type: :object,
+          properties: {
+            available: { type: :boolean, example: true },
+            cashout_value: { type: :number, example: 4000.50, description: 'Current cashout value in UGX' },
+            potential_win: { type: :number, example: 5000.00, description: 'Original potential payout' },
+            stake: { type: :number, example: 1000.00, description: 'Original stake' },
+            current_odds: { type: :number, example: 2.5, description: 'Current accumulator odds' }
+          },
+          required: ['available']
+        run_test!
+      end
+
+      response '200', 'cashout offer unavailable' do
+        let(:betslip) { Fabricate(:bet_slip, user: user, status: 'Closed', stake: 1000, payout: 5000) }
+
+        schema type: :object,
+          properties: {
+            available: { type: :boolean, example: false },
+            reason: { type: :string, example: 'Bet slip already settled' },
+            cashout_value: { type: :number, example: 0 },
+            potential_win: { type: :number, example: 5000.00 },
+            stake: { type: :number, example: 1000.00 }
+          }
+        run_test!
+      end
+
+      response '404', 'bet slip not found' do
+        let(:id) { 999999 }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:Authorization) { 'Bearer invalid_token' }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/betslips/{id}/cashout' do
+    parameter name: :id, in: :path, type: :integer, description: 'Betslip ID'
+
+    post 'Executes cashout for a betslip' do
+      tags 'Betslips'
+      produces 'application/json'
+      security [Bearer: {}]
+      parameter name: :Authorization, in: :header, type: :string, description: 'Bearer token'
+
+      let(:Authorization) { auth_headers['Authorization'] }
+      let(:fixture) { Fabricate(:fixture) }
+      let(:betslip) { Fabricate(:bet_slip, user: user, status: 'Active', stake: 1000, payout: 5000) }
+      let!(:bet) { Fabricate(:bet, bet_slip: betslip, user: user, fixture: fixture, status: 'Active', odds: 2.5, market_identifier: '1', outcome: '1', specifier: nil, bet_type: 'Live') }
+      let!(:live_market) { Fabricate(:live_market, fixture: fixture, market_identifier: '1', specifier: nil, status: 'active', odds: { '1' => { 'odd' => 2.5, 'outcome_id' => '1' } }) }
+      let(:id) { betslip.id }
+
+      response '200', 'cashout successful' do
+        schema type: :object,
+          properties: {
+            success: { type: :boolean, example: true },
+            message: { type: :string, example: 'Bet cashed out successfully' },
+            cashout_value: { type: :number, example: 4000.50, description: 'Gross cashout value before tax' },
+            new_balance: { type: :number, example: 13500.75, description: 'User balance after cashout' }
+          },
+          required: ['success', 'message', 'cashout_value', 'new_balance']
+        run_test!
+      end
+
+      response '422', 'cashout unavailable' do
+        let(:betslip) { Fabricate(:bet_slip, user: user, status: 'Closed', stake: 1000, payout: 5000) }
+
+        schema type: :object,
+          properties: {
+            success: { type: :boolean, example: false },
+            error: { type: :string, example: 'Bet slip already settled' }
+          }
+        run_test!
+      end
+
+      response '404', 'bet slip not found' do
+        let(:id) { 999999 }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:Authorization) { 'Bearer invalid_token' }
+        run_test!
+      end
+    end
+  end
+
   describe "GET /" do
     context "when user is authenticated" do
       before do
@@ -266,7 +372,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
             fixture_id: fixture.id,
             market_identifier: '1',
             outcome_desc: 'Home Win',
-            outcome: '1',
+            outcome_id: '1',
             odd: 2.5,
             specifier: nil,
             bet_type: 'PreMatch'
@@ -334,7 +440,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
             market
           end
           let!(:market2) do
-            market = Fabricate.build(:pre_market, market_identifier: '2', specifier: nil, odds: { 'Over 2.5' => {'odd' => 3.0, 'outcome_id' => '1'} })
+            market = Fabricate.build(:pre_market, market_identifier: '10', specifier: nil, odds: { 'Over 2.5' => {'odd' => 3.0, 'outcome_id' => '1'} })
             market.fixture_id = same_game_fixture.id
             market.save!
             market
@@ -349,16 +455,16 @@ RSpec.describe "Api::V1::Betslips", type: :request do
                   fixture_id: same_game_fixture.id,
                   market_identifier: '1',
                   outcome_desc: 'Home Win',
-                  outcome: '1',
+                  outcome_id: '1',
                   odd: 2.0,
                   specifier: nil,
                   bet_type: 'PreMatch'
                 },
                 {
                   fixture_id: same_game_fixture.id,
-                  market_identifier: '2',
+                  market_identifier: '10',
                   outcome_desc: 'Over 2.5',
-                  outcome: '1',
+                  outcome_id: '1',
                   odd: 3.0,
                   specifier: nil,
                   bet_type: 'PreMatch'
@@ -421,7 +527,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
                   fixture_id: fixture.id,
                   market_identifier: '1',
                   outcome_desc: 'Home Win',
-                  outcome: '1',
+                  outcome_id: '1',
                   odd: 2.50,
                   specifier: nil,
                   bet_type: 'PreMatch'
@@ -430,7 +536,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
                   fixture_id: Fabricate(:fixture).id,
                   market_identifier: '1',
                   outcome_desc: 'Home Win',
-                  outcome: '1',
+                  outcome_id: '1',
                   odd: 1.5,
                   specifier: nil,
                   bet_type: 'PreMatch'
@@ -481,9 +587,9 @@ RSpec.describe "Api::V1::Betslips", type: :request do
             {
               stake: 1000,
               bets: [
-                { fixture_id: fixture.id, market_identifier: '1', outcome_desc: 'Win', outcome: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' },
-                { fixture_id: Fabricate(:fixture).id, market_identifier: '1', outcome_desc: 'Win', outcome: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' },
-                { fixture_id: Fabricate(:fixture).id, market_identifier: '1', outcome_desc: 'Win', outcome: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' }
+                { fixture_id: fixture.id, market_identifier: '1', outcome_desc: 'Win', outcome_id: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' },
+                { fixture_id: Fabricate(:fixture).id, market_identifier: '1', outcome_desc: 'Win', outcome_id: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' },
+                { fixture_id: Fabricate(:fixture).id, market_identifier: '1', outcome_desc: 'Win', outcome_id: '1', odd: 2.0, specifier: nil, bet_type: 'PreMatch' }
               ]
             }
           end
@@ -638,6 +744,208 @@ RSpec.describe "Api::V1::Betslips", type: :request do
         expect {
           post "/api/v1/betslips", params: valid_params
         }.not_to change(BetSlip, :count)
+      end
+    end
+  end
+
+  describe "GET /api/v1/betslips/:id/cashout_offer" do
+    let(:fixture) { Fabricate(:fixture) }
+    let(:betslip) { Fabricate(:bet_slip, user: user, status: 'Active', stake: 1000, payout: 5000, odds: 2.5) }
+    let!(:bet) { Fabricate(:bet, bet_slip: betslip, user: user, fixture: fixture, status: 'Active', odds: 2.5, market_identifier: '1', outcome: '1', specifier: nil, bet_type: 'Live') }
+
+    context "when user is authenticated" do
+      context "when cashout is available" do
+        let!(:live_market) { Fabricate(:live_market, fixture: fixture, market_identifier: '1', specifier: nil, status: 'active', odds: { '1' => { 'odd' => 2.5, 'outcome_id' => '1' } }) }
+
+        it "returns http success" do
+          get "/api/v1/betslips/#{betslip.id}/cashout_offer", headers: auth_headers
+          expect(response).to have_http_status(:success)
+        end
+
+        it "returns cashout offer with available true" do
+          get "/api/v1/betslips/#{betslip.id}/cashout_offer", headers: auth_headers
+          json = JSON.parse(response.body)
+
+          expect(json['available']).to eq(true)
+          expect(json).to have_key('cashout_value')
+          expect(json).to have_key('potential_win')
+          expect(json).to have_key('stake')
+          expect(json).to have_key('current_odds')
+        end
+
+        it "returns correct stake and potential win" do
+          get "/api/v1/betslips/#{betslip.id}/cashout_offer", headers: auth_headers
+          json = JSON.parse(response.body)
+
+          expect(json['stake']).to eq(1000.0)
+          expect(json['potential_win']).to eq(5000.0)
+        end
+      end
+
+      context "when bet slip is already settled" do
+        let(:settled_betslip) { Fabricate(:bet_slip, user: user, status: 'Closed', result: 'Win', stake: 1000, payout: 5000) }
+
+        it "returns cashout unavailable" do
+          get "/api/v1/betslips/#{settled_betslip.id}/cashout_offer", headers: auth_headers
+          json = JSON.parse(response.body)
+
+          expect(json['available']).to eq(false)
+          expect(json['reason']).to eq('Bet slip already settled')
+          expect(json['cashout_value']).to eq(0)
+        end
+      end
+
+      context "when markets are not available" do
+        it "returns cashout unavailable" do
+          get "/api/v1/betslips/#{betslip.id}/cashout_offer", headers: auth_headers
+          json = JSON.parse(response.body)
+
+          expect(json['available']).to eq(false)
+          expect(json['reason']).to match(/no*.*available/i)
+        end
+      end
+
+      context "when bet slip does not exist" do
+        it "returns not found" do
+          get "/api/v1/betslips/999999/cashout_offer", headers: auth_headers
+          expect(response).to have_http_status(:not_found)
+        end
+      end
+    end
+
+    context "when user is not authenticated" do
+      it "returns unauthorized status" do
+        get "/api/v1/betslips/#{betslip.id}/cashout_offer"
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
+  describe "POST /api/v1/betslips/:id/cashout" do
+    let(:fixture) { Fabricate(:fixture) }
+    let(:betslip) { Fabricate(:bet_slip, user: user, status: 'Active', stake: 1000, payout: 5000, odds: 2.5) }
+    let!(:bet) { Fabricate(:bet, bet_slip: betslip, user: user, fixture: fixture, status: 'Active', odds: 2.5, market_identifier: '1', outcome: '1', specifier: nil, bet_type: 'Live') }
+
+    context "when user is authenticated" do
+      context "when cashout is available" do
+        let!(:live_market) { Fabricate(:live_market, fixture: fixture, market_identifier: '1', specifier: nil, status: 'active', odds: { '1' => { 'odd' => 2.5, 'outcome_id' => '1' } }) }
+
+        it "returns http success" do
+          post "/api/v1/betslips/#{betslip.id}/cashout", headers: auth_headers
+          expect(response).to have_http_status(:success)
+        end
+
+        it "returns success response with cashout details" do
+          post "/api/v1/betslips/#{betslip.id}/cashout", headers: auth_headers
+          json = JSON.parse(response.body)
+
+          expect(json['success']).to eq(true)
+          expect(json['message']).to eq('Bet cashed out successfully')
+          expect(json).to have_key('cashout_value')
+          expect(json).to have_key('new_balance')
+        end
+
+        it "updates bet slip status to Closed" do
+          post "/api/v1/betslips/#{betslip.id}/cashout", headers: auth_headers
+          betslip.reload
+
+          expect(betslip.status).to eq('Closed')
+          expect(betslip.result).to eq('Win')
+        end
+
+        it "closes all associated bets" do
+          post "/api/v1/betslips/#{betslip.id}/cashout", headers: auth_headers
+          bet.reload
+
+          expect(bet.status).to eq('Closed')
+          expect(bet.result).to eq('Win')
+        end
+
+        it "updates user balance" do
+          initial_balance = user.balance
+          post "/api/v1/betslips/#{betslip.id}/cashout", headers: auth_headers
+          user.reload
+
+          expect(user.balance).to be > initial_balance
+        end
+
+        it "creates a transaction record" do
+          expect {
+            post "/api/v1/betslips/#{betslip.id}/cashout", headers: auth_headers
+          }.to change(Transaction, :count).by(1)
+        end
+
+        it "stores cashout_value and cashout_at" do
+          post "/api/v1/betslips/#{betslip.id}/cashout", headers: auth_headers
+          betslip.reload
+
+          expect(betslip.cashout_value).to be > 0
+          expect(betslip.cashout_at).not_to be_nil
+        end
+
+        it "calculates tax correctly" do
+          post "/api/v1/betslips/#{betslip.id}/cashout", headers: auth_headers
+          betslip.reload
+
+          # Tax should be on net winnings only
+          net_winnings = betslip.cashout_value - betslip.stake
+          expected_tax = net_winnings > 0 ? (net_winnings * BetSlip::TAX_RATE) : 0
+
+          expect(betslip.tax).to eq(expected_tax)
+        end
+      end
+
+      context "when bet slip is already settled" do
+        let(:settled_betslip) { Fabricate(:bet_slip, user: user, status: 'Closed', result: 'Win', stake: 1000, payout: 5000) }
+
+        it "returns unprocessable entity" do
+          post "/api/v1/betslips/#{settled_betslip.id}/cashout", headers: auth_headers
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+
+        it "returns error message" do
+          post "/api/v1/betslips/#{settled_betslip.id}/cashout", headers: auth_headers
+          json = JSON.parse(response.body)
+
+          expect(json['success']).to eq(false)
+          expect(json['error']).to eq('Bet slip already settled')
+        end
+      end
+
+      context "when markets are not available" do
+        it "returns unprocessable entity" do
+          post "/api/v1/betslips/#{betslip.id}/cashout", headers: auth_headers
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+
+        it "does not update bet slip" do
+          post "/api/v1/betslips/#{betslip.id}/cashout", headers: auth_headers
+          betslip.reload
+
+          expect(betslip.status).to eq('Active')
+        end
+
+        it "does not update user balance" do
+          initial_balance = user.balance
+          post "/api/v1/betslips/#{betslip.id}/cashout", headers: auth_headers
+          user.reload
+
+          expect(user.balance).to eq(initial_balance)
+        end
+      end
+
+      context "when bet slip does not exist" do
+        it "returns not found" do
+          post "/api/v1/betslips/999999/cashout", headers: auth_headers
+          expect(response).to have_http_status(:not_found)
+        end
+      end
+    end
+
+    context "when user is not authenticated" do
+      it "returns unauthorized status" do
+        post "/api/v1/betslips/#{betslip.id}/cashout"
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end

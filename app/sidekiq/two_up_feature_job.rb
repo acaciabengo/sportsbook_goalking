@@ -20,6 +20,7 @@ class TwoUpFeatureJob
             .where(outcome: outcome)
 
     # update all these bets as won and settled
-    bets.update_all(result: 'Win', status: 'Closed', meta_data: { settlement_reason: 'Two Up Feature Triggered' })
+    meta_data = { settlement_reason: 'Two Up Feature Triggered', settled_at: Time.current, score: "#{home_score}-#{away_score}" }
+    bets.update_all(result: 'Win', status: 'Closed', meta_data: meta_data)
   end
 end

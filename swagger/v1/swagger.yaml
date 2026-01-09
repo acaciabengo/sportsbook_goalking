@@ -354,6 +354,126 @@ paths:
           description: bet slip not found
         '401':
           description: unauthorized
+  "/api/v1/betslips/{id}/cashout_offer":
+    parameters:
+    - name: id
+      in: path
+      description: Betslip ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Gets cashout offer for a betslip
+      tags:
+      - Betslips
+      security:
+      - Bearer: {}
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer token
+        schema:
+          type: string
+      responses:
+        '200':
+          description: cashout offer unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available:
+                    type: boolean
+                    example: false
+                  cashout_value:
+                    type: number
+                    example: 0
+                    description: Current cashout value in UGX
+                  potential_win:
+                    type: number
+                    example: 5000.0
+                    description: Original potential payout
+                  stake:
+                    type: number
+                    example: 1000.0
+                    description: Original stake
+                  current_odds:
+                    type: number
+                    example: 2.5
+                    description: Current accumulator odds
+                  reason:
+                    type: string
+                    example: Bet slip already settled
+                required:
+                - available
+        '404':
+          description: bet slip not found
+        '401':
+          description: unauthorized
+  "/api/v1/betslips/{id}/cashout":
+    parameters:
+    - name: id
+      in: path
+      description: Betslip ID
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Executes cashout for a betslip
+      tags:
+      - Betslips
+      security:
+      - Bearer: {}
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer token
+        schema:
+          type: string
+      responses:
+        '200':
+          description: cashout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Bet cashed out successfully
+                  cashout_value:
+                    type: number
+                    example: 4000.5
+                    description: Gross cashout value before tax
+                  new_balance:
+                    type: number
+                    example: 13500.75
+                    description: User balance after cashout
+                required:
+                - success
+                - message
+                - cashout_value
+                - new_balance
+        '422':
+          description: cashout unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: Bet slip already settled
+        '404':
+          description: bet slip not found
+        '401':
+          description: unauthorized
   "/api/v1/sports":
     get:
       summary: list sports
