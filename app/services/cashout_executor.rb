@@ -30,6 +30,7 @@ class CashoutExecutor
       @bet_slip.update!(
         status: 'Closed',
         result: 'Win',
+        win_amount: net_winnings,
         cashout_value: cashout_value,
         cashout_at: Time.current,
         payout: net_payout,
@@ -60,12 +61,13 @@ class CashoutExecutor
         reference: generate_reference
       )
 
-      # Broadcast balance update via WebSocket
-      ActionCable.server.broadcast("balance_#{@user.id}", {
-        balance: balance_after,
-        transaction: 'cashout',
-        amount: net_payout
-      })
+      # # Broadcast balance update via WebSocket
+      # Removed before a callback already implements this
+      # ActionCable.server.broadcast("balance_#{@user.id}", {
+      #   balance: balance_after,
+      #   transaction: 'cashout',
+      #   amount: net_payout
+      # })
     end
 
     true

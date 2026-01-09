@@ -116,9 +116,12 @@ class CashoutCalculator
     # Apply bookmaker margin to the cashout value
     cashout_value = current_potential_return * CASHOUT_MARGIN
 
+    # Calculate the max payout with house margin
+    max_payout = @bet_slip.payout * CASHOUT_MARGIN
+
     # Ensure cashout value is between stake and potential payout
     # Don't offer less than stake (user is winning) or more than original payout
-    cashout_value = [[[@bet_slip.stake, cashout_value].max, @bet_slip.payout].min, 0].max
+    cashout_value = [[[@bet_slip.stake, cashout_value].max, max_payout].min, 0].max
 
     cashout_value
   end

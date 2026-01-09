@@ -124,7 +124,9 @@ class User < ApplicationRecord
 
   def broadcast_balance_updates
     if saved_change_to_balance?
-      ActionCable.server.broadcast("balance_#{self.id}", self.balance)
+      ActionCable.server.broadcast("balance_#{self.id}", {
+        balance: self.balance
+      })
     end
   end
 

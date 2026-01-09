@@ -149,17 +149,17 @@ class BetslipCreator
   def build_bets_array(pre_markets_data, live_markets_data)
     bets_arr = []
 
-    # Apply same game discount ONCE before processing
-    if @same_game_flag
-      same_game_fixture_ids = @same_game_bets.map { |b| b[:fixture_id] }
-      @bets_data.each do |bet|
-        if same_game_fixture_ids.include?(bet[:fixture_id])
-          original_odd = bet[:odd].to_f
-          adjusted_odd = (original_odd * SAME_GAME_DISCOUNT_FACTOR).round(2)
-          bet[:adjusted_odd] = adjusted_odd  # Store in new key
-        end
-      end
-    end
+    # # Apply same game discount ONCE before processing
+    # if @same_game_flag
+    #   same_game_fixture_ids = @same_game_bets.map { |b| b[:fixture_id] }
+    #   @bets_data.each do |bet|
+    #     if same_game_fixture_ids.include?(bet[:fixture_id])
+    #       original_odd = bet[:odd].to_f
+    #       adjusted_odd = (original_odd * SAME_GAME_DISCOUNT_FACTOR).round(2)
+    #       bet[:adjusted_odd] = adjusted_odd  # Store in new key
+    #     end
+    #   end
+    # end
 
     @bets_data.each do |bet_data|
       fixture_id = bet_data[:fixture_id]&.to_i
@@ -184,7 +184,9 @@ class BetslipCreator
       end
 
       # Use adjusted odds if available for same game bets
-      final_odds = bet_data[:adjusted_odd] || current_odds
+      # final_odds = bet_data[:adjusted_odd] || current_odds
+      
+      final_odds = bet_data[:odd]&.to_f&.round(2)
 
 
       bets_arr << {

@@ -3,8 +3,8 @@ class BetSlip < ApplicationRecord
   belongs_to :user
   has_many :bets
 
-  # set the tax rate
-  TAX_RATE = ENV['TAX_RATE'].to_f || 0.11
+  # set the tax rate - 15% default
+  TAX_RATE = 0.11 #ENV.fetch('TAX_RATE', '0.15').to_f 
 
   after_update :activate_bonuses, if: :saved_change_to_status?
 
