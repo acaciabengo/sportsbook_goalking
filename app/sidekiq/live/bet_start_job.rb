@@ -12,6 +12,12 @@ class Live::BetStartJob
 
       # find the fixture and activate all markets
       fixture = Fixture.find_by(event_id: match_id)
+
+      if fixture.nil?
+        Rails.logger.warn("Fixture not found for betstart: match_id=#{match_id}")
+        next
+      end
+
       suspended_markets = fixture.live_markets.where(status: 'suspended')
       suspended_markets.update_all(status: 'active') 
     end

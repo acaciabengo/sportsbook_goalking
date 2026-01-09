@@ -64,9 +64,9 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
           LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
           LEFT JOIN markets m on m.ext_market_id = lm.market_identifier::integer AND m.sport_id = s.id
-          WHERE 
-            lm.status = 'started'
-            AND lm.market_identifier = '2'
+          WHERE
+            lm.status = 'active'
+            AND lm.market_identifier = '1'
             AND f.live_odds = '1'
             AND f.booked = true
             AND f.start_date >= NOW() - INTERVAL '2 hours'
@@ -81,7 +81,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
           LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
           LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
-          WHERE lm.status = 'started'
+          WHERE lm.status = 'active'
             AND f.live_odds = '1'
             AND f.booked = true
             AND f.start_date >= NOW() - INTERVAL '2 hours'
@@ -121,9 +121,9 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           am.specifier,
           mc.total_markets AS market_count
 
-        FROM fixtures f      
-        LEFT JOIN aggregated_markets am ON am.fixture_id = f.id
-        LEFT JOIN market_counts mc ON mc.fixture_id = f.id
+        FROM fixtures f
+        INNER JOIN aggregated_markets am ON am.fixture_id = f.id
+        INNER JOIN market_counts mc ON mc.fixture_id = f.id
         LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
         LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
         LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
@@ -138,9 +138,8 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
     final_sql = ActiveRecord::Base.sanitize_sql_array([query_sql] + sanitized_binds)
     raw_results = ActiveRecord::Base.connection.exec_query(final_sql).to_a
 
-    # Filter to only include fixtures with markets before pagination
-    filtered_results = raw_results.select { |record| record["live_market_id"].present? }
-    @pagy, @records = pagy(:offset, filtered_results)
+    # No need to filter - INNER JOIN ensures all fixtures have active markets
+    @pagy, @records = pagy(:offset, raw_results)
 
     # make a nested json response
     response = {

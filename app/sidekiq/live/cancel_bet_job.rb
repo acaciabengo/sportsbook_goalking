@@ -13,6 +13,11 @@ class Live::CancelBetJob
       # # find the fixture and update its status
       fixture = Fixture.find_by(event_id: match_id)
 
+      if fixture.nil?
+        Rails.logger.warn("Fixture not found for cancelbet: match_id=#{match_id}")
+        next
+      end
+
       results_grouped_by_market_and_specifier = {}
 
       
@@ -34,7 +39,7 @@ class Live::CancelBetJob
 
       results_grouped_by_market_and_specifier.each do |ext_market_id, specifier_hash|
         specifier_hash.each do |specifier, results_hash|
-          market = fixture.live_markets.find_by(ext_market_id: ext_market_id, specifier: specifier)
+          market = fixture.live_markets.find_by(market_identifier: ext_market_id, specifier: specifier)
 
           if market.nil?
             Rails.logger.warn("Market not found for cancellation: fixture=#{fixture.id}, ext_market_id=#{ext_market_id}, specifier=#{specifier}")
