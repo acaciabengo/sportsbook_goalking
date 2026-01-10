@@ -117,7 +117,6 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           am.live_market_id,
           am.market_identifier,
           am.name AS market_name,
-          am.market_id,
           am.odds,
           am.specifier,
           mc.total_markets AS market_count
