@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_09_120000) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_10_085238) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -94,6 +94,24 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_09_120000) do
     t.index ["created_at"], name: "index_audits_on_created_at"
     t.index ["request_uuid"], name: "index_audits_on_request_uuid"
     t.index ["user_id", "user_type"], name: "user_index"
+  end
+
+  create_table "bet_rejections", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.decimal "stake", precision: 15, scale: 2
+    t.decimal "potential_win", precision: 15, scale: 2
+    t.string "rejection_reason", null: false
+    t.string "bet_type"
+    t.integer "bet_count"
+    t.jsonb "bet_data", default: []
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bet_type"], name: "index_bet_rejections_on_bet_type"
+    t.index ["created_at"], name: "index_bet_rejections_on_created_at"
+    t.index ["rejection_reason"], name: "index_bet_rejections_on_rejection_reason"
+    t.index ["user_id", "created_at"], name: "index_bet_rejections_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_bet_rejections_on_user_id"
   end
 
   create_table "bet_slip_cancels", force: :cascade do |t|
@@ -507,6 +525,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_09_120000) do
     t.index ["user_id"], name: "index_withdraws_on_user_id"
   end
 
+  add_foreign_key "bet_rejections", "users"
   add_foreign_key "bet_slip_cancels", "bet_slips"
   add_foreign_key "bet_slips", "users"
   add_foreign_key "bets", "bet_slips"

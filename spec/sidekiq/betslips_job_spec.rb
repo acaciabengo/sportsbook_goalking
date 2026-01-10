@@ -101,7 +101,9 @@ RSpec.describe BetslipsJob, type: :worker do
           
           # Only the 2.0 odds should count
           expected_win_amount = stake * 2.0
-          expect(betslip.payout).to eq(expected_win_amount)
+          tax = (expected_win_amount - stake) * BetSlip::TAX_RATE
+          net_payout = expected_win_amount - tax
+          expect(betslip.payout).to eq(net_payout)
           expect(betslip.result).to eq("Win")
         end
       end

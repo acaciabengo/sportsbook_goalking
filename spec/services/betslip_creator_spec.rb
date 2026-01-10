@@ -54,7 +54,7 @@ RSpec.describe BetslipCreator do
 
       it 'fails with error message' do
         expect(service.call).to be false
-        expect(service.error_message).to include('should be between')
+        expect(service.error_message).to include('exceeds your current')
       end
     end
 

@@ -9,6 +9,11 @@ class BetslipCreator
   SAME_GAME_ACCEPETED_MARKETS = ["1", "10", "11", "29", "92"]
   SAME_GAME_DISCOUNT_FACTOR = 0.9
 
+  # Add payout limits
+  MAX_SLIP_PAYOUT_LIMIT = 50_000_000
+  MAX_USER_DAILY4_PAYOUT_LIMIT = 120_000_000
+  
+
   def initialize(user, params)
     @user = user
     @bonus_flag = params[:bonus] == 'true' || params[:bonus] == true
@@ -21,12 +26,21 @@ class BetslipCreator
   end
 
   def call
+    # STEP 1: Bonus validation
     if @bonus_flag
       check_minimum_odds
       calculate_bonus_stake
       return false if @error_message
     end
 
+    # STEP 2: Risk Management
+    risk_validator = RiskValidator.new(@user, @stake, @bets_data)
+    unless risk_validator.validate
+      @error_message = risk_validator.error_message
+      return false
+    end
+
+    # STEP 3: Same game bets detection
     unless check_same_game_bets
       return false
     end
@@ -206,7 +220,7 @@ class BetslipCreator
     # if there are same game bets, adjust their odds
     # recalculate the odds for same game bets at 90% of original odds
     if @same_game_bets.any?
-      same_game_fixtures = @same_game_bets.map { |bet| bet[:fixture_id] }.uniq
+      same_game_fixtures = @same_game_bets.map { |bet| bet[:fixture_id].to_i }.uniq
 
       bets_arr.select { |bet| same_game_fixtures.include?(bet[:fixture_id]) }.each do |bet|
         original_odd = bet[:odds].to_f

@@ -19,6 +19,7 @@ class User < ApplicationRecord
   has_many :deposits
   has_many :withdraws
   has_many :user_bonuses, class_name: "UserBonus"
+  has_many :bet_rejections
 
   after_save :send_pin!
   # before_create :process_signup_bonus
@@ -44,7 +45,7 @@ class User < ApplicationRecord
   end
 
   def self.ransackable_associations(auth_object = nil)
-    ["audits", "bet_slips", "bets", "deposits", "transactions", "user_bonuses", "withdraws"]
+    ["audits", "bet_slips", "bets", "bet_rejections", "deposits", "transactions", "user_bonuses", "withdraws"]
   end
 
   def active_for_authentication?

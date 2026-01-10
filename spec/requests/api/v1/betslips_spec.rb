@@ -675,7 +675,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
 
             expect(response).to have_http_status(:bad_request)
             json = JSON.parse(response.body)
-            expect(json['message']).to eq('Amount should be between 1 UGX and 3000000 UGX')
+            expect(json['message']).to match(/Stake exceeds your current limit of*/)
           end
         end
 

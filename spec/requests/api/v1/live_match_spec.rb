@@ -102,7 +102,9 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
           ext_category_id: category.ext_category_id,
           match_status: 'in_play',
           status: '0',
-          start_date: 1.hour.ago
+          start_date: 1.hour.ago,
+          live_odds: '1',
+          booked: true
         )
         Fabricate(:live_market, fixture: fixture, market_identifier: "1", status: 'active')
         fixture
@@ -188,7 +190,9 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
             part_two_name: "Chelsea",
             match_status: 'in_play',
             status: '0',
-            start_date: 1.hour.ago
+            start_date: 1.hour.ago,
+            live_odds: '1',
+            booked: true
           )
         end
 
@@ -291,7 +295,9 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
             ext_category_id: live_category.ext_category_id,
             match_status: 'in_play',
             status: '0',
-            start_date: 30.minutes.ago
+            start_date: 30.minutes.ago,
+            live_odds: '1',
+            booked: true
           )
           Fabricate(:live_market, fixture: later_fixture, market_identifier: "1", status: 'active')
           
@@ -403,7 +409,9 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
             ext_tournament_id: tourn1.ext_tournament_id,
             match_status: 'in_play',
             status: '0',
-            start_date: 1.hour.ago
+            start_date: 1.hour.ago,
+            live_odds: '1',
+            booked: true
           )
         end
         let!(:market1) { Fabricate(:live_market, fixture: fixture1, market_identifier: "1", status: 'active') }
@@ -416,7 +424,9 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
             ext_category_id: 999,
             match_status: 'in_play',
             status: '0',
-            start_date: 1.hour.ago
+            start_date: 1.hour.ago,
+            live_odds: '1',
+            booked: true
           )
         end
         let!(:market2) { Fabricate(:live_market, fixture: fixture2, market_identifier: "1", status: 'active') }
@@ -430,7 +440,9 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
             ext_tournament_id: tourn2.ext_tournament_id,
             match_status: 'in_play',
             status: '0',
-            start_date: 1.hour.ago
+            start_date: 1.hour.ago,
+            live_odds: '1',
+            booked: true
           )
         end
         let!(:market3) { Fabricate(:live_market, fixture: fixture3, market_identifier: "1", status: 'active') }
@@ -474,7 +486,7 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
         before do
           Fixture.destroy_all
           LiveMarket.destroy_all
-          
+
           25.times do |i|
             fixture = Fabricate(:fixture,
               event_id: "sr:match:live#{i}",
@@ -484,7 +496,9 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
               ext_category_id: pagination_category.ext_category_id,
               match_status: 'in_play',
               status: '0',
-              start_date: (i + 1).hours.ago
+              start_date: (60 + i).minutes.ago,
+              live_odds: '1',
+              booked: true
             )
             Fabricate(:live_market, fixture: fixture, market_identifier: "1", status: 'active')
           end
@@ -533,7 +547,9 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
         part_two_name: "Borussia Dortmund",
         match_status: 'in_play',
         status: '0',
-        start_date: 1.hour.ago
+        start_date: 1.hour.ago,
+        live_odds: '1',
+        booked: true
       )
     end
 
@@ -714,25 +730,26 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
             ext_category_id: show_category.ext_category_id,
             match_status: 'in_play',
             status: '0',
-            start_date: 1.hour.ago
+            start_date: 1.hour.ago,
+            live_odds: '1',
+            booked: true
           )
         end
 
         before do
-          get "/api/v1/live_match", headers: auth_headers
+          get "/api/v1/live_match/#{fixture_no_markets.id}", headers: auth_headers
         end
 
         it "returns the fixture" do
           expect(response).to have_http_status(:ok)
         end
 
-        it "returns empty markets object" do
+        it "returns empty markets array" do
           json = JSON.parse(response.body)
-          fixtures = json['fixtures']
-          fixture_data = fixtures.find { |f| f['id'] == fixture_no_markets.id }
-          
+          fixture_data = json.first
+
           expect(fixture_data).to be_present
-          expect(fixture_data['markets']).to eq({})
+          expect(fixture_data['markets']).to eq([])
         end
       end
 
@@ -746,7 +763,9 @@ RSpec.describe "Api::V1::LiveMatch", type: :request do
             ext_category_id: show_category.ext_category_id,
             match_status: 'in_play',
             status: '0',
-            start_date: 1.hour.ago
+            start_date: 1.hour.ago,
+            live_odds: '1',
+            booked: true
           )
         end
 
