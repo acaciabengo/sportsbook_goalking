@@ -54,7 +54,6 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
             lm.market_identifier,
             lm.id AS live_market_id,
             lm.name,
-            lm.market_identifier,
             lm.odds,
             lm.specifier
           FROM live_markets lm
