@@ -53,22 +53,22 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
             lm.fixture_id,
             lm.market_identifier,
             lm.id AS live_market_id,
-            m.name,
-            m.ext_market_id,
+            lm.name,
+            lm.market_identifier,
             lm.odds,
-            lm.specifier,
-            m.id AS market_id
+            lm.specifier
           FROM live_markets lm
           JOIN fixtures f ON f.id = lm.fixture_id
           LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
           LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
           LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
-          LEFT JOIN markets m on m.ext_market_id = lm.market_identifier::integer AND m.sport_id = s.id
           WHERE
             lm.status = 'started'
-            AND lm.market_identifier = '1'
+            AND lm.market_identifier = '2'
             AND f.live_odds = '1'
             AND f.booked = true
+            AND f.match_status = '1' 
+            AND f.status = '1'
             AND f.start_date >= NOW() - INTERVAL '2 hours'
             #{dynamic_sql}
         ), 
@@ -84,6 +84,8 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           WHERE lm.status = 'started'
             AND f.live_odds = '1'
             AND f.booked = true
+            AND f.match_status = '1'
+            AND f.status = '1'
             AND f.start_date >= NOW() - INTERVAL '2 hours'
             #{dynamic_sql}
           GROUP BY lm.fixture_id
@@ -112,7 +114,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           f.ext_category_id,
           c.id AS category_id,
           c.name AS category_name,
-          -- Markets Fields (Only for Market ID '1')
+          -- Markets Fields (Only for Market ID '2')
           am.live_market_id,
           am.market_identifier,
           am.name AS market_name,
@@ -130,6 +132,8 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
         WHERE 
           f.live_odds = '1'
           AND f.booked = true
+          AND f.match_status = '1'
+          AND f.status = '1'
           AND f.start_date >= NOW() - INTERVAL '2 hours'
           #{dynamic_sql}
         ORDER BY f.start_date ASC
@@ -199,14 +203,13 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
             JSON_AGG(
               DISTINCT jsonb_build_object(
                 'id', lm.id,
-                'name', m.name,
+                'name', lm.name,
                 'market_identifier', lm.market_identifier,
                 'odds', lm.odds::jsonb,
                 'specifier', lm.specifier
               )
             ) AS markets
           FROM live_markets lm
-          LEFT JOIN markets m on m.ext_market_id = lm.market_identifier::integer
           WHERE lm.status = 'started'
           GROUP BY lm.fixture_id
         )  
@@ -239,6 +242,8 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
         LEFT JOIN aggregated_markets am ON am.fixture_id = f.id
         WHERE f.live_odds = '1'
           AND f.booked = true
+          AND f.status = '1'
+          AND f.match_status = '1'
           AND f.start_date >= NOW() - INTERVAL '2 hours'
           AND f.id = $1
         ORDER BY f.start_date DESC
