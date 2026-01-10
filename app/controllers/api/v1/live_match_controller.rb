@@ -65,7 +65,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
           LEFT JOIN markets m on m.ext_market_id = lm.market_identifier::integer AND m.sport_id = s.id
           WHERE
-            lm.status = 'active'
+            lm.status = 'started'
             AND lm.market_identifier = '1'
             AND f.live_odds = '1'
             AND f.booked = true
@@ -81,7 +81,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
           LEFT JOIN tournaments t ON f.ext_tournament_id = t.ext_tournament_id
           LEFT JOIN categories c ON f.ext_category_id = c.ext_category_id
-          WHERE lm.status = 'active'
+          WHERE lm.status = 'started'
             AND f.live_odds = '1'
             AND f.booked = true
             AND f.start_date >= NOW() - INTERVAL '2 hours'
@@ -207,7 +207,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
             ) AS markets
           FROM live_markets lm
           LEFT JOIN markets m on m.ext_market_id = lm.market_identifier::integer
-          WHERE lm.status = 'active'
+          WHERE lm.status = 'started'
           GROUP BY lm.fixture_id
         )  
       

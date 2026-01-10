@@ -39,8 +39,8 @@ class Live::OddsUpdateJob
         update_attributes[:away_score] = away_score
       end
 
-      # match_status = match["active"] #== "1" ? "live" : "finished"
-      # update_attributes[:match_status] = match_status
+      match_status = match["active"] #== "1" ? "live" : "finished"
+      update_attributes[:match_status] = match_status
 
       betstatus = match["betstatus"] #== "started" ? "in_play" : "suspended"
     
