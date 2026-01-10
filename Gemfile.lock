@@ -429,6 +429,10 @@ GEM
     public_suffix (6.0.2)
     puma (6.6.1)
       nio4r (~> 2.0)
+    puma_worker_killer (1.0.0)
+      bigdecimal (>= 2.0)
+      get_process_mem (>= 0.2)
+      puma (>= 2.7)
     pundit (2.5.0)
       activesupport (>= 3.0.0)
     racc (1.8.1)
@@ -721,6 +725,7 @@ DEPENDENCIES
   prettier
   pry (~> 0.15.0)
   puma (~> 6.4, >= 6.4.2)
+  puma_worker_killer
   pundit
   rack-cors
   rails (~> 7.0)

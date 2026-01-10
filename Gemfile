@@ -158,3 +158,5 @@ gem 'rswag-ui'
 # charts
 gem "chartkick"
 
+gem 'puma_worker_killer'
+
