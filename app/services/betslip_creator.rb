@@ -30,18 +30,23 @@ class BetslipCreator
     if @bonus_flag
       check_minimum_odds
       calculate_bonus_stake
-      return false if @error_message
+      if @error_message
+        log_failure("Bonus validation failed: #{@error_message}")
+        return false
+      end
     end
 
     # STEP 2: Risk Management
     risk_validator = RiskValidator.new(@user, @stake, @bets_data)
     unless risk_validator.validate
       @error_message = risk_validator.error_message
+      log_failure("Risk validation failed: #{risk_validator.error_message}")
       return false
     end
 
     # STEP 3: Same game bets detection
     unless check_same_game_bets
+      # Error already logged in check_same_game_bets
       return false
     end
 
@@ -56,7 +61,8 @@ class BetslipCreator
     
     pre_markets_data, live_markets_data = load_odds_data
     bets_arr = build_bets_array(pre_markets_data, live_markets_data)
-    
+
+    # Error already logged in build_bets_array
     return false if @error_message
 
     ActiveRecord::Base.transaction do
@@ -68,6 +74,7 @@ class BetslipCreator
     true
   rescue StandardError => e
     @error_message = e.message
+    log_failure("Exception: #{e.message}", { backtrace: e.backtrace&.first(5) })
     false
   end
 
@@ -75,7 +82,15 @@ class BetslipCreator
 
   def fail(message)
     @error_message = message
+    log_failure(message)
     false
+  end
+
+  def log_failure(message, extra_context = {})
+    Rails.logger.warn("[BetslipCreator] FAILED - User: #{@user&.id}, Phone: #{@user&.phone_number}, " \
+                      "Stake: #{@stake}, Error: #{message}, " \
+                      "Bets: #{@bets_data.to_json}, " \
+                      "Extra: #{extra_context.to_json}")
   end
 
   def calculate_bonus_stake
@@ -194,14 +209,36 @@ class BetslipCreator
 
       if current_odds.nil? || current_odds == 0.0
         @error_message = "One of the bets has changed odds or is no longer available. Please review your bet and try again."
+        log_failure(@error_message, {
+          fixture_id: fixture_id,
+          market_identifier: market_identifier,
+          specifier: specifier,
+          outcome_id: outcome_id,
+          bet_type: bet_type,
+          db_odds_found: odds.present?,
+          odd_entry: odd_entry
+        })
         return []
       end
 
       # Use adjusted odds if available for same game bets
       # final_odds = bet_data[:adjusted_odd] || current_odds
-      
+
       final_odds = bet_data[:odd]&.to_f&.round(2)
 
+      if final_odds.nil? || final_odds <= 0
+        @error_message = "Invalid odds provided for one of your selections. Please refresh and try again."
+        log_failure(@error_message, {
+          fixture_id: fixture_id,
+          market_identifier: market_identifier,
+          specifier: specifier,
+          outcome_id: outcome_id,
+          bet_type: bet_type,
+          client_odd: bet_data[:odd],
+          current_odds: current_odds
+        })
+        return []
+      end
 
       bets_arr << {
         user_id: @user.id,
@@ -315,6 +352,7 @@ class BetslipCreator
     # if any of the markets is not in the accepted markets, set error message
     unless same_game_markets.all? { |market| SAME_GAME_ACCEPETED_MARKETS.include?(market) }
       @error_message = "Same game bets are only allowed for specific markets."
+      log_failure(@error_message, { same_game_markets: same_game_markets, accepted: SAME_GAME_ACCEPETED_MARKETS })
       return false
     end
 
