@@ -63,7 +63,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
       query_sql = <<-SQL
         -- aggregate markets into a json array per fixture
         WITH aggregated_markets AS (
-          SELECT 
+          SELECT
             pm.fixture_id,
             pm.market_identifier,
             pm.id AS pre_market_id,
@@ -71,6 +71,7 @@ class Api::V1::PreMatchController < Api::V1::BaseController
             m.ext_market_id,
             pm.odds,
             pm.specifier,
+            pm.status AS status,
             m.id AS market_id
           FROM pre_markets pm
           JOIN fixtures f ON f.id = pm.fixture_id
@@ -129,7 +130,8 @@ class Api::V1::PreMatchController < Api::V1::BaseController
           am.name AS market_name,
           am.market_id,
           am.odds,
-          am.specifier, 
+          am.specifier,
+          am.status,
           mc.total_markets AS market_count
         FROM fixtures f    
         INNER JOIN aggregated_markets am ON am.fixture_id = f.id
@@ -184,8 +186,9 @@ class Api::V1::PreMatchController < Api::V1::BaseController
             id: record["pre_market_id"],
             name: record["market_name"],
             market_identifier: record["market_identifier"],
-            odds: record["odds"] ? format_odds(record["home_team"], record["away_team"], JSON.parse(record["odds"]), record["specifier"]) : {}, 
-            specifier: record["specifier"]
+            odds: record["odds"] ? format_odds(record["home_team"], record["away_team"], JSON.parse(record["odds"]), record["specifier"]) : {},
+            specifier: record["specifier"],
+            status: record["status"]
           }
         }
       end
@@ -215,7 +218,8 @@ class Api::V1::PreMatchController < Api::V1::BaseController
                 'name', m.name,
                 'market_identifier', pm.market_identifier,
                 'odds', pm.odds::jsonb,
-                'specifier', pm.specifier
+                'specifier', pm.specifier,
+                'status', pm.status
               )
             ) AS markets
           FROM pre_markets pm

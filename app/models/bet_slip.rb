@@ -18,6 +18,8 @@ class BetSlip < ApplicationRecord
       bet_slip_result
       bet_slip_status
       bonus
+      cashout_at
+      cashout_value
       created_at
       id
       odds

@@ -49,13 +49,14 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
     query_sql = <<-SQL
         -- aggregate markets into a json array per fixture
         WITH aggregated_markets AS (
-          SELECT 
+          SELECT
             lm.fixture_id,
             lm.market_identifier,
             lm.id AS live_market_id,
             lm.name,
             lm.odds,
-            lm.specifier
+            lm.specifier,
+            lm.status AS status
           FROM live_markets lm
           JOIN fixtures f ON f.id = lm.fixture_id
           LEFT JOIN sports s ON CAST(f.sport_id AS INTEGER) = s.ext_sport_id
@@ -119,6 +120,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           am.name AS market_name,
           am.odds,
           am.specifier,
+          am.status,
           mc.total_markets AS market_count
 
         FROM fixtures f
@@ -179,8 +181,9 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
             id: record["live_market_id"],
             name: record["market_name"],
             market_identifier: record["market_identifier"],
-            odds: record["odds"] ? format_odds(record["home_team"], record["away_team"], JSON.parse(record["odds"]), record["specifier"]) : {}, 
-            specifier: record["specifier"]
+            odds: record["odds"] ? format_odds(record["home_team"], record["away_team"], JSON.parse(record["odds"]), record["specifier"]) : {},
+            specifier: record["specifier"],
+            status: record["status"]
           }
         }
       end
@@ -204,7 +207,8 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
                 'name', lm.name,
                 'market_identifier', lm.market_identifier,
                 'odds', lm.odds::jsonb,
-                'specifier', lm.specifier
+                'specifier', lm.specifier,
+                'status', lm.status
               )
             ) AS markets
           FROM live_markets lm

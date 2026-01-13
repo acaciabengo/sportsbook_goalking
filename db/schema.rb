@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_10_085238) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_13_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -212,6 +212,26 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_10_085238) do
     t.datetime "updated_at", null: false
     t.index ["ext_category_id"], name: "index_categories_on_ext_category_id"
     t.index ["sport_id"], name: "index_categories_on_sport_id"
+  end
+
+  create_table "complaints", force: :cascade do |t|
+    t.bigint "user_id"
+    t.string "category"
+    t.string "sub_category"
+    t.bigint "bet_id"
+    t.bigint "betslip_id"
+    t.decimal "transaction_amount", precision: 12, scale: 2
+    t.date "transaction_date"
+    t.string "subject"
+    t.text "description"
+    t.string "preferred_contact_method"
+    t.string "status", default: "pending"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bet_id"], name: "index_complaints_on_bet_id"
+    t.index ["betslip_id"], name: "index_complaints_on_betslip_id"
+    t.index ["category"], name: "index_complaints_on_category"
+    t.index ["status"], name: "index_complaints_on_status"
   end
 
   create_table "crown_point_transactions", force: :cascade do |t|

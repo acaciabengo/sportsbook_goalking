@@ -3,14 +3,19 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 	before_action :auth_user
 
 	def index
-		betslips = @current_user.bet_slips.includes(:bets).order(created_at: :desc)
+		betslips = @current_user.bet_slips.includes(bets: :fixture).order(created_at: :desc)
 		@pagy, betslips = pagy(betslips, items: 20)
 
 		@pagy, @records = pagy(:offset, betslips)
 
 		slips = @records.as_json(only: [:id, :stake, :win_amount, :status, :created_at , :result, :payout],
 												include: {
-													 bets: { only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type,:status, :created_at, :status] } 
+													 bets: {
+														 only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type, :status, :created_at],
+														 include: {
+															 fixture: { only: [:part_one_name, :part_two_name] }
+														 }
+													 }
 												}
 											)
 		
@@ -24,11 +29,16 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 	end
 
 	def show
-			betslip = @current_user.bet_slips.find_by(id: params[:id])
+			betslip = @current_user.bet_slips.includes(bets: :fixture).find_by(id: params[:id])
 			if betslip
 					render json: betslip.as_json(only: [:id, :stake, :odds, :win_amount, :status, :created_at, :result, :payout],
 																			include: {
-																					bets: { only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type, :created_at, :status]  } 
+																					bets: {
+																						only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type, :created_at, :status],
+																						include: {
+																							fixture: { only: [:part_one_name, :part_two_name] }
+																						}
+																					}
 																			}
 																	)
 			else

@@ -23,7 +23,7 @@ class LiveMarket < ApplicationRecord
     # ## Create a fixture replica object
     # fixture = {"id": self.fixture_id}
 
-    if saved_change_to_odds?
+    if saved_change_to_odds? || saved_change_to_status?
       # Make the broadcasts
       data = {
         id: self.id,
