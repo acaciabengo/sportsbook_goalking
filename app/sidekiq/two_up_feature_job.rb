@@ -24,7 +24,7 @@ class TwoUpFeatureJob
     bets = Bet.where(fixture_id: fixture_id, bet_type: 'PreMatch')
             .where.not(status: 'Closed')
             .where(market_identifier: MARKET_1X2_EXT_MARKET_ID)
-            .where(outcome_id: outcome_id)
+            .where(outcome: outcome_id)
 
     # update all these bets as won and settled
     meta_data = { settlement_reason: 'Two Up Feature Triggered', settled_at: Time.current, score: "#{home_score}-#{away_score}" }

@@ -39,17 +39,23 @@ class CloseSettledBetsJob
     return if bets.empty?
 
         # Categorize outcomes - void takes precedence
-    cancelled_bets = results.select { |k, v| v["status"] == "C" }.map { |_k, v| v["outcome_id"].to_s }
-    voided_bets = results.select { |k, v| v["void_factor"].to_f > 0 }.map { |_k, v| v["outcome_id"].to_s }
-    void_outcomes = (cancelled_bets + voided_bets).uniq
-    
+    # Build a lookup by outcome_id for void_factor
+    void_outcomes_with_factor = {}
+    results.each do |_k, v|
+      outcome_id = v["outcome_id"].to_s
+      if v["status"] == "C" || v["void_factor"].to_f > 0
+        void_outcomes_with_factor[outcome_id] = v["void_factor"].to_f
+      end
+    end
+    void_outcomes = void_outcomes_with_factor.keys
+
     # Winning bets (only if not void)
-    winning_bets = results.select { |k, v| v["status"] == "W" && !void_outcomes.include?(k) }.map { |_k, v| v["outcome_id"].to_s }
+    winning_bets = results.select { |_k, v| v["status"] == "W" && !void_outcomes.include?(v["outcome_id"].to_s) }.map { |_k, v| v["outcome_id"].to_s }
 
     # Bulk update void bets first (cancelled + voided) with void_factor
     if void_outcomes.any?
       void_outcomes.each do |outcome|
-        void_factor_value = results[outcome]["void_factor"].to_f
+        void_factor_value = void_outcomes_with_factor[outcome] || 0
         bets.where(outcome: outcome).update_all(
           result: "Void",
           status: "Closed",
