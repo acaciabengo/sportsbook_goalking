@@ -152,12 +152,15 @@ class BetslipCreator
       bonus_win = 0.0
     end
 
-    payout = (bonus_win + win_amount).round(2)
-    tax = (bonus_win + win_amount) * BetSlip::TAX_RATE
+    total_wins = (bonus_win + win_amount).round(2)
+    net_winnings = total_wins - @stake
+    tax = net_winnings > 0 ? (net_winnings * BetSlip::TAX_RATE).round(2) : 0
+    payout = (total_wins - tax).round(2)
 
     if @bonus_flag
-      payout = win_amount.round(2) - (@stake).round(2)
-      tax = payout * BetSlip::TAX_RATE
+      net_winnings = (win_amount - @stake).round(2)
+      tax = net_winnings > 0 ? (net_winnings * BetSlip::TAX_RATE).round(2) : 0
+      payout = (net_winnings - tax).round(2)
     end
 
     @bet_slip.assign_attributes(

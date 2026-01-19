@@ -10,7 +10,7 @@ class Backend::AdminLandingController < ApplicationController
       SELECT
         DATE(created_at) AS date,
         SUM(stake) AS total_stake,
-        SUM(payout) AS total_amount_won,
+        SUM(CASE WHEN status = 'Closed' AND result = 'Win' THEN payout ELSE 0 END) AS total_amount_won,
         COUNT(*) AS total_bets
       FROM bet_slips
       WHERE created_at >= NOW() - INTERVAL '30 days'
