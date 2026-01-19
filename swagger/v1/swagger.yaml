@@ -474,6 +474,152 @@ paths:
           description: bet slip not found
         '401':
           description: unauthorized
+  "/api/v1/complaints":
+    post:
+      summary: Submit a new complaint
+      tags:
+      - Complaints
+      parameters: []
+      responses:
+        '201':
+          description: complaint created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Complaint submitted successfully
+                  complaint_id:
+                    type: integer
+                    example: 1
+        '422':
+          description: validation errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Category can't be blank", "Subject can't be blank"]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                category:
+                  type: string
+                  description: Complaint category
+                  example: betting
+                sub_category:
+                  type: string
+                  description: Complaint sub-category
+                  example: settlement
+                bet_id:
+                  type: integer
+                  description: Related bet ID (optional)
+                  example: 456
+                betslip_id:
+                  type: integer
+                  description: Related betslip ID (optional)
+                  example: 789
+                transaction_amount:
+                  type: number
+                  description: Transaction amount in dispute (optional)
+                  example: 5000.00
+                transaction_date:
+                  type: string
+                  format: date
+                  description: Date of transaction (optional)
+                  example: "2026-01-10"
+                subject:
+                  type: string
+                  description: Complaint subject
+                  example: Bet not settled correctly
+                description:
+                  type: string
+                  description: Detailed description of the complaint
+                  example: My bet on Manchester United vs Liverpool was not settled correctly
+                preferred_contact_method:
+                  type: string
+                  description: How the user prefers to be contacted
+                  example: phone
+                phone_number:
+                  type: string
+                  description: User's phone number for contact
+                  example: "256776582036"
+  "/api/v1/complaints/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: Complaint ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Get complaint details
+      tags:
+      - Complaints
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  category:
+                    type: string
+                  sub_category:
+                    type: string
+                    nullable: true
+                  bet_id:
+                    type: integer
+                    nullable: true
+                  betslip_id:
+                    type: integer
+                    nullable: true
+                  transaction_amount:
+                    type: string
+                    nullable: true
+                  transaction_date:
+                    type: string
+                    format: date
+                    nullable: true
+                  subject:
+                    type: string
+                  description:
+                    type: string
+                  preferred_contact_method:
+                    type: string
+                    nullable: true
+                  phone_number:
+                    type: string
+                    nullable: true
+                    example: "256776582036"
+                  status:
+                    type: string
+                    example: pending
+                  created_at:
+                    type: string
+                    format: date-time
+        '404':
+          description: complaint not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Complaint not found
   "/api/v1/sports":
     get:
       summary: list sports
