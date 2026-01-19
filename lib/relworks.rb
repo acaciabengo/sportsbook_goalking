@@ -18,6 +18,12 @@ class Relworks
     conn
   end
 
+  def format_msisdn(msisdn)
+    return nil if msisdn.blank?
+    phone = msisdn.to_s.gsub(/\s+/, '')
+    phone.start_with?('+') ? phone : "+#{phone}"
+  end
+
   def request_payment(
     msisdn: nil,
     amount: nil,
@@ -27,9 +33,9 @@ class Relworks
     body = {
       account_no: ENV["RELWORKS_ACCOUNT_NO"],
       reference: Time.now.to_i.to_s + "#{SecureRandom.hex(10)}",
-      msisdn: msisdn,
+      msisdn: format_msisdn(msisdn),
       currency: currency,
-      amount: amount
+      amount: amount.to_f
     }
 
     body[:description] = description if description
@@ -52,9 +58,9 @@ class Relworks
     body = {
       account_no: ENV["RELWORKS_ACCOUNT_NO"],
       reference: Time.now.to_i.to_s + "#{SecureRandom.hex(10)}",
-      msisdn: msisdn,
+      msisdn: format_msisdn(msisdn),
       currency: currency,
-      amount: amount
+      amount: amount.to_f
     }
 
     body[:description] = description if description
