@@ -12,7 +12,6 @@ class Relworks
   def client()
     conn =
       Faraday.new(url: @base_url, headers: @default_headers) do |faraday|
-        faraday.request :url_encoded
         faraday.adapter Faraday.default_adapter
       end
     conn
@@ -30,7 +29,7 @@ class Relworks
     currency: "UGX",
     description: nil
   )
-    body = {
+    req_body = {
       account_no: ENV["RELWORKS_ACCOUNT_NO"],
       reference: Time.now.to_i.to_s + "#{SecureRandom.hex(10)}",
       msisdn: format_msisdn(msisdn),
@@ -38,12 +37,12 @@ class Relworks
       amount: amount.to_f
     }
 
-    body[:description] = description if description
+    req_body[:description] = description if description
 
     response =
       @client.post do |req|
         req.url "mobile-money/request-payment"
-        req.body = body.to_json
+        req.body = req_body
       end
     status = response.status
     data = begin
@@ -55,7 +54,7 @@ class Relworks
   end
 
   def make_payment(msisdn: nil, amount: nil, currency: "UGX", description: nil)
-    body = {
+    req_body = {
       account_no: ENV["RELWORKS_ACCOUNT_NO"],
       reference: Time.now.to_i.to_s + "#{SecureRandom.hex(10)}",
       msisdn: format_msisdn(msisdn),
@@ -63,12 +62,12 @@ class Relworks
       amount: amount.to_f
     }
 
-    body[:description] = description if description
+    req_body[:description] = description if description
 
     response =
       @client.post do |req|
         req.url "mobile-money/send-payment"
-        req.body = body.to_json
+        req.body = req_body
       end
     status = response.status
     data = begin
