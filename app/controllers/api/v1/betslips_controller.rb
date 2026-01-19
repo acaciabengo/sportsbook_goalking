@@ -12,6 +12,7 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 												include: {
 													 bets: {
 														 only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type, :status, :result, :created_at],
+														 methods: [:market_name],
 														 include: {
 															 fixture: { only: [:part_one_name, :part_two_name, :start_date] }
 														 }
@@ -35,6 +36,7 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 																			include: {
 																					bets: {
 																						only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type, :created_at, :status, :result],
+																						methods: [:market_name],
 																						include: {
 																							fixture: { only: [:part_one_name, :part_two_name, :start_date] }
 																						}

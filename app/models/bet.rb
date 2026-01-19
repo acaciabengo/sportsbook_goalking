@@ -8,7 +8,14 @@ class Bet < ApplicationRecord
   # restrict bet_types to "PreMatch" or "Live"
   BET_TYPES = ["PreMatch", "Live"].freeze
   validates :bet_type, inclusion: { in: BET_TYPES }
-  
+
+  def market_name
+    if bet_type == "PreMatch"
+      Market.find_by(ext_market_id: market_identifier)&.name
+    else
+      LiveMarket.find_by(fixture_id: fixture_id, market_identifier: market_identifier, specifier: specifier)&.name
+    end
+  end
 
   def self.ransackable_attributes(auth_object = nil)
     %w[
