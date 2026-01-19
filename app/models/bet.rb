@@ -11,10 +11,17 @@ class Bet < ApplicationRecord
 
   def market_name
     if bet_type == "PreMatch"
-      Market.find_by(ext_market_id: market_identifier)&.name
+      resp = Market.find_by(ext_market_id: market_identifier)&.name
     else
-      LiveMarket.find_by(fixture_id: fixture_id, market_identifier: market_identifier, specifier: specifier)&.name
+      resp = LiveMarket.find_by(fixture_id: fixture_id, market_identifier: market_identifier, specifier: specifier)&.name
     end
+
+    # replace placeholders like {total}, {score}, {np}, etc. with specifier value
+    if resp && specifier.present? && resp.match?(/{[^}]+}/)
+      specifier_value = specifier.to_s.split('=').last
+      resp = resp.gsub(/{[^}]+}/, specifier_value)
+    end
+    resp
   end
 
   def self.ransackable_attributes(auth_object = nil)
