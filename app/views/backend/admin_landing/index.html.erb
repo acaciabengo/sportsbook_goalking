@@ -17,14 +17,20 @@
             <div collapse="panelChart3" class="panel-wrapper">
                <div class="card-body" >
                   <%= column_chart [
-                     {name: "Total Bets", data: @amounts.map { |row| [row["date"].to_s, row["total_stake"].to_i] }.to_h },
-                     {name: "Winning Bets", data: @amounts.map { |row| [row["date"].to_s, row["total_amount_won"].to_i] }.to_h }
+                     {name: "Total Stakes", data: @amounts.map { |row| [row["date"].to_s, row["total_stake"].to_i] }.to_h },
+                     {name: "Amount Won", data: @amounts.map { |row| [row["date"].to_s, row["total_amount_won"].to_i] }.to_h }
                   ],
                   height: "400px",
+                  prefix: "UGX ",
+                  thousands: ",",
                   library: {
-                     title: { text: "Total Bets and Winning Bets Over Time", x: -20 },
-                     yAxis: { title: { text: "Number of Bets" } },
+                     title: { text: "Total Stakes and Amount Won Over Time", x: -20 },
+                     yAxis: {
+                        title: { text: "Amount (UGX)" },
+                        labels: { format: 'UGX {value:,.0f}' }
+                     },
                      xAxis: { title: { text: "Date" }, type: 'datetime' },
+                     tooltip: { valuePrefix: 'UGX ', valueSuffix: '' },
                      legend: { layout: 'vertical', align: 'right', verticalAlign: 'middle', borderWidth: 0 },
                      plotOptions: {
                         series: {

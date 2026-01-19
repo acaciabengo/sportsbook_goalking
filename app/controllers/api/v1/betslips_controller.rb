@@ -11,9 +11,9 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 		slips = @records.as_json(only: [:id, :stake, :win_amount, :status, :created_at , :result, :payout],
 												include: {
 													 bets: {
-														 only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type, :status, :created_at],
+														 only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type, :status, :result, :created_at],
 														 include: {
-															 fixture: { only: [:part_one_name, :part_two_name] }
+															 fixture: { only: [:part_one_name, :part_two_name, :start_date] }
 														 }
 													 }
 												}
@@ -34,9 +34,9 @@ class Api::V1::BetslipsController < Api::V1::BaseController
 					render json: betslip.as_json(only: [:id, :stake, :odds, :win_amount, :status, :created_at, :result, :payout],
 																			include: {
 																					bets: {
-																						only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type, :created_at, :status],
+																						only: [:id, :fixture_id, :market_identifier, :odds, :outcome, :specifier, :outcome_desc, :bet_type, :created_at, :status, :result],
 																						include: {
-																							fixture: { only: [:part_one_name, :part_two_name] }
+																							fixture: { only: [:part_one_name, :part_two_name, :start_date] }
 																						}
 																					}
 																			}
