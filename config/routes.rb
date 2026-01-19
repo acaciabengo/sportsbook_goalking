@@ -39,8 +39,8 @@ Rails.application.routes.draw do
       match "home_tennis" => "home#tennis", :via => [:get]
       match "transactions" => "transactions#index", :via => [:get]
       match "bets" => "bets#index", :via => [:get]
-      match "deposit" => "deposits#create", :via => [:post]
-      match "withdraw" => "withdraws#create", :via => [:post]
+      match "deposit" => "transactions#deposit", :via => [:post]
+      match "withdraw" => "transactions#withdraw", :via => [:post]
       match "complaints" => "complaints#create", :via => [:post]
       match "complaints/:id" => "complaints#show", :via => [:get]
 
