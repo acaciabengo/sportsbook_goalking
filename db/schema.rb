@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_13_120000) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_13_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -303,8 +303,11 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_13_120000) do
     t.string "category_name"
     t.index ["booked"], name: "index_fixtures_on_booked"
     t.index ["event_id"], name: "index_fixtures_on_event_id", unique: true
+    t.index ["ext_category_id"], name: "idx_fixtures_ext_category_id"
+    t.index ["ext_tournament_id"], name: "idx_fixtures_ext_tournament_id"
     t.index ["location"], name: "index_fixtures_on_location"
     t.index ["location_id"], name: "index_fixtures_on_location_id"
+    t.index ["match_status", "status", "start_date"], name: "idx_fixtures_prematch_query"
     t.index ["match_status"], name: "index_fixtures_on_match_status"
     t.index ["sport"], name: "index_fixtures_on_sport"
     t.index ["sport_id"], name: "index_fixtures_on_sport_id"
@@ -387,6 +390,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_13_120000) do
     t.string "name"
     t.index ["fixture_id", "market_identifier", "specifier"], name: "custom_index_on_pre_markets", unique: true
     t.index ["fixture_id"], name: "index_pre_markets_on_fixture_id"
+    t.index ["status", "market_identifier"], name: "idx_pre_markets_status_market"
   end
 
   create_table "recovery_requests", force: :cascade do |t|

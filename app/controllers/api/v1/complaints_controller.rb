@@ -41,7 +41,8 @@ class Api::V1::ComplaintsController < Api::V1::BaseController
       :transaction_date,
       :subject,
       :description,
-      :preferred_contact_method
+      :preferred_contact_method,
+      :phone_number
     )
   end
 
@@ -49,7 +50,7 @@ class Api::V1::ComplaintsController < Api::V1::BaseController
     <<~HTML
       <h2>New Complaint Received</h2>
       <p><strong>User ID:</strong> #{complaint.user_id}</p>
-      <p><strong>Phone:</strong> #{complaint.user.phone_number}</p>
+      <p><strong>Phone:</strong> #{complaint.phone_number}</p>
       <p><strong>Category:</strong> #{complaint.category}</p>
       <p><strong>Sub Category:</strong> #{complaint.sub_category}</p>
       <p><strong>Subject:</strong> #{complaint.subject}</p>
