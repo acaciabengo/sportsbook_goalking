@@ -42,7 +42,7 @@ class Relworks
 
     response =
       @client.post do |req|
-        req.url "/mobile-money/request-payment"
+        req.url "mobile-money/request-payment"
         req.body = body.to_json
       end
     status = response.status
@@ -67,7 +67,7 @@ class Relworks
 
     response =
       @client.post do |req|
-        req.url "/mobile-money/send-payment"
+        req.url "mobile-money/send-payment"
         req.body = body.to_json
       end
     status = response.status
@@ -82,7 +82,7 @@ class Relworks
   def check_balance()
     response =
       @client.get do |req|
-        req.url "/mobile-money/check-wallet-balance"
+        req.url "mobile-money/check-wallet-balance"
         req.params = { account_no: ENV["RELWORKS_ACCOUNT_NO"], currency: "UGX" }
       end
     status = response.status
@@ -97,7 +97,7 @@ class Relworks
   def check_transaction_status(internal_reference: nil)
     response =
       @client.get do |req|
-        req.url "/mobile-money/check-transaction-status"
+        req.url "mobile-money/check-transaction-status"
         req.params = {
           account_no: ENV["RELWORKS_ACCOUNT_NO"],
           internal_reference: internal_reference
