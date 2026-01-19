@@ -12,6 +12,7 @@ class Relworks
   def client()
     conn =
       Faraday.new(url: @base_url, headers: @default_headers) do |faraday|
+        faraday.request :json
         faraday.adapter Faraday.default_adapter
       end
     conn
