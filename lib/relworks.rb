@@ -40,7 +40,11 @@ class Relworks
         req.body = body.to_json
       end
     status = response.status
-    data = JSON.parse(response.body)
+    data = begin
+      JSON.parse(response.body)
+    rescue JSON::ParserError
+      { "success" => false, "message" => response.body.to_s.truncate(200) }
+    end
     return status, data
   end
 
@@ -61,7 +65,11 @@ class Relworks
         req.body = body.to_json
       end
     status = response.status
-    data = JSON.parse(response.body)
+    data = begin
+      JSON.parse(response.body)
+    rescue JSON::ParserError
+      { "success" => false, "message" => response.body.to_s.truncate(200) }
+    end
     return status, data
   end
 
@@ -72,7 +80,11 @@ class Relworks
         req.params = { account_no: ENV["RELWORKS_ACCOUNT_NO"], currency: "UGX" }
       end
     status = response.status
-    data = JSON.parse(response.body)
+    data = begin
+      JSON.parse(response.body)
+    rescue JSON::ParserError
+      { "success" => false, "message" => response.body.to_s.truncate(200) }
+    end
     return status, data
   end
 
@@ -86,7 +98,11 @@ class Relworks
         }
       end
     status = response.status
-    data = JSON.parse(response.body)
+    data = begin
+      JSON.parse(response.body)
+    rescue JSON::ParserError
+      { "success" => false, "message" => response.body.to_s.truncate(200) }
+    end
     return status, data
   end
 end
