@@ -5,7 +5,7 @@ class Relworks
       "Accept" => "application/vnd.relworx.v2",
       "Content-Type" => "application/json"
     }
-    @base_url = "https://payments.relworx.com/api"
+    @base_url = "https://payments.relworx.com/api/"
     @client = client()
   end
 
