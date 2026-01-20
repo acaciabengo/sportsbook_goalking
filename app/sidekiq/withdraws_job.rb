@@ -38,25 +38,23 @@ class WithdrawsJob
       Withdraw.transaction do
         # double check that the user has sufficient balance before deducting
         if user.balance >= transaction.amount
+          # Deduct balance immediately to prevent double spending
+          user.update!(balance: user.balance - transaction.amount)
+
           withdraw.update(
-            status: "COMPLETED",
+            status: "PENDING",
             ext_transaction_id: response["internal_reference"],
-            balance_after: user.balance - transaction.amount,
-            message: "Withdrawal successful"
+            balance_after: user.balance,
+            message: "Withdrawal initiated"
           )
 
-          # Update user balance
-          user.update(balance: user.balance - transaction.amount)
-
-          # Update transaction status
-          transaction.update(status: "COMPLETED")
+          transaction.update(status: "PENDING")
         else
           withdraw.update(
             status: "FAILED",
             message: "Insufficient balance at the time of processing"
           )
 
-          # Update transaction status
           transaction.update(status: "FAILED")
         end
       end

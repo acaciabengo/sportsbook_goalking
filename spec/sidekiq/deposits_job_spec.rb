@@ -52,13 +52,13 @@ RSpec.describe DepositsJob, type: :job do
 
     it 'creates deposit with correct attributes' do
       DepositsJob.new.perform(transaction.id)
-      
+
       deposit = Deposit.last
-      
+
       expect(deposit.transaction_id).to eq(transaction.id.to_s)
       expect(deposit.amount).to eq(5000.0)
       expect(deposit.phone_number).to eq('256770000000')
-      expect(deposit.status).to eq('COMPLETED')
+      expect(deposit.status).to eq('PENDING')
       expect(deposit.currency).to eq('UGX')
       expect(deposit.payment_method).to eq('Mobile Money')
       expect(deposit.user_id).to eq(user.id)
@@ -84,12 +84,12 @@ RSpec.describe DepositsJob, type: :job do
       DepositsJob.new.perform(transaction.id)
     end
 
-    it 'updates deposit status to COMPLETED' do
+    it 'updates deposit status to PENDING (awaiting webhook)' do
       DepositsJob.new.perform(transaction.id)
-      
+
       deposit = Deposit.last
-      
-      expect(deposit.status).to eq('COMPLETED')
+
+      expect(deposit.status).to eq('PENDING')
     end
 
     it 'stores external transaction reference' do
@@ -100,32 +100,32 @@ RSpec.describe DepositsJob, type: :job do
       expect(deposit.ext_transaction_id).to eq('REL-EXT-123456789')
     end
 
-    it 'stores success message' do
+    it 'stores initiated message' do
       DepositsJob.new.perform(transaction.id)
-      
+
       deposit = Deposit.last
-      
-      expect(deposit.message).to eq('Deposit successful')
+
+      expect(deposit.message).to eq('Deposit initiated')
     end
 
-    it 'updates user balance' do
+    it 'does not update user balance (awaiting webhook)' do
       expect {
         DepositsJob.new.perform(transaction.id)
-      }.to change { user.reload.balance }.from(10000.0).to(15000.0)
+      }.not_to change { user.reload.balance }
     end
 
-    it 'stores balance_after in deposit' do
+    it 'does not store balance_after (awaiting webhook)' do
       DepositsJob.new.perform(transaction.id)
-      
+
       deposit = Deposit.last
-      
-      expect(deposit.balance_after).to eq(15000.0)
+
+      expect(deposit.balance_after).to be_nil
     end
 
-    it 'updates transaction status to COMPLETED' do
+    it 'updates transaction status to PENDING' do
       DepositsJob.new.perform(transaction.id)
-      
-      expect(transaction.reload.status).to eq('COMPLETED')
+
+      expect(transaction.reload.status).to eq('PENDING')
     end
 
     it 'performs all updates in a transaction' do
@@ -136,15 +136,16 @@ RSpec.describe DepositsJob, type: :job do
       expect(Deposit).to have_received(:transaction)
     end
 
-    it 'does not leave partial updates on success' do
+    it 'sets up deposit for webhook completion' do
       DepositsJob.new.perform(transaction.id)
-      
+
       deposit = Deposit.last
-      
-      # All updates should be complete
-      expect(deposit.status).to eq('COMPLETED')
-      expect(user.reload.balance).to eq(15000.0)
-      expect(transaction.reload.status).to eq('COMPLETED')
+
+      # Deposit is pending, waiting for webhook
+      expect(deposit.status).to eq('PENDING')
+      expect(deposit.ext_transaction_id).to eq('REL-EXT-123456789')
+      expect(user.reload.balance).to eq(10000.0)
+      expect(transaction.reload.status).to eq('PENDING')
     end
   end
 
@@ -364,18 +365,18 @@ RSpec.describe DepositsJob, type: :job do
           .and_return([200, success_response])
       end
 
-      it 'updates balance correctly' do
+      it 'does not update balance (awaiting webhook)' do
         DepositsJob.new.perform(transaction.id)
-        
-        expect(user.reload.balance).to eq(5000.0)
+
+        expect(user.reload.balance).to eq(0.0)
       end
 
-      it 'stores correct balance_after' do
+      it 'stores ext_transaction_id for webhook lookup' do
         DepositsJob.new.perform(transaction.id)
-        
+
         deposit = Deposit.last
-        
-        expect(deposit.balance_after).to eq(5000.0)
+
+        expect(deposit.ext_transaction_id).to eq('REL-EXT-123456789')
       end
     end
 
@@ -393,10 +394,10 @@ RSpec.describe DepositsJob, type: :job do
           .and_return([200, success_response])
       end
 
-      it 'updates balance correctly' do
+      it 'does not update balance (awaiting webhook)' do
         DepositsJob.new.perform(transaction.id)
-        
-        expect(user.reload.balance).to eq(1005000.0)
+
+        expect(user.reload.balance).to eq(1000000.0)
       end
     end
 
@@ -459,10 +460,12 @@ RSpec.describe DepositsJob, type: :job do
           .and_return([200, success_response])
       end
 
-      it 'processes large amount correctly' do
+      it 'creates deposit with large amount (awaiting webhook)' do
         DepositsJob.new.perform(transaction.id)
-        
-        expect(user.reload.balance).to eq(10010000.0)
+
+        deposit = Deposit.last
+        expect(deposit.amount).to eq(10000000.0)
+        expect(deposit.status).to eq('PENDING')
       end
     end
 
@@ -518,22 +521,16 @@ RSpec.describe DepositsJob, type: :job do
         .and_return([200, success_response])
     end
 
-    context 'when balance update fails' do
+    context 'when deposit update fails' do
       before do
-        allow_any_instance_of(User).to receive(:update)
+        allow_any_instance_of(Deposit).to receive(:update)
           .and_raise(ActiveRecord::RecordInvalid)
       end
 
-      it 'rolls back deposit update' do
+      it 'does not leave deposit in inconsistent state' do
         expect {
           DepositsJob.new.perform(transaction.id) rescue nil
-        }.not_to change { Deposit.where(status: 'COMPLETED').count }
-      end
-
-      it 'does not update user balance' do
-        expect {
-          DepositsJob.new.perform(transaction.id) rescue nil
-        }.not_to change { user.reload.balance }
+        }.not_to change { Deposit.where(status: 'PENDING', ext_transaction_id: 'REL-EXT-123456789').count }
       end
     end
   end

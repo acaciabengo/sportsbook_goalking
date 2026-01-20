@@ -16,7 +16,7 @@ RSpec.describe Relworks, type: :model do
     let(:payment_request) do
       stub_request(
         :post,
-        "https://payments.relworx.com/mobile-money/request-payment"
+        "https://payments.relworx.com/api/mobile-money/request-payment"
       ).to_return(status: 200, body: response.to_json, headers: {})
     end
     before { payment_request }
@@ -49,7 +49,7 @@ RSpec.describe Relworks, type: :model do
     let(:payment_request) do
       stub_request(
         :post,
-        "https://payments.relworx.com/mobile-money/send-payment"
+        "https://payments.relworx.com/api/mobile-money/send-payment"
       ).to_return(status: 200, body: response.to_json, headers: {})
     end
     # stub the request
@@ -78,7 +78,7 @@ RSpec.describe Relworks, type: :model do
     let(:payment_request) do
       stub_request(
         :get,
-        %r{https://payments.relworx.com/mobile-money/check-wallet-balance*}
+        %r{https://payments.relworx.com/api/mobile-money/check-wallet-balance*}
       ).to_return(status: 200, body: response.to_json, headers: {})
     end
 
@@ -120,7 +120,7 @@ RSpec.describe Relworks, type: :model do
     let(:payment_request) do
       stub_request(
         :get,
-        "https://payments.relworx.com/mobile-money/check-transaction-status"
+        "https://payments.relworx.com/api/mobile-money/check-transaction-status"
       ).with(
         query: {
           "account_no" => ENV["RELWORKS_ACCOUNT_NO"],

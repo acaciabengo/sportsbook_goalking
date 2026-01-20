@@ -37,17 +37,13 @@ class DepositsJob
       
       Deposit.transaction do
         deposit.update(
-          status: "COMPLETED",
+          status: "PENDING",
           ext_transaction_id: response["internal_reference"],
-          message: "Deposit successful",
-          balance_after: user.balance + transaction.amount
+          message: "Deposit initiated",
         )
 
-        # Update user balance
-        user.update(balance: user.balance + transaction.amount)
-
         # Update transaction status
-        transaction.update(status: "COMPLETED")
+        transaction.update(status: "PENDING")
       end
     else
       deposit.update(

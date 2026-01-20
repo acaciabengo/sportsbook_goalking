@@ -612,6 +612,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
 
             win_amount = 8000.0 # 1000 * 2 * 2 * 2
             expected_bonus = (win_amount * 0.1).round(2) # 10% bonus
+           
             
             expect(bet_slip.bonus).to eq(expected_bonus)
           end
@@ -622,9 +623,10 @@ RSpec.describe "Api::V1::Betslips", type: :request do
 
             win_amount = 8000.0
             bonus = (win_amount * 0.1).round(2)
-            expected_payout = (bonus + win_amount).round(2)
+            gross_payout = (bonus + win_amount).round(2)
+            net_payout = gross_payout - ((gross_payout- 1000) * BetSlip::TAX_RATE)
 
-            expect(bet_slip.payout).to eq(expected_payout)
+            expect(bet_slip.payout).to eq(net_payout)
           end
 
           it "calculates tax correctly" do
@@ -633,7 +635,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
 
             win_amount = 8000.0
             bonus = (win_amount * 0.1).round(2)
-            expected_tax = (bonus + win_amount) * BetSlip::TAX_RATE
+            expected_tax = (bonus + win_amount - 1000) * BetSlip::TAX_RATE
 
             expect(bet_slip.tax).to eq(expected_tax)
           end

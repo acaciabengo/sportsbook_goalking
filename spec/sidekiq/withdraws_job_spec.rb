@@ -52,13 +52,13 @@ RSpec.describe WithdrawsJob, type: :job do
 
     it 'creates withdraw with correct attributes' do
       WithdrawsJob.new.perform(transaction.id)
-      
+
       withdraw = Withdraw.last
-      
+
       expect(withdraw.transaction_id).to eq(transaction.id.to_s)
       expect(withdraw.amount).to eq(10000.0)
       expect(withdraw.phone_number).to eq('256770000000')
-      expect(withdraw.status).to eq('COMPLETED')
+      expect(withdraw.status).to eq('PENDING')
       expect(withdraw.currency).to eq('UGX')
       expect(withdraw.payment_method).to eq('Mobile Money')
       expect(withdraw.user_id).to eq(user.id)
@@ -84,12 +84,12 @@ RSpec.describe WithdrawsJob, type: :job do
       WithdrawsJob.new.perform(transaction.id)
     end
 
-    it 'updates withdraw status to COMPLETED' do
+    it 'updates withdraw status to PENDING (awaiting webhook)' do
       WithdrawsJob.new.perform(transaction.id)
-      
+
       withdraw = Withdraw.last
-      
-      expect(withdraw.status).to eq('COMPLETED')
+
+      expect(withdraw.status).to eq('PENDING')
     end
 
     it 'stores external transaction reference' do
@@ -100,12 +100,12 @@ RSpec.describe WithdrawsJob, type: :job do
       expect(withdraw.ext_transaction_id).to eq('REL-WTH-987654321')
     end
 
-    it 'stores success message' do
+    it 'stores initiated message' do
       WithdrawsJob.new.perform(transaction.id)
-      
+
       withdraw = Withdraw.last
-      
-      expect(withdraw.message).to eq('Withdrawal successful')
+
+      expect(withdraw.message).to eq('Withdrawal initiated')
     end
 
     it 'deducts amount from user balance' do
@@ -130,10 +130,10 @@ RSpec.describe WithdrawsJob, type: :job do
       expect(withdraw.balance_after).to eq(40000.0)
     end
 
-    it 'updates transaction status to COMPLETED' do
+    it 'updates transaction status to PENDING' do
       WithdrawsJob.new.perform(transaction.id)
-      
-      expect(transaction.reload.status).to eq('COMPLETED')
+
+      expect(transaction.reload.status).to eq('PENDING')
     end
 
     it 'performs all updates in a database transaction' do
@@ -144,14 +144,16 @@ RSpec.describe WithdrawsJob, type: :job do
       expect(Withdraw).to have_received(:transaction)
     end
 
-    it 'does not leave partial updates on success' do
+    it 'sets up withdraw for webhook completion' do
       WithdrawsJob.new.perform(transaction.id)
-      
+
       withdraw = Withdraw.last
-      
-      expect(withdraw.status).to eq('COMPLETED')
+
+      # Withdraw is pending, balance deducted, waiting for webhook confirmation
+      expect(withdraw.status).to eq('PENDING')
+      expect(withdraw.ext_transaction_id).to eq('REL-WTH-987654321')
       expect(user.reload.balance).to eq(40000.0)
-      expect(transaction.reload.status).to eq('COMPLETED')
+      expect(transaction.reload.status).to eq('PENDING')
     end
   end
 
@@ -472,18 +474,26 @@ RSpec.describe WithdrawsJob, type: :job do
           .and_return([200, success_response])
       end
 
-      it 'withdraws successfully' do
+      it 'deducts balance immediately (pending webhook)' do
         WithdrawsJob.new.perform(transaction.id)
-        
+
         expect(user.reload.balance).to eq(0.0)
       end
 
       it 'stores correct balance_after' do
         WithdrawsJob.new.perform(transaction.id)
-        
+
         withdraw = Withdraw.last
-        
+
         expect(withdraw.balance_after).to eq(0.0)
+      end
+
+      it 'sets status to PENDING' do
+        WithdrawsJob.new.perform(transaction.id)
+
+        withdraw = Withdraw.last
+
+        expect(withdraw.status).to eq('PENDING')
       end
     end
 
@@ -656,14 +666,14 @@ RSpec.describe WithdrawsJob, type: :job do
 
     context 'when balance update fails after API success' do
       before do
-        allow_any_instance_of(User).to receive(:update)
+        allow_any_instance_of(User).to receive(:update!)
           .and_raise(ActiveRecord::RecordInvalid)
       end
 
-      it 'rolls back withdraw record' do
+      it 'rolls back withdraw status update' do
         expect {
           WithdrawsJob.new.perform(transaction.id) rescue nil
-        }.not_to change { Withdraw.where(status: 'COMPLETED').count }
+        }.not_to change { Withdraw.where(status: 'PENDING', ext_transaction_id: 'REL-WTH-987654321').count }
       end
 
       it 'does not deduct from user balance' do
@@ -681,9 +691,9 @@ RSpec.describe WithdrawsJob, type: :job do
 
       it 'does not deduct from user balance' do
         initial_balance = user.balance
-        
+
         WithdrawsJob.new.perform(transaction.id) rescue nil
-        
+
         expect(user.reload.balance).to eq(initial_balance)
       end
     end

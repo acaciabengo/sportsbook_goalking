@@ -64,6 +64,11 @@ Rails.application.routes.draw do
     match "mtn/payment" => "mtn_uganda#create", :via => %i[post get]
   end
 
+  namespace :webhooks do
+    match "relworks/deposits" => "relworks#deposits", :via => %i[post get]
+    match "relworks/withdraws" => "relworks#withdraws", :via => %i[post get]
+  end
+
   resources :bet_slips, only: %i[index create show]
   match "/refresh_slip", to: "line_bets#refresh", via: [:post]
   match "/page_refresh",
