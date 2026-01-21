@@ -11,18 +11,8 @@ class Webhooks::RelworksController < ApplicationController
       return render status: 400, json: { error: "Missing internal_reference" }
     end
 
-    CompleteRelworksDepositJob.perform_async(
-      internal_reference: args[:internal_reference],
-      status: args[:status],
-      message: args[:message],
-      customer_reference: args[:customer_reference],
-      msisdn: args[:msisdn],
-      amount: args[:amount],
-      currency: args[:currency],
-      provider: args[:provider],
-      charge: args[:charge],
-      completed_at: args[:completed_at]
-    )
+    CompleteRelworksDepositJob.perform_async(args[:internal_reference], args[:status], args[:message])
+      
 
     render status: 200, json: { response: "OK" }
   rescue StandardError => e
@@ -40,18 +30,7 @@ class Webhooks::RelworksController < ApplicationController
       return render status: 400, json: { error: "Missing internal_reference" }
     end
 
-    CompleteRelworksWithdrawJob.perform_async(
-      internal_reference: args[:internal_reference],
-      status: args[:status],
-      message: args[:message],
-      customer_reference: args[:customer_reference],
-      msisdn: args[:msisdn],
-      amount: args[:amount],
-      currency: args[:currency],
-      provider: args[:provider],
-      charge: args[:charge],
-      completed_at: args[:completed_at]
-    )
+    CompleteRelworksWithdrawJob.perform_async(args[:internal_reference], args[:status], args[:message])
 
     render status: 200, json: { response: "OK" }
   rescue StandardError => e

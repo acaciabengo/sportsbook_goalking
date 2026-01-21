@@ -1,20 +1,9 @@
 class CompleteRelworksWithdrawJob
   include Sidekiq::Job
   sidekiq_options queue: "high"
-  sidekiq_options retry: 3
+  sidekiq_options retry: 1
 
-  def perform(
-    internal_reference:,
-    status: nil,
-    message: nil,
-    customer_reference: nil,
-    msisdn: nil,
-    amount: nil,
-    currency: nil,
-    provider: nil,
-    charge: nil,
-    completed_at: nil
-  )
+  def perform(internal_reference, status, message)
     withdraw = Withdraw.find_by(ext_transaction_id: internal_reference)
 
     if withdraw.nil?
@@ -29,10 +18,14 @@ class CompleteRelworksWithdrawJob
 
     if status&.downcase == "success"
       Withdraw.transaction do
+        user.with_lock do
+          user.decrement!(:balance, withdraw.amount.to_f)
+        end
+
         withdraw.update!(
           status: "COMPLETED",
           message: message || "Withdrawal successful",
-          balance_after: withdraw.balance_before - withdraw.amount
+          balance_after: user.reload.balance
         )
 
         transaction&.update!(status: "COMPLETED")
@@ -43,9 +36,6 @@ class CompleteRelworksWithdrawJob
           status: "FAILED",
           message: message || "Withdrawal failed"
         )
-
-        # Refund balance on failed withdrawal
-        user.update!(balance: user.balance + withdraw.amount&.to_f)
 
         transaction&.update!(status: "FAILED")
       end

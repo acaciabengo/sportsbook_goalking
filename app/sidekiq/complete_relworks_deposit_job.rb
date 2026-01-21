@@ -1,20 +1,9 @@
 class CompleteRelworksDepositJob
   include Sidekiq::Job
   sidekiq_options queue: "high"
-  sidekiq_options retry: 3
+  sidekiq_options retry: 1
 
-  def perform(
-    internal_reference:,
-    status: nil,
-    message: nil,
-    customer_reference: nil,
-    msisdn: nil,
-    amount: nil,
-    currency: nil,
-    provider: nil,
-    charge: nil,
-    completed_at: nil
-  )
+  def perform(internal_reference, status, message)
     deposit = Deposit.find_by(ext_transaction_id: internal_reference)
 
     if deposit.nil?
@@ -29,13 +18,15 @@ class CompleteRelworksDepositJob
 
     if status&.downcase == "success"
       Deposit.transaction do
+        user.with_lock do
+          user.increment!(:balance, deposit.amount.to_f)
+        end
+
         deposit.update!(
           status: "COMPLETED",
           message: message || "Deposit successful",
-          balance_after: user.balance + deposit.amount
+          balance_after: user.reload.balance
         )
-
-        user.update!(balance: user.balance + deposit.amount&.to_f)
 
         transaction&.update!(status: "COMPLETED")
       end
