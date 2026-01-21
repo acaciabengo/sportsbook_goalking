@@ -16,7 +16,7 @@ class Backend::TransactionsAnalyticsController < ApplicationController
         SUM(amount) AS total_withdraw
       FROM transactions
       WHERE category = 'Withdraw'
-        AND status = 'SUCCESS'
+        AND status IN ('COMPLETED', 'SUCCESS')
         AND created_at >= NOW() - INTERVAL '30 days'
       GROUP BY DATE(created_at)
       ORDER BY DATE(created_at);
@@ -28,7 +28,7 @@ class Backend::TransactionsAnalyticsController < ApplicationController
         SUM(amount) AS total_deposit
       FROM transactions
       WHERE category ~ '^(Dep|Win)'
-        AND status = 'SUCCESS'
+        AND status IN ('COMPLETED', 'SUCCESS')
         AND created_at >= NOW() - INTERVAL '30 days'
       GROUP BY DATE(created_at)
       ORDER BY DATE(created_at);

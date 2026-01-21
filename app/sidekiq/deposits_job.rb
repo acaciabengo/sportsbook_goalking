@@ -18,7 +18,8 @@ class DepositsJob
       currency: "UGX",
       payment_method: "Mobile Money",
       user_id: transaction.user_id,
-      transaction_reference: transaction.reference
+      transaction_reference: transaction.reference,
+      balance_before: user.balance
     )
 
     if !deposit.persisted?
