@@ -21,7 +21,7 @@ RSpec.describe CashoutCalculator do
 
       it 'calculates cashout with margin' do
         result = service.call
-        expected = (1000 * 3.0 * 0.80).round(2)
+        expected = ((1000 *( 5/3.0)) * 0.80).round(2)
         expect(result[:cashout_value]).to eq(expected)
       end
 
@@ -82,6 +82,23 @@ RSpec.describe CashoutCalculator do
         expect(result[:current_odds]).to eq(6.25)
       end
     end
+
+    context 'with a lost bet in the slip' do
+      let(:bet4) { Fabricate(:bet, bet_slip: bet_slip, fixture: fixture, status: 'Closed', odds: 2.5, result: 'Loss') }
+      let(:bet5) { Fabricate(:bet, bet_slip: bet_slip, fixture: fixture, market_identifier: '10', outcome: 2, odds: 2.0, status: 'Active', bet_type: 'PreMatch') }
+      
+      before do
+        bet4
+        bet5
+      end
+
+      it 'returns unavailable' do
+        result = service.call
+        expect(result[:available]).to be false
+      end
+    end
+
+    
 
     # context 'when cashout value is too low' do
     #   let(:bet_slip) { Fabricate(:bet_slip, user: user, status: 'Active', stake: 5000, payout: 5100, odds: 1.02) }

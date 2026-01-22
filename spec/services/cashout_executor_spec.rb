@@ -129,5 +129,34 @@ RSpec.describe CashoutExecutor do
         expect { service.call }.to change { user.reload.balance }.from(10000).to(10500)
       end
     end
+
+    context 'with a lost bet in the slip' do
+      let(:cashout_offer) { { available: false, reason: 'Bet slip already lost' } }
+
+      before do
+        bet.update!(result: 'Loss', status: 'Closed')
+      end
+
+      it 'returns false' do
+        expect(service.call).to be false
+      end
+
+      it 'sets error message indicating bet slip is lost' do
+        service.call
+        expect(service.error_message).to eq('Bet slip already lost')
+      end
+
+      it 'does not update bet slip status' do
+        expect { service.call }.not_to change { bet_slip.reload.status }
+      end
+
+      it 'does not update user balance' do
+        expect { service.call }.not_to change { user.reload.balance }
+      end
+
+      it 'does not create a transaction record' do
+        expect { service.call }.not_to change { user.transactions.count }
+      end
+    end
   end
 end
