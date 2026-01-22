@@ -12,6 +12,12 @@ class CashoutCalculator
     return unavailable('Bet slip already settled') unless @bet_slip.status == 'Active'
     return unavailable('No bets in this slip') if @bets.empty?
 
+    # if any of the fixtures has been lost, return unavailable with 0 offer
+    bet_statuses = @bets.pluck(:result)
+    if bet_statuses.any? {|status| status == 'Loss'}
+      return unavailable("Bet slip already lost")
+    end
+
     # Fetch current odds for all bets
     current_odds_data = fetch_current_odds
 
@@ -110,18 +116,22 @@ class CashoutCalculator
     # Calculate current accumulator odds (multiply all odds together)
     current_accumulator_odds = current_odds.inject(:*)
 
-    # Calculate potential return at current odds
-    current_potential_return = @bet_slip.stake * current_accumulator_odds
+    # # Calculate potential return at current odds
+    # current_potential_return = @bet_slip.stake * current_accumulator_odds
 
-    # Apply bookmaker margin to the cashout value
-    cashout_value = current_potential_return * CASHOUT_MARGIN
+    # # Apply bookmaker margin to the cashout value
+    # cashout_value = current_potential_return * CASHOUT_MARGIN
 
-    # Calculate the max payout with house margin
-    max_payout = @bet_slip.payout * CASHOUT_MARGIN
+    # # Calculate the max payout with house margin
+    # max_payout = @bet_slip.payout * CASHOUT_MARGIN
 
-    # Ensure cashout value is between stake and potential payout
-    # Don't offer less than stake (user is winning) or more than original payout
-    cashout_value = [[[@bet_slip.stake, cashout_value].max, max_payout].min, 0].max
+    # # Ensure cashout value is between stake and potential payout
+    # # Don't offer less than stake (user is winning) or more than original payout
+    # cashout_value = [[[@bet_slip.stake, cashout_value].max, max_payout].min, 0].max
+    
+    initial_accumulator_odds = @bet_slip.odds
+
+    cashout_value = (@bet_slip.stake * (initial_accumulator_odds / current_accumulator_odds)) * CASHOUT_MARGIN || 0
 
     cashout_value
   end
