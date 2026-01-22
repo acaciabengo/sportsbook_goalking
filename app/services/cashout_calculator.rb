@@ -14,7 +14,7 @@ class CashoutCalculator
 
     # if any of the fixtures has been lost, return unavailable with 0 offer
     bet_statuses = @bets.pluck(:result)
-    if bet_statuses.any? {|status| status == 'Loss'}
+    if bet_statuses.any? {|status| status&.downcase == 'loss'}
       return unavailable("Bet slip already lost")
     end
 

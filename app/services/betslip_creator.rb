@@ -298,14 +298,14 @@ class BetslipCreator
 
     pre_markets.each do |market|
       pre_markets_data[market.fixture_id] ||= {}
-      pre_markets_data[market.fixture_id][market.market_identifier] ||= {}
-      pre_markets_data[market.fixture_id][market.market_identifier][market.specifier] = market.odds
+      pre_markets_data[market.fixture_id][market.market_identifier.to_s] ||= {}
+      pre_markets_data[market.fixture_id][market.market_identifier.to_s][market.specifier.presence] = market.odds
     end
 
     live_markets.each do |market|
       live_markets_data[market.fixture_id] ||= {}
-      live_markets_data[market.fixture_id][market.market_identifier] ||= {}
-      live_markets_data[market.fixture_id][market.market_identifier][market.specifier] = market.odds
+      live_markets_data[market.fixture_id][market.market_identifier.to_s] ||= {}
+      live_markets_data[market.fixture_id][market.market_identifier.to_s][market.specifier.presence] = market.odds
     end
 
     [pre_markets_data, live_markets_data]
