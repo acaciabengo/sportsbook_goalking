@@ -26,7 +26,7 @@ class Api::V1::UsersController < Api::V1::BaseController
 
   def redeem
     user = @current_user
-    if user.points >= 120
+    if (user.points || 0) >= 120
       # create a user bonus and for each 120 points redeemed, give a bonus of 10000
       redeemable_points = (user.points / 120)&.to_i  * 120
       bonus_amount = (redeemable_points / 120) * 10000

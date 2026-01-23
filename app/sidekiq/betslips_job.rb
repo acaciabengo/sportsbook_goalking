@@ -122,8 +122,7 @@ class BetslipsJob
          total_crown_points = calculate_crown_points(slip.stake, crown_points_per_slip)
          user = slip&.user
          if user.present? && total_crown_points > 0
-            user.points += total_crown_points
-            user.save!
+            user.increment!(:points, total_crown_points)
             # Create crown point transaction record
             transaction = CrownPointTransaction.new(
                user: user,
