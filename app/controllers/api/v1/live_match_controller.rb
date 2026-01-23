@@ -350,7 +350,10 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
     # check if there are any placeholders using regex
     has_placeholders = market_name.match?(/\{.*?\}/)
 
-    return market_name unless has_placeholders
+    if has_placeholders
+      new_market_name = market_name + " " + specifier
+      return new_market_name
+    end
 
     new_market_name = market_name.gsub(/\{.*?\}/) do |match|
       case match
