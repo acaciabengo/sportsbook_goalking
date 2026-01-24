@@ -118,7 +118,7 @@ class BetslipsJob
       # Award points for the betslip if the feature is enabled
       crown_points_feature = ENV['CROWN_POINTS_FEATURE']&.to_s&.downcase == 'true'
       if crown_points_feature
-         crown_points_per_slip = (ENV['CROWN_POINTS_PER_BETSLIP'].presence || '5').to_i
+         crown_points_per_slip = (ENV['CROWN_POINTS_PER_BETSLIP'].presence || 5).to_i
          total_crown_points = calculate_crown_points(slip.stake, crown_points_per_slip)
          user = slip&.user
          if user.present? && total_crown_points > 0
