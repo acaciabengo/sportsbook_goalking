@@ -4,6 +4,9 @@ class TwoUpFeatureJob
 
   SOCCER_EXT_SPORT_ID = "1"
   MARKET_1X2_EXT_MARKET_ID = "1"
+  ACCEPETED_TOURNAMENTS = [17, 34, 35, 8, 7, 679, 34480]
+  ACCEPETED_MARKETS = ["1", "2"]
+  
 
   def perform(fixture_id, home_score, away_score)
     # Query for all bets associated with the fixture
@@ -21,10 +24,13 @@ class TwoUpFeatureJob
       outcome_id = '3'
     end
 
-    bets = Bet.where(fixture_id: fixture_id, bet_type: 'PreMatch')
-            .where.not(status: 'Closed')
-            .where(market_identifier: MARKET_1X2_EXT_MARKET_ID)
-            .where(outcome: outcome_id)
+    bets = Bet
+          .joins(:fixture)
+          .where(fixture_id: fixture_id, bet_type: 'PreMatch')
+          .where.not(status: 'Closed')
+          .where(market_identifier: MARKET_1X2_EXT_MARKET_ID)
+          .where(outcome: outcome_id)
+          .where(fixtures: { ext_tournament_id: ACCEPETED_TOURNAMENTS })
 
     # update all these bets as won and settled
     meta_data = { settlement_reason: 'Two Up Feature Triggered', settled_at: Time.current, score: "#{home_score}-#{away_score}" }

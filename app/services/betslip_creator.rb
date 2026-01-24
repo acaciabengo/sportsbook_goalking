@@ -6,8 +6,10 @@ class BetslipCreator
 
   SAME_GAME_MAX_STAKE = 100_000
   SAME_GAME_MIN_STAKE = 2_000
-  SAME_GAME_ACCEPETED_MARKETS = ["1", "10", "11", "29", "92"]
+  SAME_GAME_ACCEPETED_MARKETS = ["1", "10","18", "29", "19", "20", "2", "8"]
+  SAME_GAME_ACCEPETED_TOURNAMENTS = [17, 34, 35, 8, 7, 679, 34480]
   SAME_GAME_DISCOUNT_FACTOR = 0.9
+  SAME_GAME_ACCEPETED_SPORTS = ["1"]  # Soccer
 
   # Add payout limits
   MAX_SLIP_PAYOUT_LIMIT = 50_000_000
@@ -351,11 +353,26 @@ class BetslipCreator
     same_game_bets = @bets_data.select { |bet| same_game_fixtures.include?(bet[:fixture_id]) }
 
     same_game_markets = same_game_bets.map { |bet| bet[:market_identifier].to_s }.uniq
-
+    
     # if any of the markets is not in the accepted markets, set error message
     unless same_game_markets.all? { |market| SAME_GAME_ACCEPETED_MARKETS.include?(market) }
-      @error_message = "Same game bets are only allowed for specific markets."
+      @error_message = "Same game bets are not allowed for these markets."
       log_failure(@error_message, { same_game_markets: same_game_markets, accepted: SAME_GAME_ACCEPETED_MARKETS })
+      return false
+    end
+    
+    same_game_tournament_ids = Fixture.where(id: same_game_fixtures).pluck(:ext_tournament_id).compact.uniq
+
+    unless same_game_tournament_ids.all? { |tourn_id| SAME_GAME_ACCEPETED_TOURNAMENTS.include?(tourn_id.to_i) }
+      @error_message = "Same game bets are not allowed for these tournaments."
+      log_failure(@error_message, { same_game_tournament_ids: same_game_tournament_ids, accepted: SAME_GAME_ACCEPETED_TOURNAMENTS })
+      return false
+    end
+
+    same_game_sport_ids = Fixture.where(id: same_game_fixtures).pluck(:sport_id).compact.uniq
+    unless same_game_sport_ids.all? { |sport_id| SAME_GAME_ACCEPETED_SPORTS.include?(sport_id.to_s) }
+      @error_message = "Same game bets are only allowed for Soccer."
+      log_failure(@error_message, { same_game_sport_ids: same_game_sport_ids, accepted: SAME_GAME_ACCEPETED_SPORTS })
       return false
     end
 

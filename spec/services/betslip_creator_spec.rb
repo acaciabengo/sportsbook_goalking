@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe BetslipCreator do
   let(:user) { Fabricate(:user, balance: 10000) }
-  let(:fixture) { Fabricate(:fixture) }
+  let(:fixture) { Fabricate(:fixture, ext_tournament_id: 17, sport_id: "1") }
   let(:pre_market) { Fabricate(:pre_market, fixture: fixture, market_identifier: '1', odds: { '1' => { 'outcome_id' => 1, 'odd' => 2.5 } }) }
   let(:bets_data) do
     [{

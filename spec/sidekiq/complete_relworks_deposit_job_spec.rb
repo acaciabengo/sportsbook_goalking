@@ -46,31 +46,31 @@ RSpec.describe CompleteRelworksDepositJob, type: :job do
     before { deposit }
 
     it 'updates deposit status to COMPLETED' do
-      CompleteRelworksDepositJob.new.perform(**webhook_params)
+      CompleteRelworksDepositJob.new.perform(webhook_params[:internal_reference], webhook_params[:status], webhook_params[:message])
 
       expect(deposit.reload.status).to eq('COMPLETED')
     end
 
     it 'updates user balance' do
       expect {
-        CompleteRelworksDepositJob.new.perform(**webhook_params)
+        CompleteRelworksDepositJob.new.perform(webhook_params[:internal_reference], webhook_params[:status], webhook_params[:message])
       }.to change { user.reload.balance }.from(10000.0).to(15000.0)
     end
 
     it 'stores balance_after' do
-      CompleteRelworksDepositJob.new.perform(**webhook_params)
+      CompleteRelworksDepositJob.new.perform(webhook_params[:internal_reference], webhook_params[:status], webhook_params[:message])
 
       expect(deposit.reload.balance_after).to eq(15000.0)
     end
 
     it 'updates transaction status to COMPLETED' do
-      CompleteRelworksDepositJob.new.perform(**webhook_params)
+      CompleteRelworksDepositJob.new.perform(webhook_params[:internal_reference], webhook_params[:status], webhook_params[:message])
 
       expect(transaction.reload.status).to eq('COMPLETED')
     end
 
     it 'stores success message' do
-      CompleteRelworksDepositJob.new.perform(**webhook_params)
+      CompleteRelworksDepositJob.new.perform(webhook_params[:internal_reference], webhook_params[:status], webhook_params[:message])
 
       expect(deposit.reload.message).to eq('Request payment completed successfully.')
     end
@@ -88,25 +88,25 @@ RSpec.describe CompleteRelworksDepositJob, type: :job do
     before { deposit }
 
     it 'updates deposit status to FAILED' do
-      CompleteRelworksDepositJob.new.perform(**webhook_params)
+      CompleteRelworksDepositJob.new.perform(webhook_params[:internal_reference], webhook_params[:status], webhook_params[:message])
 
       expect(deposit.reload.status).to eq('FAILED')
     end
 
     it 'does not update user balance' do
       expect {
-        CompleteRelworksDepositJob.new.perform(**webhook_params)
+        CompleteRelworksDepositJob.new.perform(webhook_params[:internal_reference], webhook_params[:status], webhook_params[:message])
       }.not_to change { user.reload.balance }
     end
 
     it 'updates transaction status to FAILED' do
-      CompleteRelworksDepositJob.new.perform(**webhook_params)
+      CompleteRelworksDepositJob.new.perform(webhook_params[:internal_reference], webhook_params[:status], webhook_params[:message])
 
       expect(transaction.reload.status).to eq('FAILED')
     end
 
     it 'stores error message' do
-      CompleteRelworksDepositJob.new.perform(**webhook_params)
+      CompleteRelworksDepositJob.new.perform(webhook_params[:internal_reference], webhook_params[:status], webhook_params[:message])
 
       expect(deposit.reload.message).to eq('Insufficient funds in mobile money account')
     end
@@ -123,12 +123,12 @@ RSpec.describe CompleteRelworksDepositJob, type: :job do
     it 'logs error and returns early' do
       expect(Rails.logger).to receive(:error).with(/Deposit not found/)
 
-      CompleteRelworksDepositJob.new.perform(**webhook_params)
+      CompleteRelworksDepositJob.new.perform(webhook_params[:internal_reference], webhook_params[:status], webhook_params[:message])
     end
 
     it 'does not raise error' do
       expect {
-        CompleteRelworksDepositJob.new.perform(**webhook_params)
+        CompleteRelworksDepositJob.new.perform(webhook_params[:internal_reference], webhook_params[:status], webhook_params[:message])
       }.not_to raise_error
     end
   end
@@ -147,7 +147,7 @@ RSpec.describe CompleteRelworksDepositJob, type: :job do
 
     it 'returns early without changes' do
       expect {
-        CompleteRelworksDepositJob.new.perform(**webhook_params)
+        CompleteRelworksDepositJob.new.perform(webhook_params[:internal_reference], webhook_params[:status], webhook_params[:message])
       }.not_to change { user.reload.balance }
     end
   end
@@ -157,8 +157,8 @@ RSpec.describe CompleteRelworksDepositJob, type: :job do
       expect(CompleteRelworksDepositJob.sidekiq_options_hash['queue']).to eq('high')
     end
 
-    it 'retries 3 times' do
-      expect(CompleteRelworksDepositJob.sidekiq_options_hash['retry']).to eq(3)
+    it 'retries 1 time' do
+      expect(CompleteRelworksDepositJob.sidekiq_options_hash['retry']).to eq(1)
     end
   end
 end

@@ -6,8 +6,8 @@ RSpec.describe TwoUpFeatureJob, type: :worker do
   # only 2 status active, market 1X2, outcome home win or away win should be updated to won
   # the rest should remain unchanged and different sports or markets or outcomes
   
-  let!(:soccer_fixture) { Fabricate(:fixture, sport_id: "1") }
-  let!(:other_fixture) { Fabricate(:fixture, sport_id: "2") }
+  let!(:soccer_fixture) { Fabricate(:fixture, sport_id: "1", ext_tournament_id: 17) }
+  let!(:other_fixture) { Fabricate(:fixture, sport_id: "2", ext_tournament_id: 999) }
 
   let!(:worker) { described_class.new }
 

@@ -432,7 +432,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
         end
         
         context "with same game bets" do
-          let!(:same_game_fixture) { Fabricate(:fixture, event_id: SecureRandom.uuid, league_id: SecureRandom.uuid) }
+          let!(:same_game_fixture) { Fabricate(:fixture, event_id: SecureRandom.uuid, league_id: SecureRandom.uuid, ext_tournament_id: 17, sport_id: "1") }
           let!(:market1) do
             market = Fabricate.build(:pre_market, market_identifier: '1', specifier: nil, odds: { '1' => {'odd' => 2.0, 'outcome_id' => '1'} })
             market.fixture_id = same_game_fixture.id
@@ -513,7 +513,7 @@ RSpec.describe "Api::V1::Betslips", type: :request do
             post "/api/v1/betslips", params: bad_params, headers: auth_headers
             expect(response).to have_http_status(:bad_request).or have_http_status(:bad_request)
             json = JSON.parse(response.body)
-            expect(json['message']).to match(/Same game bets are only allowed/)
+            expect(json['message']).to match(/Same game bets are not allowed/)
           end
         end
 
