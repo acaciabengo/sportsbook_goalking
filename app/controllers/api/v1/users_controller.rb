@@ -2,6 +2,10 @@ class Api::V1::UsersController < Api::V1::BaseController
   skip_before_action :verify_authenticity_token
   before_action :auth_user
 
+  MIN_REDEEMABLE_POINTS = 60
+  BONUS_AMOUNT_PER_MIN_POINTS = 5000
+
+
   def show
     user = @current_user.as_json(only: [:id, :first_name, :last_name, :phone_number, :balance, :points, :created_at],
                                                       include: { user_bonuses: { only: [:id, :amount, :status, :expires_at, :created_at] } })
@@ -26,10 +30,10 @@ class Api::V1::UsersController < Api::V1::BaseController
 
   def redeem
     user = @current_user
-    if (user.points || 0) >= 120
-      # create a user bonus and for each 120 points redeemed, give a bonus of 10000
-      redeemable_points = (user.points / 120)&.to_i  * 120
-      bonus_amount = (redeemable_points / 120) * 10000
+    if (user.points || 0) >= MIN_REDEEMABLE_POINTS
+      # create a user bonus and for each 60 points redeemed, give a bonus of 10000
+      redeemable_points = (user.points / MIN_REDEEMABLE_POINTS)&.to_i  * MIN_REDEEMABLE_POINTS
+      bonus_amount = (redeemable_points / MIN_REDEEMABLE_POINTS) * BONUS_AMOUNT_PER_MIN_POINTS
       expiration_days = ENV['USER_BONUS_EXPIRATION_DAYS'].to_i || 3
       ActiveRecord::Base.transaction do
         expiration_date = Time.now() + expiration_days.days
