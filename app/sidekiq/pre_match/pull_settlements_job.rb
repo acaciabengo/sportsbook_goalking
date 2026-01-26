@@ -17,7 +17,7 @@ class PreMatch::PullSettlementsJob
       SELECT DISTINCT fixtures.id, fixtures.event_id
       FROM fixtures
       JOIN pre_markets ON pre_markets.fixture_id = fixtures.id
-      WHERE fixtures.match_status IN ('finished', 'ended')
+      WHERE fixtures.match_status IN ('finished', 'ended', 1)
         AND EXISTS (
           SELECT 1 FROM pre_markets pm
           WHERE pm.fixture_id = fixtures.id
@@ -41,7 +41,7 @@ class PreMatch::PullSettlementsJob
       SELECT DISTINCT fixtures.id, fixtures.event_id
       FROM fixtures
         JOIN live_markets ON live_markets.fixture_id = fixtures.id
-        WHERE fixtures.match_status IN ('finished', 'ended')
+        WHERE fixtures.match_status IN ('finished', 'ended', 1)
         AND EXISTS (
           SELECT 1 FROM live_markets lm
           WHERE lm.fixture_id = fixtures.id
@@ -55,19 +55,37 @@ class PreMatch::PullSettlementsJob
 
     # =============================================================
     # Find all fixtures with status not_started but start_time in the past
+    # and have unclosed pre_markets or live_markets
     # =============================================================
-    
+
     sql = <<-SQL
-      SELECT 
-        DISTINCT fixtures.id, 
+      SELECT
+        DISTINCT fixtures.id,
         fixtures.event_id
       FROM fixtures
-      WHERE fixtures.match_status = 'not_started'
+      WHERE fixtures.match_status IN ('not_started', 0)
         AND fixtures.start_date < NOW()
+        AND fixtures.start_date > (NOW() - INTERVAL '24 hours')
+        AND (
+          EXISTS (
+            SELECT 1 FROM pre_markets pm
+            WHERE pm.fixture_id = fixtures.id
+              AND pm.status != 'settled'
+          )
+          OR EXISTS (
+            SELECT 1 FROM live_markets lm
+            WHERE lm.fixture_id = fixtures.id
+              AND lm.status != 'settled'
+          )
+        )
+      ORDER BY fixtures.id ASC
     SQL
 
     started_fixtures = ActiveRecord::Base.connection.exec_query(sql).to_a
-    settle_live_market(started_fixtures)
+    started_fixtures.each do |fixture|
+      settle_pre_market(fixture)
+      settle_live_market_from_api(fixture)
+    end
   end
 
   def settle_pre_market(fixture)

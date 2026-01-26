@@ -30,7 +30,6 @@ end
 # every 5 mins check pre_match settlements
 every 5.minutes do
   runner "PreMatch::PullSettlementsJob.perform_async"
-  
 end
 
 every 6.minutes do
