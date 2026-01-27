@@ -8,14 +8,14 @@ class Api::V1::PreMatchController < Api::V1::BaseController
 
     sport_id = params[:sport_id].presence&.to_i
     category_id = params[:category_id].presence&.to_i
-    tournament_id = params[:tournament_id].presence&.to_i
+    tournament_id = params[:tournament_id].presence&.split(',')&.map(&:to_i)
     query = params[:query]&.strip.presence
     page = (params[:page].presence || 1).to_i
     per_page = 20
     offset = (page - 1) * per_page
 
     # Build filter conditions once
-    filter_key = [sport_id || 'all', category_id || 'all', tournament_id || 'all', query || 'none'].join(":")
+    filter_key = [sport_id || 'all', category_id || 'all', tournament_id&.sort&.join(',') || 'all', query || 'none'].join(":")
 
     # ===============================
     # Cache total count separately (changes less frequently)
@@ -161,8 +161,9 @@ class Api::V1::PreMatchController < Api::V1::BaseController
     end
 
     if tournament_id.present?
-      conditions << "t.id = ?"
-      binds << tournament_id
+      placeholders = tournament_id.map { '?' }.join(', ')
+      conditions << "t.id IN (#{placeholders})"
+      binds.concat(tournament_id)
     end
 
     if query.present?

@@ -368,6 +368,14 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
       end
     end
 
+    # if specifier is present, also replace any standalone {specifier} placeholders
+    if specifier.present?
+      new_market_name = new_market_name.gsub('{specifier}', specifier.to_s)
+
+      # also append to all market names
+      new_market_name = "#{new_market_name} (#{specifier})"
+    end
+
     new_market_name
   end
 end

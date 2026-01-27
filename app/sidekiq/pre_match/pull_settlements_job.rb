@@ -17,13 +17,13 @@ class PreMatch::PullSettlementsJob
       SELECT DISTINCT fixtures.id, fixtures.event_id
       FROM fixtures
       JOIN pre_markets ON pre_markets.fixture_id = fixtures.id
-      WHERE fixtures.match_status IN ('finished', 'ended', 1)
+      WHERE fixtures.match_status IN ('finished', 'ended', 1, 'interrupted', 'postponed', 'abandoned', 'cancelled')
         AND EXISTS (
           SELECT 1 FROM pre_markets pm
           WHERE pm.fixture_id = fixtures.id
             AND pm.status != 'settled'
         )
-        AND fixtures.start_date > (NOW() - INTERVAL '10 days')
+        AND fixtures.start_date > (NOW() - INTERVAL '72 hours')
       ORDER BY fixtures.id ASC
     SQL
 
@@ -41,13 +41,13 @@ class PreMatch::PullSettlementsJob
       SELECT DISTINCT fixtures.id, fixtures.event_id
       FROM fixtures
         JOIN live_markets ON live_markets.fixture_id = fixtures.id
-        WHERE fixtures.match_status IN ('finished', 'ended', 1)
+        WHERE fixtures.match_status IN ('finished', 'ended', 1, 'interrupted', 'postponed', 'abandoned', 'cancelled')
         AND EXISTS (
           SELECT 1 FROM live_markets lm
           WHERE lm.fixture_id = fixtures.id
             AND lm.status != 'settled'
         )
-        AND fixtures.start_date > (NOW() - INTERVAL '24 hours')
+        AND fixtures.start_date > (NOW() - INTERVAL '96 hours')
     SQL
 
     fixtures = ActiveRecord::Base.connection.exec_query(sql).to_a
@@ -65,7 +65,7 @@ class PreMatch::PullSettlementsJob
       FROM fixtures
       WHERE fixtures.match_status IN ('not_started', 0)
         AND fixtures.start_date < NOW()
-        AND fixtures.start_date > (NOW() - INTERVAL '24 hours')
+        AND fixtures.start_date > (NOW() - INTERVAL '72 hours')
         AND (
           EXISTS (
             SELECT 1 FROM pre_markets pm
@@ -84,7 +84,7 @@ class PreMatch::PullSettlementsJob
     started_fixtures = ActiveRecord::Base.connection.exec_query(sql).to_a
     started_fixtures.each do |fixture|
       settle_pre_market(fixture)
-      settle_live_market_from_api(fixture)
+      settle_live_market([fixture])
     end
   end
 
@@ -173,12 +173,11 @@ class PreMatch::PullSettlementsJob
   end
 
   def settle_live_market(fixtures)
+    return if fixtures.empty?
+
+    redis = Redis.new(url: ENV['REDIS_URL'])
+
     fixtures.each_slice(10) do |fixture_batch|
-      # construct XML request for this batch
-      #  <BookmakerStatus timestamp="0">
-      #   <Match matchid="661373" />
-      # </BookmakerStatus>
-      # 
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.BookmakerStatus(timestamp: '0', type: "current") {
           fixture_batch.each do |fixture|
@@ -189,10 +188,17 @@ class PreMatch::PullSettlementsJob
 
       xml_request = builder.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::NO_DECLARATION).strip
 
-      # connect to redis and publish the request
-      redis = Redis.new(url: ENV['REDIS_URL'])
-      redis.publish(CHANNEL, xml_request)
+      event_ids = fixture_batch.map { |f| f["event_id"] }.join(', ')
+      subscribers = redis.publish(CHANNEL, xml_request)
+
+      if subscribers == 0
+        Rails.logger.error("Live settlement request published but no subscribers on #{CHANNEL} — feed service may be down. Event IDs: #{event_ids}")
+      else
+        Rails.logger.info("Published live settlement request for event IDs: #{event_ids}")
+      end
     end
+  ensure
+    redis&.close
   end
 end
 
