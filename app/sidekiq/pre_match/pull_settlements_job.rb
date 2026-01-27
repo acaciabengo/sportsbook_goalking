@@ -41,7 +41,7 @@ class PreMatch::PullSettlementsJob
       SELECT DISTINCT fixtures.id, fixtures.event_id
       FROM fixtures
         JOIN live_markets ON live_markets.fixture_id = fixtures.id
-        WHERE fixtures.match_status IN ('finished', 'ended', 1, 'interrupted', 'postponed', 'abandoned', 'cancelled')
+        WHERE fixtures.match_status IN ('finished', 'ended', '1', 'interrupted', 'postponed', 'abandoned', 'cancelled')
         AND EXISTS (
           SELECT 1 FROM live_markets lm
           WHERE lm.fixture_id = fixtures.id
