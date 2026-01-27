@@ -92,7 +92,7 @@ class PreMatch::PullSettlementsJob
     http_status, settlement_data = @bet_balancer.get_matches(match_id: fixture['event_id'], want_score: true)
 
     if http_status != 200 || settlement_data.nil?
-      Rails.logger.error("Failed to fetch settlement data for fixture #{fixture['id']}")
+      Rails.logger.error("Failed to fetch settlement data for fixture #{fixture['id']}, event_id #{fixture['event_id']}: HTTP #{http_status} \n #{settlement_data&.to_xml}")
       return
     end
 
