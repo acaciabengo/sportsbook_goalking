@@ -63,7 +63,7 @@ class PreMatch::PullSettlementsJob
         DISTINCT fixtures.id,
         fixtures.event_id
       FROM fixtures
-      WHERE fixtures.match_status IN ('not_started', 0)
+      WHERE fixtures.match_status IN ('not_started', '0')
         AND fixtures.start_date < NOW()
         AND fixtures.start_date > (NOW() - INTERVAL '72 hours')
         AND (
