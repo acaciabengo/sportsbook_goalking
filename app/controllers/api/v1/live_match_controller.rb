@@ -347,14 +347,6 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
   def format_market_names(competitor1, competitor2, market_name, specifier)
     return market_name if market_name.blank?
 
-    # check if there are any placeholders using regex
-    has_placeholders = market_name.match?(/\{.*?\}/)
-
-    if has_placeholders
-      new_market_name = market_name + " " + specifier
-      return new_market_name
-    end
-
     new_market_name = market_name.gsub(/\{.*?\}/) do |match|
       case match
       when '{$competitor1}'

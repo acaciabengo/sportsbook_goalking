@@ -23,7 +23,7 @@ class PreMatch::PullSettlementsJob
           WHERE pm.fixture_id = fixtures.id
             AND pm.status != 'settled'
         )
-        AND fixtures.start_date > (NOW() - INTERVAL '24 hours')
+        AND fixtures.start_date > (NOW() - INTERVAL '10 days')
       ORDER BY fixtures.id ASC
     SQL
 
