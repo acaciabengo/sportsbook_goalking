@@ -1,86 +1,64 @@
-class PreMatch::PullSettlementsJob
+class PreMatch::SyncMarketsJob
   include Sidekiq::Job
   sidekiq_options queue: :high, retry: 1
 
-  def perform(fixture_id)
-    fixture = Fixture.find_by(id: fixture_id)
-
-    unless fixture
-      Rails.logger.error("PullSettlementsJob: Fixture not found with id #{fixture_id}")
-      return
-    end
-
+  def perform
     @bet_balancer = BetBalancer.new
 
-    http_status, settlement_data = @bet_balancer.get_matches(
-      match_id: fixture.event_id,
-      want_score: true
-    )
+    http_status, fixtures_data = @bet_balancer.get_updates
 
     if http_status != 200
-      Rails.logger.error("Failed to fetch settlement data for fixture #{fixture.id}, event_id #{fixture.event_id}: HTTP #{http_status}")
+      Rails.logger.error("Failed to fetch updates from BetBalancer: HTTP #{http_status}")
       return
     end
 
-    return if settlement_data.nil?
-
-    settlement_data.remove_namespaces!
-
-    # Find the match node
-    match_node = settlement_data.at_xpath("//Match[@BetbalancerMatchID='#{fixture.event_id}']") ||
-                 settlement_data.at_xpath("//Match")
-
-    return unless match_node
-
-    # 1. Update fixture info (date, status, score)
-    update_fixture_info(fixture, match_node)
-
-    # 2. Update odds
-    update_pre_market_odds(fixture, match_node)
-
-    # 3. Settle markets if BetResult exists
-    bet_result_node = match_node.at_xpath("BetResult")
-    if bet_result_node.present?
-      settle_pre_market(fixture, bet_result_node)
-    end
-
-    Rails.logger.info("PullSettlementsJob completed for fixture #{fixture.id} (event_id: #{fixture.event_id})")
+    fixtures_data.remove_namespaces!
+    process_updates(fixtures_data)
   end
 
-  private
+  def process_updates(fixtures_data)
+    fixtures_data.xpath("//Match").each do |match_node|
+      event_id = match_node["BetbalancerMatchID"]&.to_i
+      next unless event_id
+
+      fixture = Fixture.find_by(event_id: event_id)
+      next unless fixture
+
+      # 1. Update fixture info (date, status)
+      update_fixture_info(fixture, match_node)
+
+      # 2. Update odds
+      update_pre_market_odds(fixture, match_node)
+
+      # 3. Check if fixture needs settlement (<BetResult> exists)
+      bet_result_node = match_node.at_xpath("BetResult")
+      if bet_result_node.present?
+        settle_pre_market(fixture, bet_result_node)
+      end
+    end
+  end
 
   def update_fixture_info(fixture, match_node)
     fixture_node = match_node.xpath("Fixture")
+    return unless fixture_node.present?
+
     update_attrs = {}
 
     # Check for date change
-    if fixture_node.present?
-      match_date_node = fixture_node.xpath("DateInfo/MatchDate")
-      if match_date_node.present?
-        new_date = match_date_node.text.to_datetime.strftime("%Y-%m-%d %H:%M:%S") rescue nil
-        if new_date && fixture.start_date != new_date
-          update_attrs[:start_date] = new_date
-          Rails.logger.info("Fixture #{fixture.id} date changed: #{fixture.start_date} -> #{new_date}")
-        end
-      end
-
-      # Check for status change
-      status_off = fixture_node.xpath("StatusInfo/Off").text
-      if status_off == "1" && fixture.status != "1"
-        update_attrs[:status] = "1"
-        update_attrs[:match_status] = "ended"
+    match_date_node = fixture_node.xpath("DateInfo/MatchDate")
+    if match_date_node.present?
+      new_date = match_date_node.text.to_datetime.strftime("%Y-%m-%d %H:%M:%S") rescue nil
+      if new_date && fixture.start_date != new_date
+        update_attrs[:start_date] = new_date
+        Rails.logger.info("Fixture #{fixture.id} date changed: #{fixture.start_date} -> #{new_date}")
       end
     end
 
-    # Extract score from Result node
-    result_node = match_node.at_xpath("Result/ScoreInfo/Score[@Type='FT']")
-    if result_node.present?
-      score = result_node.text
-      if score.include?(":")
-        update_attrs[:home_score] = score.split(":")[0].to_i
-        update_attrs[:away_score] = score.split(":")[1].to_i
-        update_attrs[:match_status] = "ended" unless fixture.match_status == "ended"
-      end
+    # Check for status change
+    status_off = fixture_node.xpath("StatusInfo/Off").text
+    if status_off == "1" && fixture.status != "1"
+      update_attrs[:status] = "1"
+      update_attrs[:match_status] = "ended"
     end
 
     fixture.update(update_attrs) if update_attrs.any?
@@ -119,9 +97,7 @@ class PreMatch::PullSettlementsJob
         market = existing_markets[[ext_market_id, specifier]]
 
         if market
-          # Skip settled markets for odds updates
-          next if market.status == "settled"
-
+          # Update existing market
           unless market.update(odds: odds_hash)
             Rails.logger.error("Failed to update PreMarket #{market.id}: #{market.errors.full_messages.join(', ')}")
           end
@@ -138,6 +114,7 @@ class PreMatch::PullSettlementsJob
           unless new_market.persisted?
             Rails.logger.error("Failed to create PreMarket for fixture #{fixture.id}, market #{ext_market_id}: #{new_market.errors.full_messages.join(', ')}")
           else
+            # Add to cache for potential future lookups in same batch
             existing_markets[[ext_market_id, specifier]] = new_market
           end
         end
@@ -150,14 +127,14 @@ class PreMatch::PullSettlementsJob
                                 .index_by { |m| [m.market_identifier, m.specifier] }
 
     # Group outcomes by [market_identifier, specifier]
-    # XML: <BetResult><W OddsType="10" OutComeId="1" OutCome="1"/><L .../></BetResult>
+    # XML: <BetResult><W OddsType="186" OutComeId="4" OutCome="..."/><L .../></BetResult>
     markets_results = {}
 
     bet_result_node.xpath("*").each do |outcome_node|
       market_identifier = outcome_node["OddsType"]
       specifier = outcome_node["SpecialBetValue"].presence
       outcome = outcome_node["OutCome"]
-      status = outcome_node.name  # "W", "L", "C", "R"
+      status = outcome_node.name  # "W" or "L"
       void_factor = outcome_node["VoidFactor"]&.to_f || 0.0
       outcome_id = outcome_node["OutComeId"]&.to_i
 
@@ -179,8 +156,8 @@ class PreMatch::PullSettlementsJob
         next
       end
 
-      # # Skip if already settled
-      # next if market.status == "settled"
+      # Skip if already settled
+      next if market.status == "settled"
 
       unless market.update(results: results, status: "settled")
         Rails.logger.error("Failed to settle PreMarket #{market.id}: #{market.errors.full_messages.join(', ')}")

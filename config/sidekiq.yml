@@ -15,7 +15,7 @@
   - low
 :scheduler:
   :schedule:
-    pull_settlements:                                                                                              
-        every: '10s'                                                                                                 
-        class: PreMatch::PullSettlementsJob  
-        queue: high
+    sync_markets:
+      every: '10s'
+      class: PreMatch::SyncMarketsJob
+      queue: high
