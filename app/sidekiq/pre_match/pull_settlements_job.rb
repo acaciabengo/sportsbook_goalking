@@ -23,7 +23,7 @@ class PreMatch::PullSettlementsJob
           WHERE pm.fixture_id = fixtures.id
             AND pm.status != 'settled'
         )
-        AND fixtures.start_date > (NOW() - INTERVAL '72 hours')
+        AND fixtures.start_date > (NOW() - INTERVAL '24 hours')
       ORDER BY fixtures.id ASC
     SQL
 
@@ -47,7 +47,7 @@ class PreMatch::PullSettlementsJob
           WHERE lm.fixture_id = fixtures.id
             AND lm.status != 'settled'
         )
-        AND fixtures.start_date > (NOW() - INTERVAL '96 hours')
+        AND fixtures.start_date > (NOW() - INTERVAL '24 hours')
     SQL
 
     fixtures = ActiveRecord::Base.connection.exec_query(sql).to_a
@@ -65,7 +65,7 @@ class PreMatch::PullSettlementsJob
       FROM fixtures
       WHERE fixtures.match_status IN ('not_started', '0')
         AND fixtures.start_date < NOW()
-        AND fixtures.start_date > (NOW() - INTERVAL '72 hours')
+        AND fixtures.start_date > (NOW() - INTERVAL '24 hours')
         AND (
           EXISTS (
             SELECT 1 FROM pre_markets pm
@@ -85,6 +85,8 @@ class PreMatch::PullSettlementsJob
     started_fixtures.each do |fixture|
       settle_pre_market(fixture)
       settle_live_market([fixture])
+      # sleep for 10 seconds
+      sleep(10)
     end
   end
 

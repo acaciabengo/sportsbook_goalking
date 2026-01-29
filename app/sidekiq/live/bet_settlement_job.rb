@@ -36,8 +36,8 @@ class Live::BetSettlementJob
 
       match.xpath("Odds").each do |odds_node|
         # market_name = odds_node['freetext']
-        specifier = odds_node['specialoddsvalue']
-        ext_market_id = odds_node['typeid'].to_i
+        specifier = odds_node['specialoddsvalue'].presence
+        ext_market_id = odds_node['typeid'].presence
 
         # Build simple results hash
         results = {}
