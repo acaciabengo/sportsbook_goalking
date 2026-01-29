@@ -159,4 +159,17 @@ class BetBalancer
     data = Nokogiri.XML(response.body)
     return status, data
   end
+
+  def get_updates()
+    response =
+      @client.get do |req|
+        req.url "/get"
+        req.headers["Content-Type"] = "application/xml"
+        req.params = @default_params
+      end
+    # parse xml
+    status = response.status
+    data = Nokogiri.XML(response.body)
+    return status, data
+  end
 end

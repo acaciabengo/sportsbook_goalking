@@ -1,5 +1,7 @@
 require "sidekiq"
 require "sidekiq/web"
+require "sidekiq-scheduler"
+require "sidekiq-scheduler/web"
 
 Sidekiq::Web.use(Rack::Auth::Basic) do |user, password|
   [user, password] == ["admin", "admin2013"]

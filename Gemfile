@@ -95,6 +95,7 @@ gem "devise"
 gem "draper"
 gem "pundit"
 gem "sidekiq", "~> 8.0"
+gem "sidekiq-scheduler", "~> 6.0"
 gem "cancancan"
 gem "ransack" #, '~> 2.3', '>= 2.3.2'
 gem "gon"

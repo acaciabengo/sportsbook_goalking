@@ -13,3 +13,9 @@
   - high
   - default
   - low
+:scheduler:
+  :schedule:
+    pull_settlements:                                                                                              
+        every: '10s'                                                                                                 
+        class: PreMatch::PullSettlementsJob  
+        queue: high
