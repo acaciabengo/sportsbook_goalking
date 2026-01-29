@@ -1,5 +1,13 @@
 # frozen_string_literal: true
 
+# Load custom Devise strategies
+require 'devise/models/dual_authenticatable'
+
+# Register the custom strategy with Devise
+Devise.add_module :dual_authenticatable,
+                  strategy: true,
+                  model: 'devise/models/dual_authenticatable'
+
 # Use this hook to configure devise mailer, warden hooks and so forth.
 # Many of these configuration options can be set straight in your model.
 Devise.setup do |config|
