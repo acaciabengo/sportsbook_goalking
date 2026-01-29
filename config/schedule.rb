@@ -36,9 +36,9 @@ every 6.minutes do
   runner "BetslipsJob.perform_async"
 end
 
-every 1.hour do
-  runner "PreMatch::PullOddsJob.perform_async"
-end
+# every 1.hour do
+#   runner "PreMatch::PullOddsJob.perform_async"
+# end
 
 every 1.day, at: "3:00 am" do
   runner "PreMatch::PullFixturesJob.perform_async"
