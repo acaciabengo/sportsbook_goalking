@@ -65,6 +65,7 @@ class Api::V1::LiveMatchController < Api::V1::BaseController
           WHERE
             lm.status = 'started'
             AND lm.market_identifier = '2'
+            AND lm.name = '3way'
             AND f.live_odds = '1'
             AND f.booked = true
             AND f.match_status = '1' 
