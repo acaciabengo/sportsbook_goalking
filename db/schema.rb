@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_23_000001) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_29_150930) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -510,6 +510,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_23_000001) do
     t.decimal "first_deposit_bonus_amount", precision: 10, scale: 2, default: "0.0"
     t.decimal "bonus", precision: 10, scale: 2, default: "0.0"
     t.integer "points", default: 0
+    t.boolean "legacy_password", default: false
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["phone_number"], name: "index_users_on_phone_number", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'devise/strategies/authenticatable'
+require_relative '../../dotnet_password_hasher'
 
 module Devise
   module Strategies
@@ -11,28 +12,39 @@ module Devise
       end
 
       def authenticate!
-        # TODO: Implement your authentication logic here
-        #
-        # Available methods:
-        #   - params: access request parameters
-        #   - password: the password from params
-        #   - authentication_hash: hash with authentication keys
-        #   - mapping: the Devise mapping for current scope
-        #
-        # Use these to complete authentication:
-        #   - success!(resource) - authentication succeeded
-        #   - fail!(message) - authentication failed with message
-        #   - fail(:invalid) - authentication failed with default invalid message
-        #
-        # Example:
-        #   resource = mapping.to.find_for_authentication(authentication_hash)
-        #   if resource && validate(resource) { resource.valid_password?(password) }
-        #     success!(resource)
-        #   else
-        #     fail(:invalid)
-        #   end
+        resource = mapping.to.find_for_authentication(authentication_hash)
+        
+        return fail(:not_found_in_database) unless resource
 
-        fail(:invalid)
+        if resource.legacy_password?
+          # Verify .NET password
+          if verify_dotnet_password(resource, password)
+            # Migrate to bcrypt
+            resource.password = password
+            resource.legacy_password = false
+            resource.save(validate: false)
+            success!(resource)
+          else
+            fail(:invalid)
+          end
+        else
+          # Use standard Devise bcrypt validation
+          if resource.valid_password?(password)
+            success!(resource)
+          else
+            fail(:invalid)
+          end
+        end
+      end
+
+      private
+
+      def verify_dotnet_password(resource, plain_password)
+        DotnetPasswordHasher.verify(plain_password, resource.encrypted_password)
+      end
+
+      def password
+        params[scope][:password]
       end
     end
   end
