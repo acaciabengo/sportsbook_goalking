@@ -41,7 +41,7 @@ class User < ApplicationRecord
   # validate :password_complexity
   #
   def self.ransackable_attributes(auth_object = nil)
-    ["account_active", "activated_first_deposit_bonus", "activated_signup_bonus", "agreement", "balance", "bonus", "confirmation_sent_at", "confirmation_token", "confirmed_at", "created_at", "current_sign_in_at", "current_sign_in_ip", "email", "encrypted_password", "failed_attempts", "first_deposit_bonus_amount", "first_name", "id", "id_number", "last_name", "last_sign_in_at", "last_sign_in_ip", "locked_at", "nationality", "password_reset_code", "password_reset_sent_at", "phone_number", "pin", "pin_sent_at", "remember_created_at", "reset_password_sent_at", "reset_password_token", "sign_in_count", "signup_bonus_amount", "unconfirmed_email", "unlock_token", "updated_at", "verified", "points"]
+    ["account_active", "activated_first_deposit_bonus", "activated_signup_bonus", "agreement", "balance", "bonus", "confirmation_sent_at", "confirmation_token", "confirmed_at", "created_at", "current_sign_in_at", "current_sign_in_ip", "email", "encrypted_password", "failed_attempts", "first_deposit_bonus_amount", "first_name", "id", "id_number", "last_name", "last_sign_in_at", "last_sign_in_ip", "legacy_password", "locked_at", "nationality", "password_reset_code", "password_reset_sent_at", "phone_number", "pin", "pin_sent_at", "remember_created_at", "reset_password_sent_at", "reset_password_token", "sign_in_count", "signup_bonus_amount", "unconfirmed_email", "unlock_token", "updated_at", "verified", "points"]
   end
 
   def self.ransackable_associations(auth_object = nil)
