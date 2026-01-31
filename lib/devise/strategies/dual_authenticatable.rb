@@ -6,11 +6,6 @@ require_relative '../../dotnet_password_hasher'
 module Devise
   module Strategies
     class DualAuthenticatable < Authenticatable
-      def valid?
-        # Return true if this strategy should be tried
-        true
-      end
-
       def authenticate!
         resource = mapping.to.find_for_authentication(authentication_hash)
         
