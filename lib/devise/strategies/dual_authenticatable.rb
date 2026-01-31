@@ -6,6 +6,10 @@ require_relative '../../dotnet_password_hasher'
 module Devise
   module Strategies
     class DualAuthenticatable < Authenticatable
+      def valid?
+        params[scope].is_a?(Hash) && params[scope][:password].present?
+      end
+
       def authenticate!
         resource = mapping.to.find_for_authentication(authentication_hash)
         
@@ -14,10 +18,8 @@ module Devise
         if resource.legacy_password?
           # Verify .NET password
           if verify_dotnet_password(resource, password)
-            # Migrate to bcrypt
-            resource.password = password
-            resource.legacy_password = false
-            resource.save(validate: false)
+            # Migrate to bcrypt using update_columns (bypasses callbacks)
+            resource.migrate_to_bcrypt!(password)
             success!(resource)
           else
             fail(:invalid)

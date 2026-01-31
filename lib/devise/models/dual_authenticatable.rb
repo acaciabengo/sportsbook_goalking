@@ -20,9 +20,7 @@ module Devise
         if legacy_password?
           if DotnetPasswordHasher.verify(password, encrypted_password)
             # Migrate to bcrypt on successful login
-            self.password = password
-            self.legacy_password = false
-            save(validate: false)
+            migrate_to_bcrypt!(password)
             true
           else
             false
@@ -30,6 +28,19 @@ module Devise
         else
           Devise::Encryptor.compare(self.class, encrypted_password, password)
         end
+      end
+
+      # Migrates legacy .NET password to bcrypt
+      def migrate_to_bcrypt!(plain_password)
+        new_hash = Devise::Encryptor.digest(self.class, plain_password)
+        update_columns(
+          encrypted_password: new_hash,
+          legacy_password: false,
+          updated_at: Time.current
+        )
+        Rails.logger.info("[DualAuth] Migrated user #{id} from .NET to bcrypt")
+      rescue => e
+        Rails.logger.error("[DualAuth] Failed to migrate user #{id}: #{e.message}")
       end
 
       # Sets password and hashes it with bcrypt
